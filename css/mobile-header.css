@@ -1,0 +1,127 @@
+/* =====================================================
+   COLLAPSIBLE HEADER FOR MOBILE
+   Сворачиваемый хедер на мобильных устройствах
+   
+   Подключение:
+   <link rel="stylesheet" href="css/mobile-header.css">
+   <script src="js/mobile-header.js"></script>
+   ===================================================== */
+
+/* ===== Кнопка сворачивания ===== */
+.header-collapse-btn {
+    display: none;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border: none;
+    border-radius: 50%;
+    color: #000;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.header-collapse-btn:hover {
+    transform: scale(1.1);
+}
+
+.header-collapse-btn.collapsed {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: #fff;
+}
+
+/* ===== На мобилке показываем кнопку ===== */
+@media (max-width: 768px) {
+    .header-collapse-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Когда хедер свёрнут */
+    .mobile-header-collapsed .dashboard-header,
+    .mobile-header-collapsed .studio-header,
+    .mobile-header-collapsed .page-header,
+    .mobile-header-collapsed header {
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    /* Анимация для хедера */
+    .dashboard-header,
+    .studio-header,
+    .page-header,
+    header {
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    
+    /* Когда хедер свёрнут - добавляем отступ сверху */
+    .mobile-header-collapsed main,
+    .mobile-header-collapsed .main-content,
+    .mobile-header-collapsed .studio-main,
+    .mobile-header-collapsed .content-tabs {
+        margin-top: 0 !important;
+        padding-top: 60px !important;
+    }
+    
+    /* Мини-индикатор статуса когда свёрнуто */
+    .header-mini-status {
+        display: none;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(10px);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        color: #fff;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .mobile-header-collapsed .header-mini-status {
+        display: flex;
+    }
+}
+
+/* ===== Стили для компактного хедера ===== */
+@media (max-width: 480px) {
+    /* Ещё более компактный вид */
+    .dashboard-header,
+    .studio-header {
+        padding: 10px 15px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .header-left,
+    .header-right {
+        flex: 1;
+        min-width: 100%;
+        justify-content: center;
+    }
+    
+    .wallet-card {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .limits-display {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .limit-item {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+}
