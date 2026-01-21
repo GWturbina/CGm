@@ -166,19 +166,11 @@
         </footer>
     </div>
 
-    <script src="/js/common.js"></script>
+<script src="/js/common.js"></script>
     <script src="/js/id-linking-service.js?v=3"></script>
     <script src="/js/index.js"></script>
-
-    <!-- Service Worker -->
-    <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('✅ SW registered'))
-                .catch(err => console.log('SW error:', err));
-        });
-    }
-</script>
+    
+    <!-- PWA Auto Update -->
+    <script src="/js/pwa-updater.js"></script>
 </body>
 </html>
