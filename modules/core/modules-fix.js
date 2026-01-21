@@ -307,6 +307,24 @@ function copyReferralLink() {
     });
 }
 
+function shareReferralLink() {
+    const input = document.getElementById('referralLinkInput');
+    const displayId = window.currentDisplayId || window.currentGwId || window.currentTempId;
+    const link = input ? input.value : `${window.location.origin}/registration.html?ref=${displayId}`;
+    
+    if (navigator.share) {
+        navigator.share({ 
+            title: 'CardGift', 
+            text: 'Присоединяйся к CardGift!',
+            url: link 
+        }).catch(() => {
+            copyReferralLink();
+        });
+    } else {
+        copyReferralLink();
+    }
+}
+
 // ===== MOBILE FUNCTIONS =====
 
 function isMobile() {
@@ -322,6 +340,55 @@ function openInSafePal() {
     const currentUrl = encodeURIComponent(window.location.href);
     const safePalDeepLink = `https://link.safepal.io/dapp?url=${currentUrl}`;
     window.location.href = safePalDeepLink;
+}
+
+function showOpenInWalletBanner() {
+    if (!isMobile()) return;
+    if (window.ethereum || window.safepal) return; // Уже есть кошелёк
+    
+    const existingBanner = document.getElementById('walletBanner');
+    if (existingBanner) return;
+    
+    const banner = document.createElement('div');
+    banner.id = 'walletBanner';
+    banner.style.cssText = `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        z-index: 99999;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+        border-top: 1px solid #333;
+    `;
+    
+    banner.innerHTML = `
+        <span style="color: #fff; font-size: 14px;">📱 Для полного доступа откройте в SafePal</span>
+        <button onclick="openInSafePal()" style="
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        ">Открыть</button>
+        <button onclick="this.parentElement.remove()" style="
+            background: transparent;
+            color: #888;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+        ">×</button>
+    `;
+    
+    document.body.appendChild(banner);
 }
 
 // ===== DEBUG FUNCTIONS =====
@@ -425,11 +492,13 @@ window.addSafePalButton = addSafePalButton;
 
 // Referral
 window.copyReferralLink = copyReferralLink;
+window.shareReferralLink = shareReferralLink;
 
 // Mobile
 window.isMobile = isMobile;
 window.isInAppBrowser = isInAppBrowser;
 window.openInSafePal = openInSafePal;
+window.showOpenInWalletBanner = showOpenInWalletBanner;
 
 // Debug
 window.toggleDebugPanel = toggleDebugPanel;
