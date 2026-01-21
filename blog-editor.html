@@ -1,0 +1,2472 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✏️ Редактор блога | CardGift</title>
+    <meta name="description" content="Создайте пост для своего блога в CardGift">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CSS VARIABLES - ТЕМЫ
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        :root {
+            /* Dark Theme (default) */
+            --bg-primary: #0a0a14;
+            --bg-secondary: #12121e;
+            --bg-card: #1a1a2e;
+            --bg-input: #0d0d1a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6a6a7a;
+            --border: #2a2a3e;
+            --border-light: #3a3a4e;
+            --accent: #f59e0b;
+            --accent-hover: #fbbf24;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --cardgift-gold: #FFD700;
+            --cardgift-dark: #1a1a2e;
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f0f2f5;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a5a;
+            --text-muted: #8a8a9a;
+            --border: #e0e0e8;
+            --border-light: #d0d0d8;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           BASE STYLES
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           HEADER CARDGIFT
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--border);
+            border-color: var(--accent);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        
+        .header-btn:hover {
+            border-color: var(--accent);
+            background: var(--border);
+        }
+        
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            transform: rotate(20deg);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           MAIN LAYOUT
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        .main {
+            display: flex;
+            padding-top: 60px;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+        }
+        
+        .sidebar-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+        
+        /* Template Cards */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .template-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .template-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .template-card.active {
+            border-color: var(--accent);
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        .template-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .template-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        /* Integration Buttons */
+        .integration-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .integration-btn {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        
+        .integration-btn:hover {
+            border-color: var(--accent);
+            background: var(--border);
+        }
+        
+        .integration-btn .icon {
+            font-size: 20px;
+        }
+        
+        .integration-btn .text {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .integration-btn .arrow {
+            color: var(--text-muted);
+        }
+        
+        /* My Posts Button */
+        .my-posts-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        
+        .my-posts-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 158, 11, 0.3);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           EDITOR AREA
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        .editor-area {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+            max-width: 800px;
+        }
+        
+        .editor-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 12px 15px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        
+        .toolbar-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+        
+        .toolbar-btn.active {
+            background: var(--accent);
+            color: #000;
+        }
+        
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+            margin: 0 8px;
+        }
+        
+        /* Title Input */
+        .title-input {
+            width: 100%;
+            padding: 20px 25px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+            outline: none;
+        }
+        
+        .title-input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        /* Media Upload */
+        .media-upload {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border);
+            display: none;
+        }
+        
+        .media-upload.active {
+            display: block;
+        }
+        
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background: rgba(245, 158, 11, 0.05);
+        }
+        
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .upload-text strong {
+            color: var(--accent);
+        }
+        
+        /* Media Preview */
+        .media-preview {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .media-preview.active {
+            display: block;
+        }
+        
+        .media-preview img,
+        .media-preview video {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+        }
+        
+        .media-remove {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Video URL Input */
+        .video-url-input {
+            display: none;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+        
+        .video-url-input.active {
+            display: block;
+        }
+        
+        .video-url-input input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .video-url-input input:focus {
+            border-color: var(--accent);
+        }
+        
+        /* Poll Editor */
+        .poll-editor {
+            display: none;
+            padding: 15px;
+        }
+        
+        .poll-editor.active {
+            display: block;
+        }
+        
+        .poll-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .poll-option input {
+            flex: 1;
+            padding: 12px 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .poll-option input:focus {
+            border-color: var(--accent);
+        }
+        
+        .poll-remove-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--error);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .poll-add-btn {
+            padding: 10px 20px;
+            background: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .poll-add-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        /* Card Selector */
+        .card-selector {
+            display: none;
+            padding: 15px;
+        }
+        
+        .card-selector.active {
+            display: block;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .card-item {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .card-item:hover {
+            border-color: var(--accent);
+        }
+        
+        .card-item.selected {
+            border-color: var(--accent);
+        }
+        
+        .card-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Content Editor */
+        .content-editor {
+            min-height: 300px;
+            padding: 20px 25px;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+        
+        .content-editor:empty::before {
+            content: attr(data-placeholder);
+            color: var(--text-muted);
+        }
+        
+        /* Post Preview Section */
+        .post-preview-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .preview-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: var(--bg-card);
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--accent);
+            transition: background 0.2s;
+        }
+        
+        .preview-section-header:hover {
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        .preview-toggle {
+            transition: transform 0.3s;
+        }
+        
+        .preview-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .preview-section-body {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .preview-section-body.collapsed {
+            display: none;
+        }
+        
+        .excerpt-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+        }
+        
+        .excerpt-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .char-counter {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+        
+        .og-upload-section {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .og-preview-box {
+            width: 200px;
+            height: 105px;
+            border-radius: 8px;
+            background: var(--bg-card);
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .og-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+        }
+        
+        .og-upload-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .btn-upload-small, .btn-remove-small {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        
+        .btn-upload-small:hover {
+            border-color: var(--accent);
+        }
+        
+        .btn-remove-small {
+            background: transparent;
+            border-color: var(--error);
+            color: var(--error);
+        }
+        
+        .btn-remove-small:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        /* Footer Actions */
+        .editor-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .footer-options {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .option-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        .option-checkbox input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+        
+        .footer-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .btn-draft {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-draft:hover {
+            background: var(--border);
+        }
+        
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+        
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        
+        .btn-publish {
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            color: #000;
+        }
+        
+        .btn-publish:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 158, 11, 0.3);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           FOOTER CARDGIFT
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        .footer {
+            margin-left: 280px;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           MODALS
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-card);
+            border: none;
+            border-radius: 50%;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           MY POSTS LIST STYLES
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        .my-post-item {
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        
+        .my-post-item:hover {
+            border-color: var(--accent);
+        }
+        
+        .my-post-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            cursor: pointer;
+        }
+        
+        .my-post-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .my-post-info {
+            flex: 1;
+        }
+        
+        .my-post-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .my-post-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        .my-post-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-share-post, .btn-delete-post {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        
+        .btn-share-post:hover {
+            background: var(--accent);
+        }
+        
+        .btn-delete-post:hover {
+            background: var(--error);
+        }
+        
+        /* Share Modal */
+        .share-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 8px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            font-size: 12px;
+            gap: 4px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .share-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .share-btn span:first-child {
+            font-size: 20px;
+        }
+        
+        /* Delete Options */
+        .btn-delete-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: white;
+            gap: 5px;
+            transition: transform 0.2s;
+        }
+        
+        .btn-delete-option:hover {
+            transform: scale(1.02);
+        }
+        
+        .btn-delete-option span:first-child {
+            font-size: 24px;
+        }
+        
+        .btn-delete-option small {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           TOAST NOTIFICATIONS
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .toast.success {
+            border-color: var(--success);
+        }
+        
+        .toast.error {
+            border-color: var(--error);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        @media (max-width: 900px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+                z-index: 1001;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .editor-area,
+            .footer {
+                margin-left: 0;
+            }
+            
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════════════════
+           LOADING
+           ═══════════════════════════════════════════════════════════════════════════ */
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+            <a href="/dashboard.html" class="back-btn">
+                <span>←</span>
+                <span>Dashboard</span>
+            </a>
+            <div class="logo">
+                <div class="logo-icon">🎁</div>
+                <span class="logo-text">CardGift</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <a href="/blog-guide.html" target="_blank" class="header-btn" style="background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1)); border-color: var(--cardgift-gold);">
+                <span>📖</span>
+                <span>Инструкция</span>
+            </a>
+            <a href="/blog-settings.html" class="header-btn">
+                <span>⚙️</span>
+                <span>Настройки</span>
+            </a>
+            <button class="header-btn" onclick="openPreview()">
+                <span>👁️</span>
+                <span>Мой блог</span>
+            </button>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">
+                <span id="themeIcon">🌙</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-title">Тип поста</div>
+            <div class="template-grid">
+                <div class="template-card active" data-type="text" onclick="selectTemplate('text')">
+                    <div class="template-icon">📝</div>
+                    <div class="template-name">Текст</div>
+                </div>
+                <div class="template-card" data-type="photo" onclick="selectTemplate('photo')">
+                    <div class="template-icon">🖼️</div>
+                    <div class="template-name">Фото</div>
+                </div>
+                <div class="template-card" data-type="video" onclick="selectTemplate('video')">
+                    <div class="template-icon">🎬</div>
+                    <div class="template-name">Видео</div>
+                </div>
+                <div class="template-card" data-type="poll" onclick="selectTemplate('poll')">
+                    <div class="template-icon">📊</div>
+                    <div class="template-name">Опрос</div>
+                </div>
+                <div class="template-card" data-type="card" onclick="selectTemplate('card')">
+                    <div class="template-icon">🎁</div>
+                    <div class="template-name">Открытка</div>
+                </div>
+                <div class="template-card" data-type="gallery" onclick="selectTemplate('gallery')">
+                    <div class="template-icon">🎨</div>
+                    <div class="template-name">Галерея</div>
+                </div>
+            </div>
+            
+            <!-- CardGift Integrations -->
+            <div class="integration-section">
+                <div class="sidebar-title">Интеграции CardGift</div>
+                
+                <button class="integration-btn" onclick="openAIStudio()">
+                    <span class="icon">🤖</span>
+                    <span class="text">AI Studio</span>
+                    <span class="arrow">→</span>
+                </button>
+                
+                <button class="integration-btn" onclick="openCardArchive()">
+                    <span class="icon">📁</span>
+                    <span class="text">Мои открытки</span>
+                    <span class="arrow">→</span>
+                </button>
+                
+                <button class="integration-btn" onclick="openSurveys()">
+                    <span class="icon">📋</span>
+                    <span class="text">Мои опросы</span>
+                    <span class="arrow">→</span>
+                </button>
+                
+                <button class="integration-btn" onclick="showReferralInfo()">
+                    <span class="icon">🌐</span>
+                    <span class="text">Реферальная ссылка</span>
+                    <span class="arrow">→</span>
+                </button>
+            </div>
+            
+            <button class="my-posts-btn" onclick="openMyPosts()">
+                📚 Мои посты
+            </button>
+        </aside>
+
+        <!-- Editor -->
+        <div class="editor-area">
+            <div class="editor-card">
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <button class="toolbar-btn" onclick="formatText('bold')" title="Жирный"><b>B</b></button>
+                    <button class="toolbar-btn" onclick="formatText('italic')" title="Курсив"><i>I</i></button>
+                    <button class="toolbar-btn" onclick="formatText('underline')" title="Подчёркнутый"><u>U</u></button>
+                    <button class="toolbar-btn" onclick="formatText('strikeThrough')" title="Зачёркнутый"><s>S</s></button>
+                    <div class="toolbar-divider"></div>
+                    <button class="toolbar-btn" onclick="formatText('formatBlock', 'h2')" title="Заголовок">H2</button>
+                    <button class="toolbar-btn" onclick="formatText('formatBlock', 'h3')" title="Подзаголовок">H3</button>
+                    <button class="toolbar-btn" onclick="formatText('formatBlock', 'blockquote')" title="Цитата">❝</button>
+                    <div class="toolbar-divider"></div>
+                    <button class="toolbar-btn" onclick="formatText('insertUnorderedList')" title="Список">•</button>
+                    <button class="toolbar-btn" onclick="formatText('insertOrderedList')" title="Нумерованный">1.</button>
+                    <div class="toolbar-divider"></div>
+                    <button class="toolbar-btn" onclick="insertLink()" title="Ссылка">🔗</button>
+                    <button class="toolbar-btn" onclick="insertEmoji()" title="Эмодзи">😊</button>
+                </div>
+                
+                <!-- Title -->
+                <input type="text" class="title-input" id="postTitle" placeholder="Заголовок поста..." maxlength="200">
+                
+                <!-- Media Upload (for photo/video/gallery) -->
+                <div class="media-upload" id="mediaUpload">
+                    <div class="upload-zone" id="uploadZone" onclick="triggerUpload()">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">
+                            Перетащите файл сюда или <strong>нажмите для загрузки</strong>
+                        </div>
+                    </div>
+                    <div class="media-preview" id="mediaPreview">
+                        <img id="previewImage" src="" alt="Preview">
+                        <button class="media-remove" onclick="removeMedia()">×</button>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+                
+                <!-- Video URL (for video type) -->
+                <div class="video-url-input" id="videoUrlInput">
+                    <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube или Vimeo...">
+                </div>
+                
+                <!-- Poll Editor -->
+                <div class="poll-editor" id="pollEditor">
+                    <div id="pollOptions">
+                        <div class="poll-option">
+                            <input type="text" placeholder="Вариант 1" maxlength="100">
+                            <button class="poll-remove-btn" onclick="removePollOption(this)">×</button>
+                        </div>
+                        <div class="poll-option">
+                            <input type="text" placeholder="Вариант 2" maxlength="100">
+                            <button class="poll-remove-btn" onclick="removePollOption(this)">×</button>
+                        </div>
+                    </div>
+                    <button class="poll-add-btn" onclick="addPollOption()">+ Добавить вариант</button>
+                </div>
+                
+                <!-- Card Selector -->
+                <div class="card-selector" id="cardSelector">
+                    <div class="card-grid" id="cardGrid">
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+                            Загрузка открыток...
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content Editor -->
+                <div class="content-editor" id="contentEditor" contenteditable="true" data-placeholder="Напишите что-нибудь..."></div>
+                
+                <!-- Post Preview Settings (for sharing) -->
+                <div class="post-preview-section">
+                    <div class="preview-section-header" onclick="togglePreviewSection()">
+                        <span>🖼️ Превью поста (для шаринга в мессенджерах)</span>
+                        <span class="preview-toggle" id="previewToggle">▼</span>
+                    </div>
+                    <div class="preview-section-body" id="previewSectionBody">
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">
+                            Эти данные показываются когда вы делитесь постом в Telegram, WhatsApp и других мессенджерах.
+                        </p>
+                        
+                        <!-- Post Excerpt -->
+                        <div class="form-group">
+                            <label class="form-label">Короткое описание (1-2 предложения)</label>
+                            <textarea id="postExcerpt" class="excerpt-input" placeholder="О чём этот пост? Это будет показано в превью..." maxlength="200" rows="2"></textarea>
+                            <div class="char-counter"><span id="excerptCount">0</span>/200</div>
+                        </div>
+                        
+                        <!-- Post OG Image -->
+                        <div class="form-group">
+                            <label class="form-label">Картинка превью</label>
+                            <div class="og-upload-section">
+                                <div class="og-preview-box" id="postOgPreview">
+                                    <div class="og-placeholder" id="postOgPlaceholder">
+                                        <div style="font-size: 28px; margin-bottom: 8px;">🖼️</div>
+                                        <div style="font-size: 12px;">Нет картинки</div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">1200×630 px</div>
+                                    </div>
+                                    <img id="postOgImage" style="display: none; width: 100%; height: 100%; object-fit: cover;" alt="Preview">
+                                </div>
+                                <div class="og-upload-actions">
+                                    <input type="file" id="postOgInput" accept="image/*" style="display: none;" onchange="handlePostOgUpload(event)">
+                                    <button type="button" class="btn-upload-small" onclick="document.getElementById('postOgInput').click()">📤 Загрузить</button>
+                                    <button type="button" class="btn-remove-small" onclick="removePostOg()">🗑️</button>
+                                </div>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">
+                                💡 Если не загружена — будет использована первая картинка из поста или превью блога.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="editor-footer">
+                    <div class="footer-options">
+                        <label class="option-checkbox">
+                            <input type="checkbox" id="allowComments" checked>
+                            <span>💬 Комментарии</span>
+                        </label>
+                        <label class="option-checkbox">
+                            <input type="checkbox" id="notifySubscribers" checked>
+                            <span>🔔 Уведомить подписчиков</span>
+                        </label>
+                    </div>
+                    <div class="footer-buttons">
+                        <button class="btn btn-delete" onclick="deletePostFromEditor()" id="deleteBtn" style="display: none;">
+                            <span>🗑️</span>
+                            <span>В корзину</span>
+                        </button>
+                        <button class="btn btn-draft" onclick="saveDraft()">
+                            <span>📑</span>
+                            <span>Черновик</span>
+                        </button>
+                        <button class="btn btn-publish" onclick="publishPost()">
+                            <span>🚀</span>
+                            <span>Опубликовать</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-brand">
+            <span style="font-size: 24px;">🎁</span>
+            <span style="font-family: 'Playfair Display', serif; font-size: 18px; background: linear-gradient(135deg, var(--cardgift-gold), #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CardGift</span>
+        </div>
+        <div class="footer-text">
+            Блог является частью экосистемы CardGift
+        </div>
+        <div class="footer-links">
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/generator.html">Создать открытку</a>
+            <a href="/blog.html" id="myBlogLink">Мой блог</a>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Referral Modal -->
+    <div class="modal-overlay" id="referralModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">🌐 Реферальная ссылка</h3>
+                <button class="modal-close" onclick="closeModal('referralModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Когда читатели вашего блога регистрируются в CardGift, они автоматически становятся вашими рефералами.
+                </p>
+                <div style="background: var(--bg-card); padding: 15px; border-radius: 10px; border: 1px solid var(--accent);">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Ваша реферальная ссылка:</div>
+                    <div id="referralLinkDisplay" style="font-size: 14px; color: var(--accent); word-break: break-all;"></div>
+                </div>
+                <button onclick="copyReferralLink()" style="width: 100%; margin-top: 15px; padding: 12px; background: var(--accent); color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    📋 Копировать ссылку
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════════
+        // BLOG EDITOR - INTEGRATED WITH CARDGIFT
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        // State
+        let currentTemplate = 'text';
+        let currentUser = null;
+        let selectedCardId = null;
+        let uploadedMediaUrl = null;
+        let editingPostId = null;
+        let postOgImageBase64 = null;
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Theme
+            const savedTheme = localStorage.getItem('blog_theme') || 'dark';
+            setTheme(savedTheme);
+            
+            // Check auth
+            await checkAuth();
+            
+            // Check if editing existing post
+            const urlParams = new URLSearchParams(window.location.search);
+            editingPostId = urlParams.get('edit');
+            if (editingPostId) {
+                await loadPostForEditing(editingPostId);
+            }
+            
+            // Hide loading
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }, 500);
+            
+            // Setup drag & drop
+            setupDragDrop();
+            
+            // Update referral link
+            updateReferralLink();
+            
+            // Update my blog link
+            updateMyBlogLink();
+        });
+        
+        async function checkAuth() {
+            // Ищем GW ID по всем возможным ключам (как в dashboard.js)
+            const gwId = localStorage.getItem('cardgift_gw_id') 
+                      || localStorage.getItem('cardgift_display_id')
+                      || localStorage.getItem('currentGwId')
+                      || localStorage.getItem('gw_id');
+            
+            const wallet = localStorage.getItem('cardgift_wallet') 
+                        || localStorage.getItem('cg_wallet_address')
+                        || localStorage.getItem('walletAddress');
+            
+            console.log('🔍 Auth check:', { gwId, wallet });
+            
+            if (!gwId && !wallet) {
+                showToast('⚠️ Войдите в систему через Dashboard', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 2000);
+                return;
+            }
+            
+            // Если есть wallet но нет gwId - пробуем получить из Supabase
+            if (!gwId && wallet) {
+                try {
+                    if (window.SupabaseClient?.client) {
+                        const { data } = await SupabaseClient.client
+                            .from('users')
+                            .select('gw_id')
+                            .eq('wallet_address', wallet.toLowerCase())
+                            .single();
+                        
+                        if (data?.gw_id) {
+                            currentUser = { gw_id: data.gw_id, wallet: wallet };
+                            console.log('✅ Got GW ID from wallet:', data.gw_id);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Could not get GW ID from wallet:', e);
+                }
+            }
+            
+            currentUser = {
+                gw_id: gwId,
+                wallet: wallet
+            };
+            
+            console.log('✅ User authenticated:', currentUser.gw_id);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // THEME
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            setTheme(newTheme);
+        }
+        
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('blog_theme', theme);
+            document.getElementById('themeIcon').textContent = theme === 'light' ? '☀️' : '🌙';
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // TEMPLATE SELECTION
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function selectTemplate(type) {
+            currentTemplate = type;
+            
+            // Update UI
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.type === type);
+            });
+            
+            // Show/hide sections
+            document.getElementById('mediaUpload').classList.toggle('active', ['photo', 'gallery'].includes(type));
+            document.getElementById('videoUrlInput').classList.toggle('active', type === 'video');
+            document.getElementById('pollEditor').classList.toggle('active', type === 'poll');
+            document.getElementById('cardSelector').classList.toggle('active', type === 'card');
+            
+            // Load cards if needed
+            if (type === 'card') {
+                loadUserCards();
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // MEDIA UPLOAD
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function setupDragDrop() {
+            const zone = document.getElementById('uploadZone');
+            
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+            
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragover');
+            });
+            
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+        }
+        
+        function triggerUpload() {
+            document.getElementById('fileInput').click();
+        }
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+        
+        function handleFile(file) {
+            // Validate
+            if (file.size > 50 * 1024 * 1024) {
+                showToast('❌ Файл слишком большой (макс. 50MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('mediaPreview');
+                const img = document.getElementById('previewImage');
+                
+                if (file.type.startsWith('image/')) {
+                    img.src = e.target.result;
+                    preview.classList.add('active');
+                    document.getElementById('uploadZone').style.display = 'none';
+                    uploadedMediaUrl = e.target.result;
+                } else if (file.type.startsWith('video/')) {
+                    // Handle video preview
+                    uploadedMediaUrl = e.target.result;
+                    showToast('✅ Видео загружено', 'success');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeMedia() {
+            document.getElementById('mediaPreview').classList.remove('active');
+            document.getElementById('uploadZone').style.display = 'block';
+            document.getElementById('fileInput').value = '';
+            uploadedMediaUrl = null;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // POST PREVIEW (FOR SHARING)
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function togglePreviewSection() {
+            const body = document.getElementById('previewSectionBody');
+            const toggle = document.getElementById('previewToggle');
+            body.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        }
+        
+        // Переменная для хранения URL картинки (не base64!)
+        let postOgImageUrl = null;
+        
+        async function handlePostOgUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('❌ Файл слишком большой (макс. 5MB)', 'error');
+                return;
+            }
+            
+            // Показываем превью сразу (base64 для отображения)
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('postOgImage').src = ev.target.result;
+                document.getElementById('postOgImage').style.display = 'block';
+                document.getElementById('postOgPlaceholder').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+            
+            // Загружаем в Supabase Storage
+            showToast('⏳ Загружаем картинку...', 'info');
+            
+            try {
+                const fileName = `og-${Date.now()}-${Math.random().toString(36).slice(2)}.${file.name.split('.').pop()}`;
+                const filePath = `blog-og/${currentUser.gw_id}/${fileName}`;
+                
+                const { data, error } = await SupabaseClient.client.storage
+                    .from('public-images')
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                
+                if (error) {
+                    // Если bucket не существует - пробуем создать
+                    if (error.message?.includes('not found') || error.statusCode === 404) {
+                        showToast('⚠️ Создайте bucket "public-images" в Supabase Storage', 'error');
+                        console.error('Storage bucket not found. Create "public-images" bucket in Supabase.');
+                        return;
+                    }
+                    throw error;
+                }
+                
+                // Получаем публичный URL
+                const { data: urlData } = SupabaseClient.client.storage
+                    .from('public-images')
+                    .getPublicUrl(filePath);
+                
+                postOgImageUrl = urlData.publicUrl;
+                postOgImageBase64 = postOgImageUrl; // Для совместимости
+                
+                console.log('✅ OG image uploaded:', postOgImageUrl);
+                showToast('✅ Картинка загружена!', 'success');
+                
+            } catch (err) {
+                console.error('Upload error:', err);
+                showToast('❌ Ошибка загрузки: ' + err.message, 'error');
+                // Fallback - оставляем base64 (не будет работать для OG)
+                postOgImageBase64 = document.getElementById('postOgImage').src;
+            }
+        }
+        
+        function removePostOg() {
+            postOgImageBase64 = null;
+            postOgImageUrl = null;
+            document.getElementById('postOgImage').style.display = 'none';
+            document.getElementById('postOgImage').src = '';
+            document.getElementById('postOgPlaceholder').style.display = 'flex';
+            document.getElementById('postOgInput').value = '';
+            showToast('🗑️ Картинка превью удалена', 'info');
+        }
+        
+        // Счётчик символов для excerpt
+        document.addEventListener('DOMContentLoaded', () => {
+            const excerpt = document.getElementById('postExcerpt');
+            if (excerpt) {
+                excerpt.addEventListener('input', () => {
+                    document.getElementById('excerptCount').textContent = excerpt.value.length;
+                });
+            }
+        });
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // TEXT FORMATTING
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function formatText(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('contentEditor').focus();
+        }
+        
+        function insertLink() {
+            const url = prompt('Введите URL:');
+            if (url) {
+                document.execCommand('createLink', false, url);
+            }
+        }
+        
+        function insertEmoji() {
+            const emojis = ['😊', '❤️', '🎉', '👍', '🔥', '✨', '💪', '🙏', '😂', '🤔'];
+            const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+            document.execCommand('insertText', false, emoji);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // POLL
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function addPollOption() {
+            const container = document.getElementById('pollOptions');
+            const count = container.children.length + 1;
+            
+            if (count > 10) {
+                showToast('❌ Максимум 10 вариантов', 'error');
+                return;
+            }
+            
+            const option = document.createElement('div');
+            option.className = 'poll-option';
+            option.innerHTML = `
+                <input type="text" placeholder="Вариант ${count}" maxlength="100">
+                <button class="poll-remove-btn" onclick="removePollOption(this)">×</button>
+            `;
+            container.appendChild(option);
+        }
+        
+        function removePollOption(btn) {
+            const container = document.getElementById('pollOptions');
+            if (container.children.length > 2) {
+                btn.parentElement.remove();
+            } else {
+                showToast('❌ Минимум 2 варианта', 'error');
+            }
+        }
+        
+        function getPollOptions() {
+            const inputs = document.querySelectorAll('#pollOptions input');
+            return Array.from(inputs).map(i => i.value.trim()).filter(v => v);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CARDS
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        async function loadUserCards() {
+            const grid = document.getElementById('cardGrid');
+            
+            if (!currentUser?.gw_id || !window.SupabaseClient?.client) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">Войдите в систему</div>';
+                return;
+            }
+            
+            try {
+                const { data, error } = await SupabaseClient.client
+                    .from('cards')
+                    .select('id, image_url, title')
+                    .eq('author_gw_id', currentUser.gw_id)
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+                
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+                            <div style="font-size: 48px; margin-bottom: 10px;">📭</div>
+                            <p>У вас пока нет открыток</p>
+                            <a href="/generator.html" style="color: var(--accent);">Создать открытку →</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                grid.innerHTML = data.map(card => `
+                    <div class="card-item ${selectedCardId === card.id ? 'selected' : ''}" 
+                         onclick="selectCard('${card.id}', '${card.image_url || ''}')">
+                        <img src="${card.image_url || '/images/card-placeholder.png'}" alt="${card.title || 'Открытка'}">
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                console.error('Load cards error:', e);
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--error);">Ошибка загрузки</div>';
+            }
+        }
+        
+        function selectCard(id, image) {
+            selectedCardId = id;
+            document.querySelectorAll('.card-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            showToast('✅ Открытка выбрана', 'success');
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // INTEGRATIONS
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function openAIStudio() {
+            window.open('/ai-studio.html', '_blank');
+        }
+        
+        function openCardArchive() {
+            window.open('/dashboard.html#archive', '_blank');
+        }
+        
+        function openSurveys() {
+            window.open('/dashboard.html#surveys', '_blank');
+        }
+        
+        async function openMyPosts() {
+            if (!currentUser?.gw_id) {
+                showToast('❌ Войдите в систему', 'error');
+                return;
+            }
+            
+            showToast('⏳ Загрузка постов...', 'info');
+            
+            try {
+                const gwId = currentUser.gw_id;
+                const cleanId = gwId.replace(/^GW/i, '');
+                const gwIdWithPrefix = gwId.startsWith('GW') ? gwId : 'GW' + gwId;
+                
+                const { data: posts, error } = await SupabaseClient.client
+                    .from('blog_posts')
+                    .select('id, title, post_type, published, created_at, views_count, likes_count')
+                    .or(`user_gw_id.eq.${cleanId},user_gw_id.eq.${gwIdWithPrefix}`)
+                    .is('deleted_at', null)  // Исключаем удалённые
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+                
+                if (error) throw error;
+                
+                showMyPostsModal(posts || []);
+                
+            } catch (e) {
+                console.error('Load posts error:', e);
+                showToast('❌ Ошибка загрузки', 'error');
+            }
+        }
+        
+        function showMyPostsModal(posts) {
+            const oldModal = document.getElementById('myPostsModal');
+            if (oldModal) oldModal.remove();
+            
+            const typeIcons = { 'text': '📝', 'photo': '📷', 'video': '🎬', 'poll': '📊', 'card': '🎁', 'gallery': '🎨' };
+            
+            let postsHtml = '';
+            if (posts.length === 0) {
+                postsHtml = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><div style="font-size:48px;margin-bottom:15px;">📝</div><div>У вас пока нет постов</div></div>';
+            } else {
+                postsHtml = posts.map(post => {
+                    const date = new Date(post.created_at).toLocaleDateString('ru-RU');
+                    const icon = typeIcons[post.post_type] || '📝';
+                    const status = post.published ? '✅ Опубликован' : '📑 Черновик';
+                    return `
+                        <div class="my-post-item" data-post-id="${post.id}">
+                            <div class="my-post-main" onclick="editPost('${post.id}')">
+                                <div class="my-post-icon">${icon}</div>
+                                <div class="my-post-info">
+                                    <div class="my-post-title">${post.title || 'Без заголовка'}</div>
+                                    <div class="my-post-meta">${status} • ${date} • 👁 ${post.views_count||0} • ❤️ ${post.likes_count||0}</div>
+                                </div>
+                            </div>
+                            <div class="my-post-actions">
+                                <button class="btn-share-post" onclick="event.stopPropagation();sharePostFromList('${post.id}','${(post.title||'Пост').replace(/'/g, "\\'")}')">📤</button>
+                                <button class="btn-delete-post" onclick="event.stopPropagation();confirmDeletePost('${post.id}')">🗑️</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+            
+            const modalHtml = `
+                <div class="modal-overlay active" id="myPostsModal" onclick="if(event.target===this)closeModal('myPostsModal')">
+                    <div class="modal" style="max-width:550px;max-height:85vh;">
+                        <div class="modal-header">
+                            <h3>📚 Мои посты (${posts.length})</h3>
+                            <button class="modal-close" onclick="closeModal('myPostsModal')">×</button>
+                        </div>
+                        <div class="modal-body" style="max-height:65vh;overflow-y:auto;padding:15px;">
+                            ${postsHtml}
+                        </div>
+                    </div>
+                </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        // Поделиться постом из списка
+        function sharePostFromList(postId, postTitle) {
+            const shortUrl = window.location.origin + '/p/' + postId;
+            
+            showShareModal(postId, postTitle, shortUrl);
+        }
+        
+        // Модальное окно для шаринга
+        function showShareModal(postId, title, url) {
+            const oldModal = document.getElementById('shareModal');
+            if (oldModal) oldModal.remove();
+            
+            const modalHtml = `
+                <div class="modal-overlay active" id="shareModal" onclick="if(event.target===this)closeModal('shareModal')">
+                    <div class="modal" style="max-width:400px;">
+                        <div class="modal-header">
+                            <h3>📤 Поделиться постом</h3>
+                            <button class="modal-close" onclick="closeModal('shareModal')">×</button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;">
+                            <p style="color:var(--text-secondary);margin-bottom:15px;font-size:14px;">${title}</p>
+                            
+                            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:20px;">
+                                <div style="color:var(--text-muted);font-size:12px;margin-bottom:5px;">Короткая ссылка:</div>
+                                <div style="color:var(--success);word-break:break-all;">${url}</div>
+                            </div>
+                            
+                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
+                                <a href="https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" class="share-btn" style="background:#0088cc;">
+                                    <span>📱</span>
+                                    <span>Telegram</span>
+                                </a>
+                                <a href="https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}" target="_blank" class="share-btn" style="background:#25D366;">
+                                    <span>💬</span>
+                                    <span>WhatsApp</span>
+                                </a>
+                                <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" class="share-btn" style="background:#1877F2;">
+                                    <span>📘</span>
+                                    <span>Facebook</span>
+                                </a>
+                                <a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" class="share-btn" style="background:#1DA1F2;">
+                                    <span>🐦</span>
+                                    <span>X</span>
+                                </a>
+                                <a href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}" target="_blank" class="share-btn" style="background:#0A66C2;">
+                                    <span>💼</span>
+                                    <span>LinkedIn</span>
+                                </a>
+                                <a href="viber://forward?text=${encodeURIComponent(title + ' ' + url)}" target="_blank" class="share-btn" style="background:#7360F2;">
+                                    <span>📞</span>
+                                    <span>Viber</span>
+                                </a>
+                                <a href="mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent('Посмотри: ' + url)}" class="share-btn" style="background:#EA4335;">
+                                    <span>📧</span>
+                                    <span>Email</span>
+                                </a>
+                                <button onclick="copyShareLink('${url}')" class="share-btn" style="background:var(--accent);">
+                                    <span>📋</span>
+                                    <span>Копировать</span>
+                                </button>
+                            </div>
+                            
+                            <div style="text-align:center;padding:15px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,165,0,0.05));border-radius:10px;">
+                                <div style="font-size:12px;color:var(--text-muted);">💡 Превью будет показано автоматически<br>при отправке в мессенджеры</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        function copyShareLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('📋 Ссылка скопирована!', 'success');
+            });
+        }
+        
+        // Подтверждение удаления поста
+        function confirmDeletePost(postId) {
+            const oldModal = document.getElementById('deleteModal');
+            if (oldModal) oldModal.remove();
+            
+            const modalHtml = `
+                <div class="modal-overlay active" id="deleteModal" onclick="if(event.target===this)closeModal('deleteModal')">
+                    <div class="modal" style="max-width:380px;">
+                        <div class="modal-header">
+                            <h3>🗑️ Удалить пост?</h3>
+                            <button class="modal-close" onclick="closeModal('deleteModal')">×</button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;text-align:center;">
+                            <p style="color:var(--text-secondary);margin-bottom:20px;">Выберите действие:</p>
+                            
+                            <div style="display:flex;flex-direction:column;gap:10px;">
+                                <button onclick="deletePost('${postId}', false)" class="btn-delete-option" style="background:var(--warning);color:#000;">
+                                    <span>📦</span>
+                                    <span>В корзину</span>
+                                    <small>Можно восстановить</small>
+                                </button>
+                                <button onclick="deletePost('${postId}', true)" class="btn-delete-option" style="background:var(--error);">
+                                    <span>🗑️</span>
+                                    <span>Удалить навсегда</span>
+                                    <small>Без возможности восстановления</small>
+                                </button>
+                                <button onclick="closeModal('deleteModal')" class="btn-delete-option" style="background:var(--bg-card);border:1px solid var(--border);">
+                                    <span>↩️</span>
+                                    <span>Отмена</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        // Удаление поста
+        async function deletePost(postId, permanent = false) {
+            try {
+                if (permanent) {
+                    // Полное удаление
+                    const { error } = await SupabaseClient.client
+                        .from('blog_posts')
+                        .delete()
+                        .eq('id', postId);
+                    
+                    if (error) throw error;
+                    showToast('🗑️ Пост удалён навсегда', 'success');
+                } else {
+                    // В корзину (помечаем как удалённый)
+                    const { error } = await SupabaseClient.client
+                        .from('blog_posts')
+                        .update({ 
+                            published: false, 
+                            deleted_at: new Date().toISOString()
+                        })
+                        .eq('id', postId);
+                    
+                    if (error) throw error;
+                    showToast('📦 Пост перемещён в корзину', 'success');
+                }
+                
+                closeModal('deleteModal');
+                
+                // Убираем пост из списка визуально
+                const postEl = document.querySelector(`[data-post-id="${postId}"]`);
+                if (postEl) {
+                    postEl.style.opacity = '0.5';
+                    setTimeout(() => postEl.remove(), 300);
+                }
+                
+                // Обновляем счётчик
+                const header = document.querySelector('#myPostsModal .modal-header h3');
+                if (header) {
+                    const count = document.querySelectorAll('#myPostsModal .my-post-item').length - 1;
+                    header.textContent = `📚 Мои посты (${count})`;
+                }
+                
+                // Если удаляем текущий редактируемый пост — редирект
+                if (editingPostId === postId) {
+                    setTimeout(() => {
+                        window.location.href = '/blog-editor.html';
+                    }, 1500);
+                }
+                
+            } catch (e) {
+                console.error('Delete error:', e);
+                showToast('❌ Ошибка удаления', 'error');
+            }
+        }
+        
+        function editPost(postId) {
+            closeModal('myPostsModal');
+            window.location.href = '/blog-editor.html?edit=' + postId;
+        }
+        
+        function openPreview() {
+            const username = localStorage.getItem('blog_username') || currentUser?.gw_id;
+            if (username) {
+                window.open('/blog.html?user=' + username, '_blank');
+            } else {
+                showToast('❌ Сначала настройте блог', 'error');
+            }
+        }
+        
+        function showReferralInfo() {
+            document.getElementById('referralModal').classList.add('active');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        function openHelp() {
+            const oldModal = document.getElementById('helpModal');
+            if (oldModal) oldModal.remove();
+            
+            const helpHtml = `
+                <div class="modal-overlay active" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
+                    <div class="modal" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3>📖 Руководство по блогу</h3>
+                            <button class="modal-close" onclick="closeModal('helpModal')">×</button>
+                        </div>
+                        <div class="modal-body" style="line-height: 1.6;">
+                            
+                            <h4 style="color: var(--accent); margin: 0 0 15px;">🚀 Быстрый старт</h4>
+                            <ol style="padding-left: 20px; color: var(--text-secondary); margin-bottom: 20px;">
+                                <li>Выберите тип поста слева</li>
+                                <li>Напишите заголовок и текст</li>
+                                <li>Нажмите <b>Опубликовать</b></li>
+                            </ol>
+                            
+                            <h4 style="color: var(--accent); margin: 0 0 10px;">📝 Типы постов</h4>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                                <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px;">📝</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Текст</div>
+                                </div>
+                                <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px;">📷</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Фото</div>
+                                </div>
+                                <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px;">🎬</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Видео</div>
+                                </div>
+                                <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px;">📊</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Опрос</div>
+                                </div>
+                                <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px;">🎁</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Открытка</div>
+                                </div>
+                                <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px;">🎨</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Галерея</div>
+                                </div>
+                            </div>
+                            
+                            <div style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.05)); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; padding: 15px; text-align: center;">
+                                <div style="margin-bottom: 10px; color: var(--text-secondary);">Хотите узнать больше?</div>
+                                <a href="/blog-guide.html" target="_blank" style="display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, var(--cardgift-gold), #FFA500); color: #000; text-decoration: none; border-radius: 8px; font-weight: 600;">📖 Полное руководство</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', helpHtml);
+        }
+        
+        function updateReferralLink() {
+            const gwId = currentUser?.gw_id || 'XXXXXX';
+            const cleanId = gwId.replace(/^GW/i, '');
+            // Короткая ссылка
+            const shortLink = window.location.origin + '/r/' + cleanId;
+            const fullLink = window.location.origin + '/registration.html?ref=' + cleanId;
+            
+            document.getElementById('referralLinkDisplay').innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Короткая ссылка:</div>
+                    <div style="color: var(--success); font-weight: 600;">${shortLink}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Полная ссылка:</div>
+                    <div style="color: var(--accent);">${fullLink}</div>
+                </div>
+            `;
+            // Сохраняем короткую ссылку для копирования
+            document.getElementById('referralLinkDisplay').dataset.shortLink = shortLink;
+        }
+        
+        function copyReferralLink() {
+            const shortLink = document.getElementById('referralLinkDisplay').dataset.shortLink;
+            navigator.clipboard.writeText(shortLink).then(() => {
+                showToast('📋 Короткая ссылка скопирована!', 'success');
+            });
+        }
+        
+        function updateMyBlogLink() {
+            const username = localStorage.getItem('blog_username') || currentUser?.gw_id;
+            const link = document.getElementById('myBlogLink');
+            if (link && username) {
+                link.href = '/blog.html?user=' + username;
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SAVE / PUBLISH
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        async function saveDraft() {
+            await savePost(false);
+        }
+        
+        async function publishPost() {
+            await savePost(true);
+        }
+        
+        async function savePost(publish = false) {
+            if (!currentUser?.gw_id) {
+                showToast('❌ Войдите в систему', 'error');
+                return;
+            }
+            
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('contentEditor').innerHTML.trim();
+            
+            if (!content && currentTemplate === 'text') {
+                showToast('❌ Напишите что-нибудь', 'error');
+                return;
+            }
+            
+            // Validate poll
+            if (currentTemplate === 'poll') {
+                const options = getPollOptions();
+                if (options.length < 2) {
+                    showToast('❌ Добавьте минимум 2 варианта ответа', 'error');
+                    return;
+                }
+            }
+            
+            // Validate card
+            if (currentTemplate === 'card' && !selectedCardId) {
+                showToast('❌ Выберите открытку', 'error');
+                return;
+            }
+            
+            try {
+                const postData = {
+                    user_gw_id: currentUser.gw_id,
+                    title: title || null,
+                    content: content,
+                    post_type: currentTemplate,
+                    media_url: uploadedMediaUrl,
+                    video_url: currentTemplate === 'video' ? document.getElementById('videoUrl').value : null,
+                    poll_options: currentTemplate === 'poll' ? getPollOptions() : null,
+                    embedded_card_id: selectedCardId,
+                    excerpt: document.getElementById('postExcerpt')?.value.trim() || null,
+                    og_image_url: postOgImageBase64,
+                    published: publish,
+                    allow_comments: document.getElementById('allowComments').checked,
+                    published_at: publish ? new Date().toISOString() : null
+                };
+                
+                // DEBUG: Показываем что отправляем
+                console.log('📤 Saving post data:', {
+                    ...postData,
+                    og_image_url: postOgImageBase64 ? (postOgImageBase64.startsWith('data:') ? '[base64]' : postOgImageBase64) : null
+                });
+                
+                let result;
+                
+                if (editingPostId) {
+                    // Update existing
+                    result = await SupabaseClient.client
+                        .from('blog_posts')
+                        .update(postData)
+                        .eq('id', editingPostId)
+                        .select()
+                        .single();
+                } else {
+                    // Create new
+                    result = await SupabaseClient.client
+                        .from('blog_posts')
+                        .insert(postData)
+                        .select()
+                        .single();
+                }
+                
+                if (result.error) throw result.error;
+                
+                // DEBUG: Показываем результат
+                console.log('✅ Post saved:', result.data);
+                console.log('📝 Saved excerpt:', result.data?.excerpt);
+                console.log('🖼️ Saved og_image_url:', result.data?.og_image_url ? `[base64 ${result.data.og_image_url.length} chars]` : null);
+                
+                if (publish) {
+                    showToast('🚀 Пост опубликован!', 'success');
+                } else {
+                    showToast('📑 Черновик сохранён', 'success');
+                }
+                
+                // Redirect after short delay
+                setTimeout(() => {
+                    if (publish) {
+                        const username = localStorage.getItem('blog_username') || currentUser.gw_id;
+                        window.location.href = '/blog.html?user=' + username;
+                    }
+                }, 1500);
+                
+            } catch (e) {
+                console.error('Save post error:', e);
+                showToast('❌ Ошибка сохранения: ' + e.message, 'error');
+            }
+        }
+        
+        async function loadPostForEditing(postId) {
+            try {
+                const { data, error } = await SupabaseClient.client
+                    .from('blog_posts')
+                    .select('*')
+                    .eq('id', postId)
+                    .single();
+                
+                if (error) throw error;
+                
+                // Fill form
+                document.getElementById('postTitle').value = data.title || '';
+                document.getElementById('contentEditor').innerHTML = data.content || '';
+                
+                selectTemplate(data.post_type || 'text');
+                
+                if (data.video_url) {
+                    document.getElementById('videoUrl').value = data.video_url;
+                }
+                
+                if (data.poll_options) {
+                    // TODO: Fill poll options
+                }
+                
+                if (data.embedded_card_id) {
+                    selectedCardId = data.embedded_card_id;
+                }
+                
+                // Load excerpt
+                if (data.excerpt) {
+                    document.getElementById('postExcerpt').value = data.excerpt;
+                    document.getElementById('excerptCount').textContent = data.excerpt.length;
+                }
+                
+                // Load og_image_url
+                if (data.og_image_url) {
+                    postOgImageBase64 = data.og_image_url;
+                    document.getElementById('postOgImage').src = data.og_image_url;
+                    document.getElementById('postOgImage').style.display = 'block';
+                    document.getElementById('postOgPlaceholder').style.display = 'none';
+                }
+                
+                document.getElementById('allowComments').checked = data.allow_comments !== false;
+                
+                // Show delete button when editing
+                document.getElementById('deleteBtn').style.display = 'flex';
+                
+                showToast('📝 Редактирование поста', 'info');
+                
+            } catch (e) {
+                console.error('Load post error:', e);
+                showToast('❌ Ошибка загрузки поста', 'error');
+            }
+        }
+        
+        // Delete post from editor button
+        function deletePostFromEditor() {
+            if (!editingPostId) {
+                showToast('❌ Нельзя удалить несохранённый пост', 'error');
+                return;
+            }
+            confirmDeletePost(editingPostId);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SIDEBAR TOGGLE (Mobile)
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // TOAST
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        console.log('✅ Blog Editor Integrated v1.0 loaded');
+    </script>
+</body>
+</html>
