@@ -569,6 +569,90 @@ function toggleWalletDropdown() {
     }
 }
 
+function toggleWalletConnection() {
+    if (window.walletConnected) {
+        disconnectWallet();
+    } else {
+        // Показываем секцию кошелька или пытаемся подключить
+        if (typeof showSection === 'function') {
+            showSection('wallet');
+        } else if (typeof connectWallet === 'function') {
+            connectWallet();
+        } else if (window.ethereum) {
+            window.ethereum.request({ method: 'eth_requestAccounts' })
+                .then(() => location.reload())
+                .catch(console.error);
+        } else {
+            if (typeof showToast === 'function') {
+                showToast('Установите SafePal или MetaMask', 'error');
+            }
+        }
+    }
+}
+
+// ===== IMPORT/EXPORT CONTACTS =====
+
+function showImportExportModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📁 Импорт/Экспорт</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <button class="btn btn-green btn-block" onclick="exportContacts()" style="width:100%;padding:15px;margin-bottom:15px;background:#4CAF50;color:white;border:none;border-radius:8px;cursor:pointer;">📤 Экспорт (JSON)</button>
+                <label class="btn btn-blue btn-block" style="display:block;width:100%;padding:15px;background:#2196F3;color:white;border:none;border-radius:8px;cursor:pointer;text-align:center;">
+                    📥 Импорт
+                    <input type="file" accept=".json" onchange="importContacts(event)" style="display:none;">
+                </label>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function exportContacts() {
+    const contactsData = window.contacts || [];
+    const blob = new Blob([JSON.stringify(contactsData, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cardgift_contacts.json';
+    a.click();
+    if (typeof showToast === 'function') {
+        showToast('Контакты экспортированы!', 'success');
+    }
+}
+
+function importContacts(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const imported = JSON.parse(e.target.result);
+            if (Array.isArray(imported)) {
+                window.contacts = [...(window.contacts || []), ...imported];
+                if (typeof saveContacts === 'function') saveContacts();
+                if (typeof renderContacts === 'function') renderContacts();
+                if (typeof updateContactsCounts === 'function') updateContactsCounts();
+                closeModal();
+                if (typeof showToast === 'function') {
+                    showToast(`Импортировано ${imported.length} контактов!`, 'success');
+                }
+            }
+        } catch (err) {
+            console.error('Import error:', err);
+            if (typeof showToast === 'function') {
+                showToast('Ошибка импорта файла', 'error');
+            }
+        }
+    };
+    reader.readAsText(file);
+}
+
 // ===== EXPORT ALL =====
 
 // Wallet
@@ -613,5 +697,11 @@ window.installPWA = installPWA;
 
 // Wallet dropdown
 window.toggleWalletDropdown = toggleWalletDropdown;
+window.toggleWalletConnection = toggleWalletConnection;
+
+// Import/Export
+window.showImportExportModal = showImportExportModal;
+window.exportContacts = exportContacts;
+window.importContacts = importContacts;
 
 console.log('✅ Modules Fix loaded - all missing functions defined');
