@@ -1,65 +1,121 @@
 /* =====================================================
-   CARDGIFT - SERVICE WORKER
-   v1.0 - PWA, Offline support, Push notifications
+   CARDGIFT - SERVICE WORKER v2.0
+   PWA, Offline support, Push notifications, Background sync
+   
+   Обновлено: Январь 2026
    ===================================================== */
 
-const CACHE_NAME = 'cardgift-v2';
+const CACHE_VERSION = 'v2.1';
+const CACHE_NAME = `cardgift-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
-// Файлы для кэширования
+// ===== ФАЙЛЫ ДЛЯ КЭШИРОВАНИЯ =====
 const PRECACHE_ASSETS = [
+    // HTML страницы
     '/',
     '/index.html',
     '/dashboard.html',
     '/generator.html',
     '/card-viewer.html',
     '/registration.html',
+    '/ai-studio.html',
+    '/blog.html',
+    '/survey.html',
     '/offline.html',
+    
+    // CSS
     '/css/common.css',
     '/css/dashboard.css',
     '/css/generator.css',
     '/css/card-viewer.css',
+    '/css/ai-studio.css',
+    '/css/registration.css',
+    '/css/index.css',
+    '/css/mobile-header.css',
+    
+    // Core JS (загружаются всегда)
     '/js/config.js',
     '/js/common.js',
-    '/js/auth.js',
     '/js/supabase.js',
-    '/js/globalway-bridge.js',
+    '/js/supabase-api.js',
+    '/js/auth.js',
+    '/js/wallet-state.js',
+    '/js/wallet.js',
+    '/js/translations.js',
+    
+    // Dashboard модули
+    '/modules/core/dashboard-core.js',
+    '/modules/mobile/mobile.js',
+    '/modules/contacts/contacts.js',
+    '/modules/archive/archive.js',
+    '/modules/referrals/referrals.js',
+    '/modules/blog/blog.js',
+    '/modules/panel/panel.js',
+    '/modules/upgrade/upgrade.js',
+    '/modules/modals/modals.js',
+    
+    // Другие важные JS
+    '/js/generator.js',
     '/js/cardService.js',
-    '/js/cloudinary.js',
-    '/manifest.json'
+    '/js/globalway-bridge.js',
+    '/js/contacts-service.js',
+    
+    // PWA
+    '/manifest.json',
+    
+    // Иконки (основные)
+    '/icons/icon-192.png',
+    '/icons/icon-512.png'
 ];
 
-// Установка Service Worker
+// Ресурсы которые НЕ кэшируем
+const NEVER_CACHE = [
+    '/api/',
+    'supabase.co',
+    'cloudinary.com',
+    'jsdelivr.net',
+    'cdnjs.cloudflare.com'
+];
+
+// ===== УСТАНОВКА =====
 self.addEventListener('install', (event) => {
-    console.log('📦 Service Worker installing...');
+    console.log(`📦 Service Worker ${CACHE_VERSION} installing...`);
     
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
+            .then(async (cache) => {
                 console.log('📦 Caching app shell...');
-                return cache.addAll(PRECACHE_ASSETS);
+                
+                // Кэшируем по одному чтобы ошибка в одном не сломала все
+                const results = await Promise.allSettled(
+                    PRECACHE_ASSETS.map(url => 
+                        cache.add(url).catch(err => {
+                            console.warn(`⚠️ Failed to cache: ${url}`, err.message);
+                        })
+                    )
+                );
+                
+                const cached = results.filter(r => r.status === 'fulfilled').length;
+                console.log(`✅ Cached ${cached}/${PRECACHE_ASSETS.length} assets`);
             })
-            .then(() => {
-                console.log('✅ Service Worker installed');
-                return self.skipWaiting();
-            })
+            .then(() => self.skipWaiting())
             .catch((error) => {
-                console.warn('⚠️ Some assets failed to cache:', error);
+                console.error('❌ Cache failed:', error);
                 return self.skipWaiting();
             })
     );
 });
 
-// Активация Service Worker
+// ===== АКТИВАЦИЯ =====
 self.addEventListener('activate', (event) => {
-    console.log('🚀 Service Worker activating...');
+    console.log(`🚀 Service Worker ${CACHE_VERSION} activating...`);
     
     event.waitUntil(
         caches.keys()
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames
-                        .filter((name) => name !== CACHE_NAME)
+                        .filter((name) => name.startsWith('cardgift-') && name !== CACHE_NAME)
                         .map((name) => {
                             console.log('🗑️ Deleting old cache:', name);
                             return caches.delete(name);
@@ -73,140 +129,219 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Обработка запросов
+// ===== ОБРАБОТКА ЗАПРОСОВ =====
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
     
-    // Пропускаем внешние запросы и API
-    if (!url.origin.includes(self.location.origin)) {
+    // Пропускаем не-GET запросы
+    if (request.method !== 'GET') {
         return;
     }
     
-    // API запросы - всегда сеть
+    // Пропускаем запросы которые не кэшируем
+    if (NEVER_CACHE.some(pattern => request.url.includes(pattern))) {
+        return;
+    }
+    
+    // Пропускаем внешние ресурсы (кроме CDN)
+    if (!url.origin.includes(self.location.origin) && 
+        !url.href.includes('jsdelivr') && 
+        !url.href.includes('cdnjs')) {
+        return;
+    }
+
+    // API запросы - только сеть
     if (url.pathname.startsWith('/api/')) {
         event.respondWith(
             fetch(request)
-                .catch(() => {
-                    return new Response(
-                        JSON.stringify({ error: 'Offline' }),
-                        { headers: { 'Content-Type': 'application/json' } }
-                    );
-                })
+                .catch(() => new Response(
+                    JSON.stringify({ error: 'Offline', message: 'Нет подключения к интернету' }),
+                    { 
+                        status: 503,
+                        headers: { 'Content-Type': 'application/json' } 
+                    }
+                ))
         );
         return;
     }
-    
-    // Для остальных - сначала кэш, потом сеть
+
+    // Стратегия: Stale-While-Revalidate
+    // Отдаём из кэша сразу, обновляем в фоне
     event.respondWith(
         caches.match(request)
             .then((cachedResponse) => {
-                if (cachedResponse) {
-                    // Обновляем кэш в фоне
-                    event.waitUntil(
-                        fetch(request)
-                            .then((response) => {
-                                if (response.ok) {
-                                    caches.open(CACHE_NAME)
-                                        .then((cache) => cache.put(request, response));
-                                }
-                            })
-                            .catch(() => {})
-                    );
-                    return cachedResponse;
-                }
-                
-                return fetch(request)
-                    .then((response) => {
-                        // Кэшируем новые ресурсы
-                        if (response.ok && request.method === 'GET') {
-                            const responseClone = response.clone();
+                // Запрос в сеть (для обновления кэша)
+                const fetchPromise = fetch(request)
+                    .then((networkResponse) => {
+                        // Кэшируем успешные ответы
+                        if (networkResponse.ok) {
+                            const responseClone = networkResponse.clone();
                             caches.open(CACHE_NAME)
                                 .then((cache) => cache.put(request, responseClone));
                         }
-                        return response;
+                        return networkResponse;
                     })
-                    .catch(() => {
-                        // Офлайн - показываем офлайн страницу для HTML
-                        if (request.headers.get('accept')?.includes('text/html')) {
-                            return caches.match(OFFLINE_URL);
-                        }
+                    .catch((error) => {
+                        console.warn('⚠️ Fetch failed:', url.pathname);
+                        return null;
                     });
+
+                // Если есть в кэше - отдаём сразу
+                if (cachedResponse) {
+                    // Обновляем кэш в фоне
+                    event.waitUntil(fetchPromise);
+                    return cachedResponse;
+                }
+
+                // Если нет в кэше - ждём сеть
+                return fetchPromise.then((response) => {
+                    if (response) return response;
+                    
+                    // Офлайн - показываем офлайн страницу для HTML
+                    if (request.headers.get('accept')?.includes('text/html')) {
+                        return caches.match(OFFLINE_URL);
+                    }
+                    
+                    return new Response('Offline', { status: 503 });
+                });
             })
     );
 });
 
-// Push уведомления
+// ===== PUSH УВЕДОМЛЕНИЯ =====
 self.addEventListener('push', (event) => {
-    console.log('📬 Push received:', event);
+    console.log('📬 Push received');
     
     let data = {
         title: 'CardGift',
         body: 'У вас новое уведомление',
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-72.png',
-        tag: 'cardgift-notification'
+        tag: 'cardgift-notification',
+        url: '/dashboard.html'
     };
     
     if (event.data) {
         try {
-            data = { ...data, ...event.data.json() };
+            const payload = event.data.json();
+            data = { ...data, ...payload };
         } catch (e) {
             data.body = event.data.text();
         }
     }
     
+    const options = {
+        body: data.body,
+        icon: data.icon,
+        badge: data.badge,
+        tag: data.tag,
+        data: { url: data.url },
+        actions: [
+            { action: 'open', title: '📂 Открыть' },
+            { action: 'close', title: '✕ Закрыть' }
+        ],
+        vibrate: [200, 100, 200],
+        requireInteraction: false,
+        renotify: true,
+        silent: false
+    };
+    
     event.waitUntil(
-        self.registration.showNotification(data.title, {
-            body: data.body,
-            icon: data.icon,
-            badge: data.badge,
-            tag: data.tag,
-            data: data.data || {},
-            actions: data.actions || [
-                { action: 'open', title: 'Открыть' },
-                { action: 'close', title: 'Закрыть' }
-            ],
-            vibrate: [200, 100, 200]
-        })
+        self.registration.showNotification(data.title, options)
     );
 });
 
-// Клик по уведомлению
+// ===== КЛИК ПО УВЕДОМЛЕНИЮ =====
 self.addEventListener('notificationclick', (event) => {
-    console.log('🔔 Notification clicked:', event);
+    console.log('🔔 Notification clicked:', event.action);
     
     event.notification.close();
+    
+    if (event.action === 'close') {
+        return;
+    }
     
     const urlToOpen = event.notification.data?.url || '/dashboard.html';
     
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then((clientList) => {
-                // Если есть открытое окно - фокусируемся на нём
+                // Ищем открытое окно
                 for (const client of clientList) {
                     if (client.url.includes(self.location.origin) && 'focus' in client) {
                         client.navigate(urlToOpen);
                         return client.focus();
                     }
                 }
-                // Иначе открываем новое
+                // Открываем новое окно
                 return clients.openWindow(urlToOpen);
             })
     );
 });
 
-// Синхронизация в фоне (когда появится интернет)
+// ===== ЗАКРЫТИЕ УВЕДОМЛЕНИЯ =====
+self.addEventListener('notificationclose', (event) => {
+    console.log('❌ Notification dismissed');
+});
+
+// ===== ФОНОВАЯ СИНХРОНИЗАЦИЯ =====
 self.addEventListener('sync', (event) => {
     console.log('🔄 Background sync:', event.tag);
     
-    if (event.tag === 'sync-cards') {
-        event.waitUntil(syncCards());
+    switch (event.tag) {
+        case 'sync-cards':
+            event.waitUntil(syncCards());
+            break;
+        case 'sync-contacts':
+            event.waitUntil(syncContacts());
+            break;
+        default:
+            console.log('Unknown sync tag:', event.tag);
     }
 });
 
 async function syncCards() {
-    console.log('🔄 Syncing cards...');
+    console.log('🔄 Syncing cards in background...');
+    // Здесь логика синхронизации карточек
 }
 
-console.log('📦 CardGift Service Worker loaded');
+async function syncContacts() {
+    console.log('🔄 Syncing contacts in background...');
+    // Здесь логика синхронизации контактов
+}
+
+// ===== ПЕРИОДИЧЕСКАЯ СИНХРОНИЗАЦИЯ =====
+self.addEventListener('periodicsync', (event) => {
+    console.log('⏰ Periodic sync:', event.tag);
+    
+    if (event.tag === 'update-content') {
+        event.waitUntil(updateContent());
+    }
+});
+
+async function updateContent() {
+    console.log('⏰ Updating content...');
+    // Здесь логика периодического обновления
+}
+
+// ===== СООБЩЕНИЯ ОТ СТРАНИЦЫ =====
+self.addEventListener('message', (event) => {
+    console.log('💬 Message from page:', event.data);
+    
+    if (event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    
+    if (event.data.type === 'CLEAR_CACHE') {
+        caches.delete(CACHE_NAME).then(() => {
+            event.ports[0].postMessage({ success: true });
+        });
+    }
+    
+    if (event.data.type === 'GET_VERSION') {
+        event.ports[0].postMessage({ version: CACHE_VERSION });
+    }
+});
+
+console.log(`📦 CardGift Service Worker ${CACHE_VERSION} loaded`);
