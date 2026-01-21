@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Diagnostics</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: monospace; background: #1a1a2e; color: #0f0; padding: 20px; }
+        pre { background: #000; padding: 15px; border-radius: 8px; overflow: auto; }
+        button { background: #FFD700; color: #000; border: none; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        button:hover { background: #FFA500; }
+        h2 { color: #FFD700; }
+        .error { color: #f00; }
+        .success { color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Supabase Diagnostics</h1>
+    
+    <div>
+        <button onclick="checkConnection()">1. Check Connection</button>
+        <button onclick="checkTables()">2. Check Tables</button>
+        <button onclick="checkUsers()">3. Show Users</button>
+        <button onclick="checkContacts()">4. Show Contacts</button>
+        <button onclick="addTestContact()">5. Add Test Contact</button>
+        <button onclick="clearAll()">Clear Log</button>
+    </div>
+    
+    <h2>Log:</h2>
+    <pre id="log"></pre>
+    
+    <script>
+        const SUPABASE_URL = 'https://imgpysvdosdsqucoghqa.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ3B5c3Zkb3Nkc3F1Y29naHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1NTU0ODYsImV4cCI6MjA4MjEzMTQ4Nn0.HTRDARe0DkeyI4et9I5xcElToiHzrfJTr2kFpwoik0Y';
+        
+        let client = null;
+        
+        function log(msg, isError = false) {
+            const el = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const cls = isError ? 'error' : 'success';
+            if (typeof msg === 'object') {
+                el.innerHTML += `<span class="${cls}">[${time}]</span> ${JSON.stringify(msg, null, 2)}\n\n`;
+            } else {
+                el.innerHTML += `<span class="${cls}">[${time}]</span> ${msg}\n\n`;
+            }
+            el.scrollTop = el.scrollHeight;
+        }
+        
+        function clearAll() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        async function checkConnection() {
+            log('🔌 Connecting to Supabase...');
+            try {
+                client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                log('✅ Client created');
+                log('URL: ' + SUPABASE_URL);
+                log('Key: ' + SUPABASE_KEY.substring(0, 50) + '...');
+                
+                // Test query
+                const { data, error } = await client.from('users').select('count').limit(1);
+                if (error) {
+                    log('❌ Connection test failed: ' + error.message, true);
+                    log('Error details: ' + JSON.stringify(error), true);
+                } else {
+                    log('✅ Connection successful!');
+                }
+            } catch (e) {
+                log('❌ Error: ' + e.message, true);
+            }
+        }
+        
+        async function checkTables() {
+            if (!client) await checkConnection();
+            
+            log('📋 Checking tables...');
+            
+            const tables = ['users', 'contacts', 'user_id_links', 'cards'];
+            
+            for (const table of tables) {
+                try {
+                    const { data, error, count } = await client
+                        .from(table)
+                        .select('*', { count: 'exact', head: true });
+                    
+                    if (error) {
+                        log(`❌ Table "${table}": ${error.message}`, true);
+                    } else {
+                        log(`✅ Table "${table}": ${count || 0} rows`);
+                    }
+                } catch (e) {
+                    log(`❌ Table "${table}": ${e.message}`, true);
+                }
+            }
+        }
+        
+        async function checkUsers() {
+            if (!client) await checkConnection();
+            
+            log('👥 Loading users...');
+            
+            const { data, error } = await client
+                .from('users')
+                .select('*')
+                .limit(20);
+            
+            if (error) {
+                log('❌ Error: ' + error.message, true);
+                log('Details: ' + JSON.stringify(error), true);
+            } else {
+                log(`✅ Found ${data?.length || 0} users:`);
+                if (data && data.length > 0) {
+                    data.forEach(u => {
+                        log(`  - ${u.cg_id}: ${u.name || 'no name'} (${u.messenger}: ${u.contact}) ref: ${u.referrer_cg_id || 'none'}`);
+                    });
+                } else {
+                    log('  (no users in database)');
+                }
+            }
+        }
+        
+        async function checkContacts() {
+            if (!client) await checkConnection();
+            
+            log('📇 Loading contacts...');
+            
+            const { data, error } = await client
+                .from('contacts')
+                .select('*')
+                .limit(20);
+            
+            if (error) {
+                log('❌ Error: ' + error.message, true);
+                log('Details: ' + JSON.stringify(error), true);
+            } else {
+                log(`✅ Found ${data?.length || 0} contacts:`);
+                if (data && data.length > 0) {
+                    data.forEach(c => {
+                        log(`  - Owner: ${c.owner_cg_id}, Contact: ${c.name} (${c.platform}: ${c.contact})`);
+                    });
+                } else {
+                    log('  (no contacts in database)');
+                }
+            }
+        }
+        
+        async function addTestContact() {
+            if (!client) await checkConnection();
+            
+            log('➕ Adding test contact...');
+            
+            const testData = {
+                owner_cg_id: '7346221',
+                name: 'Test Contact ' + Date.now(),
+                platform: 'telegram',
+                contact: '@test_' + Math.random().toString(36).substring(7),
+                source: 'diagnostic_test',
+                status: 'new',
+                created_at: new Date().toISOString()
+            };
+            
+            log('Data to insert: ' + JSON.stringify(testData));
+            
+            const { data, error } = await client
+                .from('contacts')
+                .insert(testData)
+                .select();
+            
+            if (error) {
+                log('❌ Insert failed: ' + error.message, true);
+                log('Error code: ' + error.code, true);
+                log('Error details: ' + error.details, true);
+                log('Error hint: ' + error.hint, true);
+            } else {
+                log('✅ Contact added successfully!');
+                log('Result: ' + JSON.stringify(data));
+            }
+        }
+    </script>
+</body>
+</html>
