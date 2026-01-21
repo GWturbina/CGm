@@ -1,0 +1,607 @@
+// =============================================
+// INTERNAL MESSAGES MODULE - Внутренние сообщения
+// =============================================
+
+let unreadCounts = {};
+let currentMessages = [];
+
+// Инициализация системы сообщений
+async function initInternalMessages() {
+    console.log('📬 Initializing Internal Messages...');
+    await loadUnreadCounts();
+    updateMessengerBadges();
+    initNewsReadTracking();
+}
+
+// =============================================
+// НЕПРОЧИТАННЫЕ СООБЩЕНИЯ
+// =============================================
+
+// Загрузить количество непрочитанных по мессенджерам
+async function loadUnreadCounts() {
+    const gwId = window.userGwId || window.displayId;
+    if (!gwId) return;
+    
+    try {
+        // Попробуем использовать функцию
+        const { data, error } = await supabase.rpc('get_unread_counts', { p_gw_id: gwId });
+        
+        if (data) {
+            unreadCounts = data;
+        } else {
+            // Fallback - прямой запрос
+            const { data: messages } = await supabase
+                .from('internal_messages')
+                .select('from_messenger')
+                .eq('to_gw_id', gwId)
+                .eq('is_read', false);
+            
+            if (messages) {
+                unreadCounts = {
+                    telegram: messages.filter(m => m.from_messenger === 'telegram').length,
+                    whatsapp: messages.filter(m => m.from_messenger === 'whatsapp').length,
+                    viber: messages.filter(m => m.from_messenger === 'viber').length,
+                    email: messages.filter(m => m.from_messenger === 'email').length,
+                    phone: messages.filter(m => m.from_messenger === 'phone').length,
+                    instagram: messages.filter(m => m.from_messenger === 'instagram').length,
+                    facebook: messages.filter(m => m.from_messenger === 'facebook').length,
+                    tiktok: messages.filter(m => m.from_messenger === 'tiktok').length,
+                    twitter: messages.filter(m => m.from_messenger === 'twitter').length,
+                    sponsor: messages.filter(m => m.from_messenger === 'sponsor').length,
+                    total: messages.length
+                };
+            }
+        }
+        
+        console.log('📬 Unread counts:', unreadCounts);
+    } catch (e) {
+        console.log('Messages table not ready:', e.message);
+        unreadCounts = {};
+    }
+}
+
+// Обновить бейджи на карточках мессенджеров
+function updateMessengerBadges() {
+    const messengerMap = {
+        'telegram': 'Telegram',
+        'whatsapp': 'WhatsApp', 
+        'viber': 'Viber',
+        'email': 'Email',
+        'phone': 'Телефон',
+        'instagram': 'Instagram',
+        'facebook': 'Facebook',
+        'tiktok': 'TikTok',
+        'twitter': 'Twitter/X'
+    };
+    
+    Object.keys(messengerMap).forEach(key => {
+        const count = unreadCounts[key] || 0;
+        const cards = document.querySelectorAll(`[data-messenger="${key}"], [onclick*="'${key}'"]`);
+        
+        cards.forEach(card => {
+            // Удалить старый бейдж
+            const oldBadge = card.querySelector('.messenger-badge');
+            if (oldBadge) oldBadge.remove();
+            
+            // Добавить новый если есть непрочитанные
+            if (count > 0) {
+                const badge = document.createElement('div');
+                badge.className = 'messenger-badge';
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.cssText = `
+                    position: absolute;
+                    top: 5px;
+                    right: 5px;
+                    background: #ff4444;
+                    color: white;
+                    border-radius: 50%;
+                    min-width: 20px;
+                    height: 20px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0 4px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    z-index: 10;
+                `;
+                
+                // Убедимся что карточка имеет position relative
+                if (getComputedStyle(card).position === 'static') {
+                    card.style.position = 'relative';
+                }
+                
+                card.appendChild(badge);
+            }
+        });
+    });
+}
+
+// =============================================
+// СООБЩЕНИЯ ПО МЕССЕНДЖЕРУ
+// =============================================
+
+// Показать сообщения по мессенджеру
+async function showMessengerMessages(messenger) {
+    const gwId = window.userGwId || window.displayId;
+    if (!gwId) return;
+    
+    try {
+        const { data: messages, error } = await supabase
+            .from('internal_messages')
+            .select('*')
+            .eq('to_gw_id', gwId)
+            .eq('from_messenger', messenger)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        
+        if (error) throw error;
+        
+        currentMessages = messages || [];
+        renderMessagesModal(messenger, currentMessages);
+        
+    } catch (e) {
+        console.error('Error loading messages:', e);
+        showNotification('Ошибка загрузки сообщений', 'error');
+    }
+}
+
+// Рендер модального окна с сообщениями
+function renderMessagesModal(messenger, messages) {
+    const messengerNames = {
+        'telegram': '📱 Telegram',
+        'whatsapp': '💬 WhatsApp',
+        'viber': '💜 Viber',
+        'email': '📧 Email',
+        'phone': '📞 Телефон',
+        'instagram': '📷 Instagram',
+        'facebook': '👤 Facebook',
+        'tiktok': '🎵 TikTok',
+        'twitter': '🐦 Twitter/X',
+        'sponsor': '👑 Спонсор'
+    };
+    
+    // Удалить старую модалку если есть
+    const oldModal = document.getElementById('messages-modal');
+    if (oldModal) oldModal.remove();
+    
+    const unreadCount = messages.filter(m => !m.is_read).length;
+    
+    const modalHtml = `
+        <div id="messages-modal" class="modal-overlay" style="display: flex !important;">
+            <div class="modal-content" style="max-width: 500px; max-height: 80vh;">
+                <div class="modal-header">
+                    <h2>${messengerNames[messenger] || messenger} ${unreadCount > 0 ? `<span style="color: #ff4444; font-size: 14px;">(${unreadCount} новых)</span>` : ''}</h2>
+                    <button class="modal-close" onclick="closeMessagesModal()">✕</button>
+                </div>
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0;">
+                    ${messages.length === 0 ? `
+                        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <div style="font-size: 50px; margin-bottom: 15px;">📭</div>
+                            <p>Нет сообщений</p>
+                        </div>
+                    ` : messages.map(m => `
+                        <div class="message-item ${m.is_read ? '' : 'unread'}" data-id="${m.id}" onclick="markMessageRead('${m.id}')" style="
+                            padding: 15px;
+                            border-bottom: 1px solid var(--border);
+                            cursor: pointer;
+                            background: ${m.is_read ? 'transparent' : 'rgba(255,215,0,0.05)'};
+                            transition: background 0.2s;
+                        ">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: ${m.is_read ? 'var(--text)' : 'var(--gold)'};">
+                                    ${m.is_read ? '' : '🔔 '}${m.from_name || 'Неизвестный'}
+                                </span>
+                                <span style="font-size: 11px; color: var(--text-muted);">
+                                    ${formatMessageTime(m.created_at)}
+                                </span>
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 14px; line-height: 1.4;">
+                                ${escapeHtml(m.message)}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="modal-footer" style="display: flex; gap: 10px;">
+                    ${unreadCount > 0 ? `
+                        <button class="btn btn-yellow" onclick="markAllRead('${messenger}')">
+                            ✅ Отметить все прочитанными
+                        </button>
+                    ` : ''}
+                    <button class="btn btn-gray" onclick="closeMessagesModal()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Закрыть модалку сообщений
+function closeMessagesModal() {
+    const modal = document.getElementById('messages-modal');
+    if (modal) modal.remove();
+}
+
+// Отметить сообщение прочитанным
+async function markMessageRead(messageId) {
+    try {
+        await supabase
+            .from('internal_messages')
+            .update({ is_read: true, read_at: new Date().toISOString() })
+            .eq('id', messageId);
+        
+        // Обновить UI
+        const item = document.querySelector(`[data-id="${messageId}"]`);
+        if (item) {
+            item.classList.remove('unread');
+            item.style.background = 'transparent';
+            const name = item.querySelector('span');
+            if (name) {
+                name.style.color = 'var(--text)';
+                name.textContent = name.textContent.replace('🔔 ', '');
+            }
+        }
+        
+        // Обновить счётчики
+        await loadUnreadCounts();
+        updateMessengerBadges();
+        
+    } catch (e) {
+        console.error('Error marking message read:', e);
+    }
+}
+
+// Отметить все прочитанными по мессенджеру
+async function markAllRead(messenger) {
+    const gwId = window.userGwId || window.displayId;
+    if (!gwId) return;
+    
+    try {
+        await supabase
+            .from('internal_messages')
+            .update({ is_read: true, read_at: new Date().toISOString() })
+            .eq('to_gw_id', gwId)
+            .eq('from_messenger', messenger)
+            .eq('is_read', false);
+        
+        showNotification('Все сообщения отмечены прочитанными', 'success');
+        closeMessagesModal();
+        
+        // Обновить счётчики
+        await loadUnreadCounts();
+        updateMessengerBadges();
+        
+    } catch (e) {
+        console.error('Error marking all read:', e);
+    }
+}
+
+// =============================================
+// НОВОСТИ - ОТСЛЕЖИВАНИЕ ПРОЧТЕНИЯ
+// =============================================
+
+// Инициализация отслеживания прочтения новостей
+function initNewsReadTracking() {
+    // Перехватываем открытие модалки новостей
+    const originalShowNews = window.showNewsModal;
+    if (originalShowNews) {
+        window.showNewsModal = function() {
+            originalShowNews.apply(this, arguments);
+            // Отмечаем новости как прочитанные через 2 секунды
+            setTimeout(markNewsAsRead, 2000);
+        };
+    }
+}
+
+// Отметить новости как прочитанные
+async function markNewsAsRead() {
+    const gwId = window.userGwId || window.displayId;
+    if (!gwId) return;
+    
+    try {
+        // Получить все активные новости
+        const { data: news } = await supabase
+            .from('news')
+            .select('id')
+            .eq('is_active', true);
+        
+        if (!news || news.length === 0) return;
+        
+        // Отметить каждую как прочитанную
+        for (const item of news) {
+            await supabase
+                .from('news_read_status')
+                .upsert({
+                    user_gw_id: gwId,
+                    news_id: item.id,
+                    read_at: new Date().toISOString()
+                }, {
+                    onConflict: 'user_gw_id,news_id'
+                });
+        }
+        
+        // Убрать бейдж с колокольчика новостей
+        updateNewsBadge(0);
+        
+        console.log('📰 News marked as read');
+        
+    } catch (e) {
+        console.error('Error marking news as read:', e);
+    }
+}
+
+// Загрузить количество непрочитанных новостей
+async function loadUnreadNewsCount() {
+    const gwId = window.userGwId || window.displayId;
+    if (!gwId) return 0;
+    
+    try {
+        // Всего активных новостей
+        const { count: totalNews } = await supabase
+            .from('news')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_active', true);
+        
+        // Прочитанных пользователем
+        const { count: readNews } = await supabase
+            .from('news_read_status')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_gw_id', gwId);
+        
+        const unread = Math.max((totalNews || 0) - (readNews || 0), 0);
+        updateNewsBadge(unread);
+        return unread;
+        
+    } catch (e) {
+        console.error('Error loading unread news:', e);
+        return 0;
+    }
+}
+
+// Обновить бейдж на колокольчике новостей
+function updateNewsBadge(count) {
+    const bell = document.querySelector('.notification-bell, #news-bell, [onclick*="showNewsModal"]');
+    if (!bell) return;
+    
+    // Удалить старый бейдж
+    const oldBadge = bell.querySelector('.news-badge');
+    if (oldBadge) oldBadge.remove();
+    
+    if (count > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'news-badge';
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.cssText = `
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 3px;
+        `;
+        
+        if (getComputedStyle(bell).position === 'static') {
+            bell.style.position = 'relative';
+        }
+        
+        bell.appendChild(badge);
+    }
+}
+
+// =============================================
+// ЧАТ СПОНСОР-РЕФЕРАЛ
+// =============================================
+
+// Показать чат со спонсором
+async function showSponsorChat() {
+    const gwId = window.userGwId || window.displayId;
+    if (!gwId) return;
+    
+    try {
+        // Получить спонсора
+        const { data: user } = await supabase
+            .from('users')
+            .select('referrer_gw_id')
+            .eq('gw_id', gwId)
+            .single();
+        
+        if (!user?.referrer_gw_id) {
+            showNotification('У вас нет спонсора', 'info');
+            return;
+        }
+        
+        // Загрузить сообщения
+        const { data: messages } = await supabase
+            .from('internal_messages')
+            .select('*')
+            .or(`and(from_gw_id.eq.${gwId},to_gw_id.eq.${user.referrer_gw_id}),and(from_gw_id.eq.${user.referrer_gw_id},to_gw_id.eq.${gwId})`)
+            .order('created_at', { ascending: true });
+        
+        renderSponsorChatModal(user.referrer_gw_id, messages || []);
+        
+    } catch (e) {
+        console.error('Error loading sponsor chat:', e);
+    }
+}
+
+// Показать чат с рефералом
+async function showReferralChat(referralGwId) {
+    const gwId = window.userGwId || window.displayId;
+    if (!gwId) return;
+    
+    try {
+        const { data: messages } = await supabase
+            .from('internal_messages')
+            .select('*')
+            .or(`and(from_gw_id.eq.${gwId},to_gw_id.eq.${referralGwId}),and(from_gw_id.eq.${referralGwId},to_gw_id.eq.${gwId})`)
+            .order('created_at', { ascending: true });
+        
+        renderSponsorChatModal(referralGwId, messages || [], true);
+        
+    } catch (e) {
+        console.error('Error loading referral chat:', e);
+    }
+}
+
+// Рендер чата
+function renderSponsorChatModal(partnerId, messages, isReferral = false) {
+    const gwId = window.userGwId || window.displayId;
+    
+    // Удалить старую модалку
+    const oldModal = document.getElementById('chat-modal');
+    if (oldModal) oldModal.remove();
+    
+    const modalHtml = `
+        <div id="chat-modal" class="modal-overlay" style="display: flex !important;">
+            <div class="modal-content" style="max-width: 500px; max-height: 80vh; display: flex; flex-direction: column;">
+                <div class="modal-header">
+                    <h2>${isReferral ? '👤 Чат с рефералом' : '👑 Чат со спонсором'} ${partnerId}</h2>
+                    <button class="modal-close" onclick="closeChatModal()">✕</button>
+                </div>
+                <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 15px; min-height: 300px;">
+                    ${messages.length === 0 ? `
+                        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <div style="font-size: 40px; margin-bottom: 10px;">💬</div>
+                            <p>Начните диалог!</p>
+                        </div>
+                    ` : messages.map(m => `
+                        <div style="
+                            margin-bottom: 10px;
+                            display: flex;
+                            justify-content: ${m.from_gw_id === gwId ? 'flex-end' : 'flex-start'};
+                        ">
+                            <div style="
+                                max-width: 80%;
+                                padding: 10px 15px;
+                                border-radius: 15px;
+                                background: ${m.from_gw_id === gwId ? 'var(--gold)' : 'var(--bg-card)'};
+                                color: ${m.from_gw_id === gwId ? '#000' : 'var(--text)'};
+                            ">
+                                <div style="font-size: 13px;">${escapeHtml(m.message)}</div>
+                                <div style="font-size: 10px; opacity: 0.7; margin-top: 5px; text-align: right;">
+                                    ${formatMessageTime(m.created_at)}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px;">
+                    <input type="text" id="chat-input" class="form-input" placeholder="Введите сообщение..." style="flex: 1;" onkeypress="if(event.key==='Enter')sendChatMessage('${partnerId}')">
+                    <button class="btn btn-yellow" onclick="sendChatMessage('${partnerId}')">📤</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Прокрутить вниз
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+// Закрыть чат
+function closeChatModal() {
+    const modal = document.getElementById('chat-modal');
+    if (modal) modal.remove();
+}
+
+// Отправить сообщение в чат
+async function sendChatMessage(toGwId) {
+    const gwId = window.userGwId || window.displayId;
+    const input = document.getElementById('chat-input');
+    const message = input?.value?.trim();
+    
+    if (!message || !gwId) return;
+    
+    try {
+        await supabase
+            .from('internal_messages')
+            .insert({
+                from_gw_id: gwId,
+                to_gw_id: toGwId,
+                from_name: gwId,
+                from_messenger: 'sponsor',
+                message: message,
+                chat_id: `sponsor_${[gwId, toGwId].sort().join('_')}`
+            });
+        
+        input.value = '';
+        
+        // Добавить сообщение в UI
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+            // Убрать placeholder если есть
+            const placeholder = chatMessages.querySelector('[style*="text-align: center"]');
+            if (placeholder) placeholder.remove();
+            
+            chatMessages.insertAdjacentHTML('beforeend', `
+                <div style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
+                    <div style="max-width: 80%; padding: 10px 15px; border-radius: 15px; background: var(--gold); color: #000;">
+                        <div style="font-size: 13px;">${escapeHtml(message)}</div>
+                        <div style="font-size: 10px; opacity: 0.7; margin-top: 5px; text-align: right;">Только что</div>
+                    </div>
+                </div>
+            `);
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+    } catch (e) {
+        console.error('Error sending message:', e);
+        showNotification('Ошибка отправки', 'error');
+    }
+}
+
+// =============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// =============================================
+
+function formatMessageTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Только что';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} мин назад`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч назад`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)} дн назад`;
+    
+    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// =============================================
+// ЭКСПОРТ И ИНИЦИАЛИЗАЦИЯ
+// =============================================
+
+// Автозапуск при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initInternalMessages, 1000);
+    setTimeout(loadUnreadNewsCount, 1500);
+});
+
+// Обновлять каждые 30 секунд
+setInterval(async () => {
+    await loadUnreadCounts();
+    updateMessengerBadges();
+}, 30000);
+
+console.log('✅ Internal Messages module loaded');
