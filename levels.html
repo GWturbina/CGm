@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardGift - Уровни и возможности</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        /* Шапка */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        h1 {
+            font-size: 38px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            color: rgba(255,255,255,0.7);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        /* Бесплатный уровень */
+        .free-level {
+            background: linear-gradient(135deg, rgba(100,100,100,0.2), rgba(60,60,60,0.2));
+            border: 2px solid rgba(150,150,150,0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .free-level h2 {
+            font-size: 24px;
+            color: #aaa;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .free-level p {
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .free-features {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .free-feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .free-feature .icon {
+            font-size: 20px;
+        }
+        
+        /* Секция пакетов */
+        .packages-section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 28px;
+            color: #FFD700;
+            margin-bottom: 30px;
+        }
+        
+        /* Карточки пакетов */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .package-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255,215,0,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .package-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,215,0,0.5);
+            box-shadow: 0 15px 40px rgba(255,215,0,0.1);
+        }
+        
+        .package-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--accent-color-light));
+        }
+        
+        /* Цвета пакетов */
+        .package-1 { --accent-color: #4CAF50; --accent-color-light: #81C784; }
+        .package-2 { --accent-color: #2196F3; --accent-color-light: #64B5F6; }
+        .package-3 { --accent-color: #9C27B0; --accent-color-light: #BA68C8; }
+        .package-4 { --accent-color: #FF9800; --accent-color-light: #FFB74D; }
+        .package-5 { --accent-color: #E91E63; --accent-color-light: #F06292; }
+        .package-6 { --accent-color: #00BCD4; --accent-color-light: #4DD0E1; }
+        .package-7 { --accent-color: #FF5722; --accent-color-light: #FF8A65; }
+        .package-8 { --accent-color: #673AB7; --accent-color-light: #9575CD; }
+        .package-9 { --accent-color: #FFD700; --accent-color-light: #FFEB3B; }
+        
+        .package-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .package-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-color-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .package-title {
+            flex: 1;
+        }
+        
+        .package-title h3 {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 3px;
+        }
+        
+        .package-price {
+            font-size: 14px;
+            color: var(--accent-color-light);
+            font-weight: 600;
+        }
+        
+        .package-icon {
+            font-size: 32px;
+        }
+        
+        /* Список функций */
+        .features-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+        
+        .features-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
+        }
+        
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .features-list .check {
+            color: #4CAF50;
+            font-size: 16px;
+        }
+        
+        .features-list .new {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-color-light));
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        
+        /* Реферальные уровни */
+        .referral-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,215,0,0.15);
+            border: 1px solid rgba(255,215,0,0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #FFD700;
+            margin-top: 10px;
+        }
+        
+        .referral-badge .icon {
+            font-size: 16px;
+        }
+        
+        /* Инфо блок */
+        .info-block {
+            background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.05));
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+        }
+        
+        .info-block h3 {
+            color: #FFD700;
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .info-block p {
+            color: rgba(255,255,255,0.7);
+            font-size: 15px;
+            line-height: 1.7;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .info-block .highlight {
+            color: #FFD700;
+            font-weight: 600;
+        }
+        
+        /* Накопительная таблица */
+        .cumulative-section {
+            margin-top: 50px;
+        }
+        
+        .cumulative-table {
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,215,0,0.2);
+        }
+        
+        .cumulative-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .cumulative-table th {
+            background: rgba(255,215,0,0.1);
+            padding: 15px;
+            text-align: left;
+            font-size: 13px;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .cumulative-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .cumulative-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .cumulative-table tr:hover {
+            background: rgba(255,215,0,0.05);
+        }
+        
+        .level-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        
+        /* Подвал */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+        }
+        
+        .footer a {
+            color: #FFD700;
+            text-decoration: none;
+        }
+        
+        .footer .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .footer .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255,215,0,0.3);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid rgba(255,215,0,0.5);
+            color: #FFD700;
+        }
+        
+        .btn-outline:hover {
+            background: rgba(255,215,0,0.1);
+        }
+        
+        /* Адаптив */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 28px;
+            }
+            
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .free-features {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .cumulative-table {
+                overflow-x: auto;
+            }
+            
+            .cumulative-table table {
+                min-width: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <header class="header">
+            <div class="logo">🎁</div>
+            <h1>Уровни и возможности</h1>
+            <p class="subtitle">
+                Активируйте пакеты и получайте доступ к инструментам для работы с контактами, рассылками и построения команды
+            </p>
+        </header>
+        
+        <!-- Бесплатный уровень -->
+        <div class="free-level">
+            <h2>🆓 Бесплатный доступ</h2>
+            <p>После регистрации вы получаете бесплатный доступ к генератору открыток</p>
+            <div class="free-features">
+                <div class="free-feature">
+                    <span class="icon">🎨</span>
+                    <span>Создание открыток</span>
+                </div>
+                <div class="free-feature">
+                    <span class="icon">📤</span>
+                    <span>Отправка (без сохранения)</span>
+                </div>
+                <div class="free-feature">
+                    <span class="icon">🔗</span>
+                    <span>Уникальный ID</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Пакеты -->
+        <section class="packages-section">
+            <h2 class="section-title">💎 Пакеты активации</h2>
+            
+            <div class="packages-grid">
+                <!-- Пакет 1 -->
+                <div class="package-card package-1">
+                    <div class="package-header">
+                        <div class="package-number">1</div>
+                        <div class="package-title">
+                            <h3>Стартовый</h3>
+                            <div class="package-price">0.0015 BNB</div>
+                        </div>
+                        <div class="package-icon">📦</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> Архив открыток <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Панель инструментов</li>
+                        <li><span class="check">✓</span> Сохранение открыток</li>
+                        <li><span class="check">✓</span> История отправок</li>
+                    </ul>
+                </div>
+                
+                <!-- Пакет 2 -->
+                <div class="package-card package-2">
+                    <div class="package-header">
+                        <div class="package-number">2</div>
+                        <div class="package-title">
+                            <h3>Контакты</h3>
+                            <div class="package-price">0.003 BNB</div>
+                        </div>
+                        <div class="package-icon">📇</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> База контактов <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Аналитика <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Статистика просмотров</li>
+                        <li><span class="check">✓</span> Сегментация контактов</li>
+                    </ul>
+                </div>
+                
+                <!-- Пакет 3 -->
+                <div class="package-card package-3">
+                    <div class="package-header">
+                        <div class="package-number">3</div>
+                        <div class="package-title">
+                            <h3>Партнёр</h3>
+                            <div class="package-price">0.006 BNB</div>
+                        </div>
+                        <div class="package-icon">🤝</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> Реферальная ссылка <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Приглашение партнёров</li>
+                        <li><span class="check">✓</span> Бонусы за активации</li>
+                    </ul>
+                    <div class="referral-badge">
+                        <span class="icon">👥</span>
+                        <span>1 уровень партнёрки</span>
+                    </div>
+                </div>
+                
+                <!-- Пакет 4 -->
+                <div class="package-card package-4">
+                    <div class="package-header">
+                        <div class="package-number">4</div>
+                        <div class="package-title">
+                            <h3>Бизнес</h3>
+                            <div class="package-price">0.012 BNB</div>
+                        </div>
+                        <div class="package-icon">💼</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> CRM система <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Управление клиентами</li>
+                        <li><span class="check">✓</span> Теги и категории</li>
+                        <li><span class="check">✓</span> Заметки по контактам</li>
+                    </ul>
+                    <div class="referral-badge">
+                        <span class="icon">👥</span>
+                        <span>2-3 уровни партнёрки</span>
+                    </div>
+                </div>
+                
+                <!-- Пакет 5 -->
+                <div class="package-card package-5">
+                    <div class="package-header">
+                        <div class="package-number">5</div>
+                        <div class="package-title">
+                            <h3>Маркетолог</h3>
+                            <div class="package-price">0.024 BNB</div>
+                        </div>
+                        <div class="package-icon">📊</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> Опросы <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Блог <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Создание опросов</li>
+                        <li><span class="check">✓</span> Публикация статей</li>
+                    </ul>
+                </div>
+                
+                <!-- Пакет 6 -->
+                <div class="package-card package-6">
+                    <div class="package-header">
+                        <div class="package-number">6</div>
+                        <div class="package-title">
+                            <h3>Рассылки</h3>
+                            <div class="package-price">0.048 BNB</div>
+                        </div>
+                        <div class="package-icon">📨</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> Push-рассылки <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Email рассылки</li>
+                        <li><span class="check">✓</span> Шаблоны сообщений</li>
+                        <li><span class="check">✓</span> Автоматизация</li>
+                    </ul>
+                </div>
+                
+                <!-- Пакет 7 -->
+                <div class="package-card package-7">
+                    <div class="package-header">
+                        <div class="package-number">7</div>
+                        <div class="package-title">
+                            <h3>Студия</h3>
+                            <div class="package-price">0.096 BNB</div>
+                        </div>
+                        <div class="package-icon">🎬</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> GlobalStudio <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Видео-редактор</li>
+                        <li><span class="check">✓</span> Видео-открытки</li>
+                        <li><span class="check">✓</span> Экспорт в HD</li>
+                    </ul>
+                    <div class="referral-badge">
+                        <span class="icon">👥</span>
+                        <span>4-5 уровни партнёрки</span>
+                    </div>
+                </div>
+                
+                <!-- Пакет 8 -->
+                <div class="package-card package-8">
+                    <div class="package-header">
+                        <div class="package-number">8</div>
+                        <div class="package-title">
+                            <h3>Предприниматель</h3>
+                            <div class="package-price">0.192 BNB</div>
+                        </div>
+                        <div class="package-icon">🏢</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> Создание МЛМ <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Собственный маркетинг</li>
+                        <li><span class="check">✓</span> Партнёрские программы</li>
+                        <li><span class="check">✓</span> White-label решения</li>
+                    </ul>
+                    <div class="referral-badge">
+                        <span class="icon">👥</span>
+                        <span>6-7 уровни партнёрки</span>
+                    </div>
+                </div>
+                
+                <!-- Пакет 9 -->
+                <div class="package-card package-9">
+                    <div class="package-header">
+                        <div class="package-number">9</div>
+                        <div class="package-title">
+                            <h3>Организатор</h3>
+                            <div class="package-price">0.384 BNB</div>
+                        </div>
+                        <div class="package-icon">👑</div>
+                    </div>
+                    <ul class="features-list">
+                        <li><span class="check">✓</span> Организатор бизнеса <span class="new">NEW</span></li>
+                        <li><span class="check">✓</span> Рассмотрение проектов</li>
+                        <li><span class="check">✓</span> Инвестиционные предложения</li>
+                        <li><span class="check">✓</span> VIP статус в GlobalWay</li>
+                    </ul>
+                    <div class="referral-badge">
+                        <span class="icon">👥</span>
+                        <span>8-9 уровни партнёрки (все)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Накопительная таблица -->
+        <section class="cumulative-section">
+            <h2 class="section-title">📋 Сводная таблица доступов</h2>
+            
+            <div class="cumulative-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Пакет</th>
+                            <th>Инструменты</th>
+                            <th>Рефер. уровни</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="level-num">1</span></td>
+                            <td>Архив, Панель инструментов</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-num">2</span></td>
+                            <td>+ Контакты, Аналитика</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-num">3</span></td>
+                            <td>+ Реферальная ссылка</td>
+                            <td>1 уровень</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-num">4</span></td>
+                            <td>+ CRM система</td>
+                            <td>2-3 уровни</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-num">5</span></td>
+                            <td>+ Опросы, Блог</td>
+                            <td>3 уровня</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-num">6</span></td>
+                            <td>+ Рассылки</td>
+                            <td>3 уровня</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-num">7</span></td>
+                            <td>+ GlobalStudio</td>
+                            <td>4-5 уровней</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-num">8</span></td>
+                            <td>+ Создание МЛМ</td>
+                            <td>6-7 уровней</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-num">9</span></td>
+                            <td>+ Организатор бизнеса</td>
+                            <td>8-9 уровней (все)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Инфо блок -->
+        <div class="info-block">
+            <h3>🌉 Интеграция с GlobalWay</h3>
+            <p>
+                Все пакеты активируются через смарт-контракт <span class="highlight">GlobalWay</span> на сети <span class="highlight">opBNB</span>. 
+                Ваш ID в CardGift связывается с ID в GlobalWay, что даёт вам доступ ко всей экосистеме инструментов. 
+                Средства за активацию распределяются между партнёрами согласно маркетинг-плану.
+            </p>
+        </div>
+        
+        <!-- Подвал -->
+        <footer class="footer">
+            <p>🎁 CardGift — инструмент для сбора контактов и работы с аудиторией</p>
+            <div class="buttons">
+                <a href="dashboard.html" class="btn btn-primary">
+                    📊 Личный кабинет
+                </a>
+                <a href="generator.html" class="btn btn-outline">
+                    🎨 Создать открытку
+                </a>
+                <a href="https://globalway.club" class="btn btn-outline" target="_blank">
+                    🌐 GlobalWay
+                </a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
