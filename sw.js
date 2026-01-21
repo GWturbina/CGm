@@ -330,18 +330,39 @@ self.addEventListener('message', (event) => {
     console.log('💬 Message from page:', event.data);
     
     if (event.data.type === 'SKIP_WAITING') {
+        console.log('🚀 Skip waiting, activating new SW...');
         self.skipWaiting();
     }
     
     if (event.data.type === 'CLEAR_CACHE') {
         caches.delete(CACHE_NAME).then(() => {
-            event.ports[0].postMessage({ success: true });
+            console.log('🗑️ Cache cleared');
+            if (event.ports[0]) {
+                event.ports[0].postMessage({ success: true });
+            }
         });
     }
     
     if (event.data.type === 'GET_VERSION') {
-        event.ports[0].postMessage({ version: CACHE_VERSION });
+        if (event.ports[0]) {
+            event.ports[0].postMessage({ version: CACHE_VERSION });
+        }
     }
+});
+
+// Уведомляем страницу о готовности
+self.addEventListener('activate', (event) => {
+    // После активации отправляем сообщение всем клиентам
+    event.waitUntil(
+        clients.matchAll().then((clients) => {
+            clients.forEach((client) => {
+                client.postMessage({
+                    type: 'SW_ACTIVATED',
+                    version: CACHE_VERSION
+                });
+            });
+        })
+    );
 });
 
 console.log(`📦 CardGift Service Worker ${CACHE_VERSION} loaded`);
