@@ -1,0 +1,382 @@
+/* =====================================================
+   EXIT-INTENT POPUP / VIRAL MECHANICS CSS
+   Добавить в card-viewer.css
+   ===================================================== */
+
+/* Exit Intent Overlay */
+.exit-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.exit-popup-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* Popup Container */
+.exit-popup {
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border-radius: 24px;
+    max-width: 400px;
+    width: 90%;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.1);
+    animation: popupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+@keyframes popupSlideIn {
+    from {
+        transform: scale(0.8) translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Popup Image */
+.exit-popup-image {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+
+/* Popup Content (если нет картинки) */
+.exit-popup-content {
+    padding: 30px;
+    text-align: center;
+}
+
+.exit-popup-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.exit-popup-title {
+    color: #FFD700;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.exit-popup-text {
+    color: #CCC;
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+/* Popup Buttons */
+.exit-popup-buttons {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.exit-popup-btn {
+    padding: 16px 24px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.exit-popup-btn-primary {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+.exit-popup-btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+}
+
+.exit-popup-btn-secondary {
+    background: transparent;
+    color: #888;
+    border: 1px solid #444;
+}
+
+.exit-popup-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #CCC;
+}
+
+/* =====================================================
+   SHARE POPUP (после нажатия "Получить подарок")
+   ===================================================== */
+
+.share-popup {
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border-radius: 24px;
+    max-width: 400px;
+    width: 90%;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.share-popup-title {
+    color: #FFD700;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.share-popup-subtitle {
+    color: #CCC;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.share-counter {
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.share-counter-text {
+    color: #FFD700;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.share-counter-progress {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.share-counter-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #FFD700, #FFA500);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.share-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.share-btn-telegram {
+    background: #0088cc;
+    color: white;
+}
+
+.share-btn-whatsapp {
+    background: #25D366;
+    color: white;
+}
+
+.share-btn-viber {
+    background: #665CAC;
+    color: white;
+}
+
+.share-btn-copy {
+    background: #333;
+    color: #FFD700;
+    border: 1px solid #FFD700;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* =====================================================
+   REGISTRATION POPUP (после шеринга)
+   ===================================================== */
+
+.registration-popup {
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border-radius: 24px;
+    max-width: 400px;
+    width: 90%;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.registration-popup-title {
+    color: #4CAF50;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.registration-popup-subtitle {
+    color: #CCC;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.registration-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.registration-input {
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    background: rgba(0, 0, 0, 0.3);
+    color: #FFF;
+    font-size: 15px;
+}
+
+.registration-input:focus {
+    border-color: #FFD700;
+    outline: none;
+}
+
+.registration-select {
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    background: rgba(0, 0, 0, 0.3);
+    color: #FFF;
+    font-size: 15px;
+}
+
+.registration-btn {
+    padding: 16px;
+    border-radius: 30px;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.registration-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+}
+
+/* =====================================================
+   GOODBYE POPUP (если закрыл без регистрации)
+   ===================================================== */
+
+.goodbye-popup {
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border-radius: 24px;
+    max-width: 400px;
+    width: 90%;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.goodbye-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.goodbye-title {
+    color: #FFD700;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.goodbye-text {
+    color: #AAA;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.goodbye-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.goodbye-btn-write {
+    padding: 14px 24px;
+    border-radius: 30px;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #000;
+    font-size: 15px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+.goodbye-btn-register {
+    padding: 14px 24px;
+    border-radius: 30px;
+    background: transparent;
+    color: #4CAF50;
+    font-size: 15px;
+    font-weight: 600;
+    border: 1px solid #4CAF50;
+    cursor: pointer;
+}
+
+.goodbye-btn-exit {
+    padding: 12px;
+    background: transparent;
+    color: #666;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.goodbye-btn-exit:hover {
+    color: #999;
+}
