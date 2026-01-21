@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CardGift">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title id="pageTitle">CardGift - Цифровые открытки</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+    
+    <meta property="og:title" content="CardGift - Digital Greeting Cards">
+    <meta property="og:description" content="Create stunning digital greeting cards">
+    <meta property="og:type" content="website">
+    
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+    <!-- LANGUAGE SWITCHER -->
+    <div class="language-switcher">
+        <button class="lang-btn" onclick="switchLanguage('en')" id="langEn">EN</button>
+        <button class="lang-btn active" onclick="switchLanguage('ru')" id="langRu">RU</button>
+        <button class="lang-btn" onclick="switchLanguage('ua')" id="langUa">UA</button>
+    </div>
+
+    <!-- PARTICLES -->
+    <div class="particles" id="particles"></div>
+
+    <!-- MAIN -->
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="logo-box">
+                <span class="logo-icon">🎁</span>
+                <span class="logo-text">CardGift</span>
+            </div>
+            <p class="tagline" id="tagline">Создавайте золотые поздравительные открытки бесплатно!</p>
+        </header>
+
+        <!-- HERO -->
+        <section class="hero">
+            <h1 class="hero-title" id="heroTitle">Цифровые открытки на любой случай</h1>
+            <p class="hero-subtitle" id="heroSubtitle">Отправляйте красивые персональные открытки с блокчейн технологией</p>
+            
+            <div class="cta-buttons">
+                <a href="generator.html" class="btn btn-primary" id="createCardBtn">🎨 Создать карту</a>
+                <a href="registration.html" class="btn btn-outline" id="registerBtn">📝 Регистрация</a>
+                <a href="dashboard.html" class="btn btn-outline" id="dashboardBtn">📊 Кабинет</a>
+            </div>
+        </section>
+
+        <!-- FEATURES -->
+        <section class="features">
+            <h2 class="section-title" id="featuresTitle">Почему CardGift?</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3 class="feature-title" id="feature1Title">Создание карт</h3>
+                    <p class="feature-desc" id="feature1Desc">Создавайте красивые цифровые открытки с фото, видео и эффектами</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3 class="feature-title" id="feature2Title">Web3 технология</h3>
+                    <p class="feature-desc" id="feature2Desc">Блокчейн технология гарантирует уникальность ваших открыток</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title" id="feature3Title">Делитесь везде</h3>
+                    <p class="feature-desc" id="feature3Desc">Отправляйте через WhatsApp, Telegram, Email или соцсети</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎬</div>
+                    <h3 class="feature-title" id="feature4Title">Поддержка видео</h3>
+                    <p class="feature-desc" id="feature4Desc">Добавляйте видео с YouTube, TikTok или Instagram</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS -->
+        <section class="how-it-works">
+            <h2 class="section-title" id="howItWorksTitle">Как это работает</h2>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3 id="step1Title">Выберите шаблон</h3>
+                    <p id="step1Desc">Выберите из нашей коллекции</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3 id="step2Title">Настройте</h3>
+                    <p id="step2Desc">Добавьте сообщение, фото или видео</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3 id="step3Title">Поделитесь</h3>
+                    <p id="step3Desc">Отправьте близким мгновенно</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATS -->
+        <section class="stats">
+            <div class="stat-item">
+                <div class="stat-number">10,000+</div>
+                <div class="stat-label" id="statCardsLabel">Создано открыток</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">5,000+</div>
+                <div class="stat-label" id="statUsersLabel">Счастливых пользователей</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50+</div>
+                <div class="stat-label" id="statCountriesLabel">Стран</div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <h2 id="ctaTitle">Готовы создать первую открытку?</h2>
+            <p id="ctaDesc">Присоединяйтесь к тысячам пользователей</p>
+            <a href="generator.html" class="btn btn-primary btn-large" id="ctaBtn">🚀 Начать бесплатно</a>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo-small">🎁 CardGift</div>
+                    <p id="footerDesc">Платформа цифровых открыток Web3</p>
+                </div>
+                
+                <div class="footer-links">
+                    <a href="generator.html" id="footerCreate">Создать карту</a>
+                    <a href="registration.html" id="footerRegister">Регистрация</a>
+                    <a href="card-viewer.html" id="footerDemo">Демо карта</a>
+                </div>
+                
+                <div class="footer-social">
+                    <span id="footerFollow">Мы в соцсетях:</span>
+                    <a href="#" class="social-link">📘</a>
+                    <a href="#" class="social-link">🐦</a>
+                    <a href="#" class="social-link">📸</a>
+                    <a href="#" class="social-link">💬</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 CardGift. <span id="footerRights">Все права защищены.</span></p>
+                <p id="footerPowered">Работает на блокчейне opBNB</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/id-linking-service.js?v=3"></script>
+    <script src="/js/index.js"></script>
+
+    <!-- Service Worker -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ SW registered'))
+                .catch(err => console.log('SW error:', err));
+        });
+    }
+</script>
+</body>
+</html>
