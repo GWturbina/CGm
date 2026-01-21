@@ -468,6 +468,98 @@ function openNewsModal() {
     showNewsModal();
 }
 
+function closeModal(modalId) {
+    if (modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.setProperty('display', 'none', 'important');
+            modal.classList.remove('show', 'active', 'open');
+        }
+    } else {
+        // Fallback: удалить overlay
+        document.querySelector('.modal-overlay')?.remove();
+    }
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    }
+}
+
+// ===== CONTACT MODAL =====
+
+function showAddContactModal() {
+    if (!window.walletConnected) {
+        if (typeof showToast === 'function') {
+            showToast('Сначала подключите кошелек', 'error');
+        }
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ Добавить контакт</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group"><label>Имя:</label><input type="text" id="contactName" class="form-input" placeholder="Имя контакта"></div>
+                <div class="form-group"><label>Платформа:</label>
+                    <select id="contactPlatform" class="form-select">
+                        <option value="telegram">Telegram</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="email">Email</option>
+                        <option value="phone">Телефон</option>
+                        <option value="instagram">Instagram</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Контакт:</label><input type="text" id="contactValue" class="form-input" placeholder="@username или номер"></div>
+                <div class="form-group"><label class="checkbox-item"><input type="checkbox" id="contactPush"> Согласие на пуш</label></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-gray" onclick="closeModal()">Отмена</button>
+                <button class="btn btn-green" onclick="addContact()">Добавить</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// ===== PWA FUNCTIONS =====
+
+function initPWA() {
+    // PWA инициализация обрабатывается в pwa-updater.js
+    console.log('📱 PWA initialized');
+}
+
+function installPWA() {
+    if (window.deferredPrompt) {
+        window.deferredPrompt.prompt();
+        window.deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('✅ PWA installed');
+            }
+            window.deferredPrompt = null;
+        });
+    } else {
+        if (typeof showToast === 'function') {
+            showToast('Приложение уже установлено или недоступно', 'info');
+        }
+    }
+}
+
+// Сохраняем событие для установки PWA
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    window.deferredPrompt = e;
+    console.log('📱 PWA install prompt ready');
+});
+
 // ===== WALLET DROPDOWN =====
 
 function toggleWalletDropdown() {
@@ -509,6 +601,15 @@ window.updateDebugInfo = updateDebugInfo;
 window.showNewsModal = showNewsModal;
 window.closeNewsModal = closeNewsModal;
 window.openNewsModal = openNewsModal;
+window.closeModal = closeModal;
+window.openModal = openModal;
+
+// Contact Modal
+window.showAddContactModal = showAddContactModal;
+
+// PWA
+window.initPWA = initPWA;
+window.installPWA = installPWA;
 
 // Wallet dropdown
 window.toggleWalletDropdown = toggleWalletDropdown;
