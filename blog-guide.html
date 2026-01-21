@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📖 Руководство по блогу | CardGift</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+    <style>
+        :root {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #12121e;
+            --bg-card: #1a1a2e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6a6a7a;
+            --border: #2a2a3e;
+            --accent: #f59e0b;
+            --cardgift-gold: #FFD700;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+        
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--cardgift-gold);
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .back-btn {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            border-color: var(--accent);
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .hero-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .hero h1 {
+            font-size: 36px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .toc {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px 30px;
+            margin-bottom: 40px;
+        }
+        
+        .toc h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+        
+        .toc-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .toc-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+        
+        .toc-list a:hover {
+            color: var(--cardgift-gold);
+        }
+        
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-primary);
+        }
+        
+        .section h2 .icon {
+            font-size: 28px;
+        }
+        
+        .section h3 {
+            font-size: 18px;
+            margin: 25px 0 12px;
+            color: var(--accent);
+        }
+        
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        
+        .section ul, .section ol {
+            color: var(--text-secondary);
+            padding-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .section li {
+            margin-bottom: 8px;
+        }
+        
+        .section li strong {
+            color: var(--text-primary);
+        }
+        
+        .step-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .step-box .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: #000;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .step-box .step-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .step-box p {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+        
+        .tip-box {
+            background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.05));
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 15px 0;
+        }
+        
+        .tip-box .tip-title {
+            color: var(--cardgift-gold);
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tip-box p {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+        
+        .warning-box {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 15px 0;
+        }
+        
+        .warning-box .warning-title {
+            color: var(--error);
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .warning-box p {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .feature-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .feature-item .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .feature-item .name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .feature-item .desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        .screenshot {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .screenshot .placeholder {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .code-box {
+            background: #0d0d1a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            color: var(--success);
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            color: #000;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255,215,0,0.3);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .footer a {
+            color: var(--cardgift-gold);
+            text-decoration: none;
+        }
+        
+        @media (max-width: 600px) {
+            .hero h1 {
+                font-size: 28px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .section h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/dashboard.html" class="logo">
+                <div class="logo-icon">🎁</div>
+                <span>CardGift</span>
+            </a>
+            <a href="/blog-editor.html" class="back-btn">← Вернуться в редактор</a>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-icon">📖</div>
+            <h1>Руководство по блогу CardGift</h1>
+            <p>Полная инструкция по созданию и ведению вашего блога. От настройки до публикации постов.</p>
+        </div>
+        
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h2>📑 Содержание</h2>
+            <div class="toc-list">
+                <a href="#start">🚀 Быстрый старт</a>
+                <a href="#settings">⚙️ Настройка блога</a>
+                <a href="#posts">📝 Типы постов</a>
+                <a href="#editor">✏️ Работа с редактором</a>
+                <a href="#integrations">🔗 Интеграции</a>
+                <a href="#sharing">📤 Публикация и шаринг</a>
+                <a href="#tips">💡 Советы</a>
+                <a href="#faq">❓ FAQ</a>
+            </div>
+        </div>
+        
+        <!-- Quick Start -->
+        <section class="section" id="start">
+            <h2><span class="icon">🚀</span> Быстрый старт</h2>
+            <p>Начните вести блог за 5 минут! Следуйте этим простым шагам:</p>
+            
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">1</span> Откройте настройки блога</div>
+                <p>В личном кабинете CardGift нажмите "Мой блог" в меню слева. При первом входе откроются настройки.</p>
+            </div>
+            
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">2</span> Заполните профиль</div>
+                <p>Придумайте уникальный username (это будет ваш адрес: cg-beryl.vercel.app/b/<b>username</b>), название блога и описание.</p>
+            </div>
+            
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">3</span> Выберите оформление</div>
+                <p>Загрузите аватар, выберите цвет темы. При желании загрузите картинку для превью (показывается при шаринге).</p>
+            </div>
+            
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">4</span> Сохраните и перейдите в редактор</div>
+                <p>Нажмите "Сохранить настройки", затем "Открыть редактор". Теперь можно писать посты!</p>
+            </div>
+            
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">5</span> Напишите первый пост</div>
+                <p>Выберите тип поста, напишите текст, нажмите "Опубликовать". Готово — ваш блог работает!</p>
+            </div>
+            
+            <div class="tip-box">
+                <div class="tip-title">💡 Совет</div>
+                <p>Ваш блог автоматически становится вашей реферальной страницей. Все посетители видят кнопку "Присоединиться к CardGift" с вашей ссылкой!</p>
+            </div>
+        </section>
+        
+        <!-- Settings -->
+        <section class="section" id="settings">
+            <h2><span class="icon">⚙️</span> Настройка блога</h2>
+            
+            <h3>Username (адрес блога)</h3>
+            <p>Это уникальный идентификатор вашего блога. Правила:</p>
+            <ul>
+                <li>Только латинские буквы (a-z), цифры и знак подчёркивания (_)</li>
+                <li>Длина: от 3 до 20 символов</li>
+                <li>Должен быть уникальным — два человека не могут иметь одинаковый username</li>
+            </ul>
+            <p>После сохранения ваш блог будет доступен по адресу:</p>
+            <div class="code-box">cg-beryl.vercel.app/b/ваш_username</div>
+            
+            <h3>Название блога</h3>
+            <p>Отображается в шапке блога и в превью при шаринге. Можно использовать любые символы, эмодзи. Максимум 100 символов.</p>
+            
+            <h3>Описание</h3>
+            <p>Расскажите о чём ваш блог. Описание показывается под названием и в превью при шаринге в мессенджерах. Максимум 1000 символов.</p>
+            
+            <h3>Аватар (логотип)</h3>
+            <p>Круглое изображение профиля. Рекомендуемый размер: 200×200 пикселей. Максимум 2 МБ.</p>
+            
+            <h3>Цвет темы</h3>
+            <p>Выберите основной цвет оформления блога. Он используется для кнопок, акцентов и превью.</p>
+            
+            <h3>Картинка для превью</h3>
+            <p>Показывается когда вы делитесь ссылкой на блог в мессенджерах (Telegram, WhatsApp, и др.). Рекомендуемый размер: 1200×630 пикселей. Если не загружена — генерируется автоматически.</p>
+        </section>
+        
+        <!-- Post Types -->
+        <section class="section" id="posts">
+            <h2><span class="icon">📝</span> Типы постов</h2>
+            <p>Блог поддерживает 6 типов контента:</p>
+            
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="icon">📝</div>
+                    <div class="name">Текст</div>
+                    <div class="desc">Обычный пост с форматированием</div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📷</div>
+                    <div class="name">Фото</div>
+                    <div class="desc">Пост с одним изображением</div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🎬</div>
+                    <div class="name">Видео</div>
+                    <div class="desc">Вставка видео с YouTube</div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📊</div>
+                    <div class="name">Опрос</div>
+                    <div class="desc">Голосование с вариантами</div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🎁</div>
+                    <div class="name">Открытка</div>
+                    <div class="desc">Вставка открытки CardGift</div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🎨</div>
+                    <div class="name">Галерея</div>
+                    <div class="desc">Несколько изображений</div>
+                </div>
+            </div>
+            
+            <h3>📝 Текстовый пост</h3>
+            <p>Классический формат блога. Поддерживает форматирование:</p>
+            <ul>
+                <li><strong>Жирный текст</strong> — выделите и нажмите B</li>
+                <li><em>Курсив</em> — выделите и нажмите I</li>
+                <li><u>Подчёркнутый</u> — выделите и нажмите U</li>
+                <li>Заголовки H1, H2, H3</li>
+                <li>Маркированные и нумерованные списки</li>
+                <li>Ссылки</li>
+                <li>Эмодзи 😀</li>
+            </ul>
+            
+            <h3>📷 Фото-пост</h3>
+            <p>Пост с изображением и подписью. Загрузите фото (до 5 МБ), добавьте описание.</p>
+            
+            <h3>🎬 Видео-пост</h3>
+            <p>Вставьте ссылку на YouTube видео. Редактор автоматически создаст превью и плеер.</p>
+            <div class="code-box">https://www.youtube.com/watch?v=XXXXXX</div>
+            
+            <h3>📊 Опрос</h3>
+            <p>Создайте голосование с 2-6 вариантами ответов. Читатели смогут голосовать прямо в блоге.</p>
+            
+            <h3>🎁 Открытка CardGift</h3>
+            <p>Вставьте открытку из вашего архива. Нажмите "Мои открытки" в боковой панели и выберите нужную.</p>
+            
+            <h3>🎨 Галерея</h3>
+            <p>Несколько изображений в одном посте. Загрузите до 10 фото, они будут показаны в виде карусели.</p>
+        </section>
+        
+        <!-- Editor -->
+        <section class="section" id="editor">
+            <h2><span class="icon">✏️</span> Работа с редактором</h2>
+            
+            <h3>Интерфейс редактора</h3>
+            <p>Редактор состоит из трёх частей:</p>
+            <ul>
+                <li><strong>Боковая панель (слева)</strong> — выбор типа поста и интеграции CardGift</li>
+                <li><strong>Область редактирования (центр)</strong> — заголовок, текст, медиа</li>
+                <li><strong>Кнопки действий (справа вверху)</strong> — настройки, превью, публикация</li>
+            </ul>
+            
+            <h3>Создание поста</h3>
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">1</span> Выберите тип поста</div>
+                <p>В боковой панели нажмите на нужный тип: Текст, Фото, Видео и т.д.</p>
+            </div>
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">2</span> Заполните заголовок</div>
+                <p>Введите привлекательный заголовок. Он будет показан в ленте блога.</p>
+            </div>
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">3</span> Напишите текст</div>
+                <p>Используйте панель форматирования для оформления текста.</p>
+            </div>
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">4</span> Добавьте медиа</div>
+                <p>Загрузите изображение, вставьте видео или выберите открытку.</p>
+            </div>
+            <div class="step-box">
+                <div class="step-title"><span class="step-num">5</span> Опубликуйте</div>
+                <p>Нажмите "Опубликовать" для публикации или "Черновик" чтобы сохранить и опубликовать позже.</p>
+            </div>
+            
+            <h3>Черновики</h3>
+            <p>Нажмите "Сохранить черновик" чтобы сохранить пост без публикации. Черновики видны только вам в разделе "Мои посты".</p>
+            
+            <h3>Редактирование постов</h3>
+            <p>Нажмите "Мои посты" в боковой панели, найдите нужный пост и кликните на него для редактирования.</p>
+        </section>
+        
+        <!-- Integrations -->
+        <section class="section" id="integrations">
+            <h2><span class="icon">🔗</span> Интеграции CardGift</h2>
+            <p>Блог интегрирован с другими функциями CardGift:</p>
+            
+            <h3>🤖 AI Studio</h3>
+            <p>Генерируйте тексты с помощью искусственного интеллекта. Опишите тему — AI напишет пост за вас. Вы можете отредактировать результат.</p>
+            
+            <h3>📁 Мои открытки</h3>
+            <p>Вставляйте в посты открытки из вашего архива CardGift. Открытка будет отображаться с превью и ссылкой.</p>
+            
+            <h3>📋 Мои опросы</h3>
+            <p>Вставляйте ранее созданные опросы в посты блога.</p>
+            
+            <h3>🌐 Реферальная ссылка</h3>
+            <p>Ваша короткая реферальная ссылка для привлечения новых участников:</p>
+            <div class="code-box">cg-beryl.vercel.app/r/ваш_id</div>
+            <p>Все посетители блога также видят баннер "Присоединяйтесь к CardGift" с вашей реферальной ссылкой!</p>
+            
+            <div class="tip-box">
+                <div class="tip-title">💰 Монетизация</div>
+                <p>Каждый человек, зарегистрировавшийся по вашей реферальной ссылке, становится вашим рефералом. Вы получаете бонусы от их активности в экосистеме GlobalWay!</p>
+            </div>
+        </section>
+        
+        <!-- Sharing -->
+        <section class="section" id="sharing">
+            <h2><span class="icon">📤</span> Публикация и шаринг</h2>
+            
+            <h3>Как поделиться блогом</h3>
+            <p>Ваш блог доступен по короткой ссылке:</p>
+            <div class="code-box">cg-beryl.vercel.app/b/ваш_username</div>
+            
+            <p>Способы поделиться:</p>
+            <ul>
+                <li><strong>Кнопка "Поделиться"</strong> в шапке блога — открывает меню шаринга или копирует ссылку</li>
+                <li><strong>Скопировать ссылку</strong> из настроек блога</li>
+                <li><strong>QR-код</strong> — можно сгенерировать для печатных материалов</li>
+            </ul>
+            
+            <h3>Превью при шаринге</h3>
+            <p>Когда вы отправляете ссылку в мессенджер, получатель видит красивое превью:</p>
+            <ul>
+                <li>Картинка (ваша или автоматически сгенерированная)</li>
+                <li>Название блога</li>
+                <li>Описание</li>
+            </ul>
+            
+            <div class="tip-box">
+                <div class="tip-title">📱 Совет для Telegram</div>
+                <p>Telegram кэширует превью. Если вы изменили картинку, отправьте ссылку боту @webpagebot чтобы обновить кэш.</p>
+            </div>
+            
+            <h3>Где продвигать блог</h3>
+            <ul>
+                <li>Социальные сети (Instagram, Facebook, VK)</li>
+                <li>Мессенджеры (Telegram каналы/группы, WhatsApp)</li>
+                <li>Подпись в email</li>
+                <li>Визитки и печатные материалы (с QR-кодом)</li>
+                <li>Форумы и сообщества по вашей теме</li>
+            </ul>
+        </section>
+        
+        <!-- Tips -->
+        <section class="section" id="tips">
+            <h2><span class="icon">💡</span> Советы для успеха</h2>
+            
+            <div class="tip-box">
+                <div class="tip-title">📅 Регулярность</div>
+                <p>Публикуйте посты регулярно — хотя бы 2-3 раза в неделю. Это увеличивает охват и вовлечённость.</p>
+            </div>
+            
+            <div class="tip-box">
+                <div class="tip-title">📷 Визуальный контент</div>
+                <p>Посты с изображениями получают больше внимания. Добавляйте фото, открытки, галереи.</p>
+            </div>
+            
+            <div class="tip-box">
+                <div class="tip-title">🎯 Целевая аудитория</div>
+                <p>Определите для кого пишете. Пишите на темы интересные вашей аудитории.</p>
+            </div>
+            
+            <div class="tip-box">
+                <div class="tip-title">📊 Опросы</div>
+                <p>Используйте опросы для вовлечения читателей. Люди любят голосовать!</p>
+            </div>
+            
+            <div class="tip-box">
+                <div class="tip-title">🎁 Открытки</div>
+                <p>Вставляйте открытки CardGift — это уникальный контент который привлекает внимание.</p>
+            </div>
+            
+            <div class="tip-box">
+                <div class="tip-title">🔗 Призыв к действию</div>
+                <p>В конце постов добавляйте призыв: подписаться, поделиться, зарегистрироваться.</p>
+            </div>
+        </section>
+        
+        <!-- FAQ -->
+        <section class="section" id="faq">
+            <h2><span class="icon">❓</span> Часто задаваемые вопросы</h2>
+            
+            <h3>Могу ли я изменить username?</h3>
+            <p>Да, но старая ссылка перестанет работать. Рекомендуем выбрать username сразу и не менять его.</p>
+            
+            <h3>Сколько постов можно создать?</h3>
+            <p>Ограничений нет — публикуйте сколько хотите!</p>
+            
+            <h3>Можно ли удалить пост?</h3>
+            <p>Да. Откройте "Мои посты", найдите нужный и удалите.</p>
+            
+            <h3>Видны ли черновики читателям?</h3>
+            <p>Нет, черновики видите только вы.</p>
+            
+            <h3>Как узнать сколько людей читают мой блог?</h3>
+            <p>В настройках блога есть статистика: просмотры, лайки, подписчики.</p>
+            
+            <h3>Блог работает на телефоне?</h3>
+            <p>Да, блог полностью адаптивен и работает на любых устройствах.</p>
+            
+            <h3>Можно ли монетизировать блог?</h3>
+            <p>Да! Все посетители блога видят вашу реферальную ссылку. Когда они регистрируются в CardGift и GlobalWay, вы получаете бонусы.</p>
+        </section>
+        
+        <!-- CTA -->
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="/blog-editor.html" class="btn-cta">
+                ✏️ Начать писать
+            </a>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>© CardGift 2024-2025 | <a href="/blog-settings.html">Настройки блога</a> | <a href="/dashboard.html">Личный кабинет</a></p>
+    </footer>
+</body>
+</html>
