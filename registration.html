@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CardGift">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">🎁 CardGift - Get Card Generator</title>
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Get free golden greeting card generator with referral system">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/registration.css">
+    
+    <!-- WEB3 библиотеки -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+<body class="registration-page">
+    <!-- ЯЗЫКОВОЙ ПЕРЕКЛЮЧАТЕЛЬ -->
+    <div class="language-switcher">
+        <button class="lang-btn active" onclick="switchLanguage('en')" id="langEn">EN</button>
+        <button class="lang-btn" onclick="switchLanguage('ru')" id="langRu">RU</button>
+        <button class="lang-btn" onclick="switchLanguage('ua')" id="langUa">UA</button>
+    </div>
+
+    <div class="registration-container">
+        <div class="registration-box">
+            <!-- Информация о реферере -->
+            <div id="referralInfo" class="referral-info">
+                <div class="icon">🎁</div>
+                <div style="color: #FFD700; font-weight: bold; margin-bottom: 5px;" id="referralText">
+                    You were invited by user <span id="referrerDisplay">ID</span>
+                </div>
+                <div style="color: #CCC; font-size: 14px;" id="referralSubtext">
+                    Get free greeting card generator!
+                </div>
+            </div>
+
+            <h2 id="mainTitle">🎁 Get Generator as Gift</h2>
+            
+            <!-- Сообщение об ошибке -->
+            <div id="errorMessage" class="error-message"></div>
+            
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label id="nameLabel">👤 Your Name:</label>
+                    <input type="text" id="userName" placeholder="" required maxlength="50">
+                    <small class="hint" id="nameHint">Enter your name or nickname</small>
+                </div>
+
+                <div class="form-group">
+                    <label id="messengerLabel">📱 Where to find you:</label>
+                    <select id="messengerSelect" required>
+                        <option value="" id="messengerPlaceholder">Choose messenger</option>
+                        <option value="telegram">📱 Telegram</option>
+                        <option value="whatsapp">💬 WhatsApp</option>
+                        <option value="email">📧 Email</option>
+                        <option value="instagram">📷 Instagram</option>
+                        <option value="viber">💜 Viber</option>
+                        <option value="facebook">👤 Facebook</option>
+                        <option value="tiktok">🎵 TikTok</option>
+                        <option value="twitter">🐦 Twitter/X</option>
+                    </select>
+                    <small class="hint" id="messengerHint">Choose convenient way to contact</small>
+                </div>
+
+                <div class="form-group" id="contactInputGroup" style="display: none;">
+                    <label id="contactLabel">📞 Your Contact:</label>
+                    <input type="text" id="contactInput" placeholder="" required maxlength="100">
+                    <small id="contactHint" class="hint"></small>
+                </div>
+
+                <!-- Согласие на push-уведомления -->
+                <div class="consent-checkbox">
+                    <input type="checkbox" id="pushConsent" required>
+                    <div class="consent-text">
+                        <span id="consentText">I consent to receive <strong>push notifications</strong> and informational messages in the selected messenger. This will help stay updated on new features and CardGift opportunities.</span>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="submit-btn" disabled>
+                    🎁 <span id="submitBtnText">GET GENERATOR AS GIFT!</span>
+                </button>
+
+                <!-- НЕПРИМЕТНАЯ КНОПКА ПОДКЛЮЧЕНИЯ КОШЕЛЬКА -->
+                <div class="wallet-connect-small">
+                    <button type="button" id="walletBtnSmall" class="wallet-btn-small" onclick="connectWallet()">
+                        <span id="walletBtnText">🔗 Connect Wallet</span>
+                    </button>
+                    <div id="walletStatusSmall" class="wallet-status-small">
+                        <span id="walletConnectedText">✅ Wallet Connected</span>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Сообщение об успехе -->
+            <div id="successMessage" class="success-message">
+                <div class="icon">✅</div>
+                <h3 id="successTitle">Congratulations!</h3>
+                <p id="successDesc">Greeting card generator is ready to use</p>
+                <p id="successId">Your unique ID: <strong id="newUserId"></strong></p>
+                <p id="walletInfo" style="display: none;">Wallet: <strong id="userWallet"></strong></p>
+                <p id="countdownText">Redirecting in <span class="countdown" id="countdown">5</span> seconds...</p>
+            </div>
+
+            <!-- WEB3 ПРЕДЛОЖЕНИЕ ЗАРАБОТКА -->
+            <div id="web3Offer" class="web3-offer">
+                <div class="offer-icon">💰</div>
+                <h3 id="web3OfferTitle">Want to Earn Money?</h3>
+                <p id="web3OfferDesc">Invite friends and earn cryptocurrency rewards for each activation!</p>
+                
+                <div class="benefits">
+                    <h4 id="web3BenefitsTitle">💎 Benefits of Web3 Activation:</h4>
+                    <ul>
+                        <li id="web3Benefit1">Earn 0.015 opBNB for each friend who activates</li>
+                        <li id="web3Benefit2">Get access to 5-level referral system</li>
+                        <li id="web3Benefit3">Unlimited card storage in blockchain</li>
+                        <li id="web3Benefit4">Advanced analytics and team management</li>
+                        <li id="web3Benefit5">Push notifications to your referrals</li>
+                    </ul>
+                </div>
+
+                <div class="web3-offer-buttons">
+                    <button onclick="goToWeb3Dashboard()" class="web3-offer-btn" id="startEarningBtn">
+                        🚀 START EARNING NOW
+                    </button>
+                    <button onclick="skipWeb3Offer()" class="web3-offer-btn secondary" id="maybeLaterBtn">
+                        Maybe Later
+                    </button>
+                </div>
+
+                <div class="requirement">
+                    <span id="requirementText">💡 Requires SafePal or MetaMask wallet connection</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="/js/config.js?v=5"></script>
+    <script src="/js/supabase.js?v=5"></script>
+    <script src="/js/globalway-bridge.js?v=5"></script>
+    <script src="/js/id-linking-service.js?v=6"></script>
+    <script src="/js/common.js?v=5"></script>
+    <script src="/js/registration.js?v=7"></script>
+    <!-- Service Worker -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ SW registered'))
+                .catch(err => console.log('SW error:', err));
+        });
+    }
+    </script>
+</body>
+</html>
