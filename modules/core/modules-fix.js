@@ -184,18 +184,45 @@ function addSafePalButton() {
 }
 
 function updateWalletUI() {
+    const walletBox = document.getElementById('walletBox');
+    const walletStatus = document.getElementById('walletStatus');
+    const walletStatusText = document.getElementById('walletStatusText');
     const walletBtn = document.getElementById('walletButton');
+    const walletThumb = document.getElementById('walletThumb');
     
     if (window.walletConnected && window.walletAddress) {
+        // Подключен
+        const shortAddr = window.walletAddress.slice(0, 6) + '...' + window.walletAddress.slice(-4);
+        
+        if (walletBox) walletBox.classList.add('connected');
+        if (walletStatus) walletStatus.textContent = shortAddr;
+        if (walletStatusText) walletStatusText.textContent = shortAddr;
+        if (walletThumb) walletThumb.style.transform = 'translateX(24px)';
+        
         if (walletBtn) {
-            walletBtn.innerHTML = `<span class="wallet-icon">💳</span><span class="wallet-text">${window.walletAddress.slice(0, 6)}...${window.walletAddress.slice(-4)}</span>`;
+            walletBtn.innerHTML = `<span class="wallet-icon">💳</span><span class="wallet-text">${shortAddr}</span>`;
             walletBtn.classList.add('connected');
         }
+        
+        // Загружаем данные
+        if (typeof loadContacts === 'function') loadContacts();
+        if (typeof updateReferralLink === 'function') updateReferralLink();
+        if (typeof updateUserIds === 'function') updateUserIds();
+        
+        console.log('✅ Wallet UI updated: CONNECTED', shortAddr);
     } else {
+        // Не подключен
+        if (walletBox) walletBox.classList.remove('connected');
+        if (walletStatus) walletStatus.textContent = 'NOT_CONNECTED';
+        if (walletStatusText) walletStatusText.textContent = 'Not Connected';
+        if (walletThumb) walletThumb.style.transform = 'translateX(0)';
+        
         if (walletBtn) {
             walletBtn.innerHTML = `<span class="wallet-icon">💳</span><span class="wallet-text">Подключить</span>`;
             walletBtn.classList.remove('connected');
         }
+        
+        console.log('⚠️ Wallet UI updated: NOT CONNECTED');
     }
 }
 
@@ -604,16 +631,21 @@ async function addContact() {
 async function connectWallet() {
     const provider = getWeb3Provider();
     
+    // Если нет провайдера - открываем секцию кошелька с кнопками
     if (!provider) {
-        // На мобильном - открываем в SafePal
-        if (isMobile()) {
-            openInSafePal();
-            return null;
-        }
-        if (typeof showToast === 'function') {
-            showToast('Кошелёк не найден! Установите SafePal или MetaMask', 'error');
+        console.log('No provider, opening wallet section...');
+        if (typeof showSection === 'function') {
+            showSection('wallet');
         }
         return null;
+    }
+    
+    // Если на десктопе без подключенного кошелька - тоже открываем секцию
+    if (!window.walletConnected) {
+        console.log('Wallet not connected, showing wallet section...');
+        if (typeof showSection === 'function') {
+            showSection('wallet');
+        }
     }
     
     try {
@@ -683,12 +715,18 @@ async function connectWallet() {
         if (typeof loadContacts === 'function') loadContacts();
         if (typeof loadCards === 'function') loadCards();
         
+        // Показываем toast
+        if (typeof showToast === 'function') {
+            showToast('Кошелёк подключен!', 'success');
+        }
+        
         return address;
         
     } catch (error) {
         console.error('Wallet connection error:', error);
-        if (typeof showToast === 'function') {
-            showToast('Ошибка подключения кошелька', 'error');
+        // Открываем секцию чтобы пользователь мог выбрать кошелёк
+        if (typeof showSection === 'function') {
+            showSection('wallet');
         }
         return null;
     }
@@ -871,5 +909,128 @@ window.toggleWalletConnection = toggleWalletConnection;
 window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
+
+// ===== ACCESS LOCKS & LEVELS =====
+
+function updateAccessLocks() {
+    const level = window.currentUserLevel || 0;
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+        const requiredLevel = parseInt(item.dataset.level) || 0;
+        const lock = item.querySelector('.nav-lock');
+        
+        if (lock) {
+            lock.style.display = level >= requiredLevel ? 'none' : 'inline';
+        }
+        
+        item.classList.toggle('locked', level < requiredLevel);
+    });
+    
+    updateSectionRestrictions();
+    console.log('🔓 Access locks updated for level:', level);
+}
+
+function updateSectionRestrictions() {
+    const level = window.currentUserLevel || 0;
+    
+    // Referrals - Level 3
+    const referralRestricted = document.getElementById('referralRestricted');
+    if (referralRestricted) {
+        referralRestricted.style.display = level >= 3 ? 'none' : 'block';
+    }
+    
+    // Restricted blocks
+    document.querySelectorAll('.restricted-block').forEach(block => {
+        const requiredLevel = parseInt(block.dataset.level) || 0;
+        block.style.display = level >= requiredLevel ? 'none' : 'block';
+    });
+}
+
+function updateLevelButtons() {
+    const level = window.currentUserLevel || 0;
+    const levelCards = document.querySelectorAll('.level-card');
+    
+    levelCards.forEach(card => {
+        const cardLevel = parseInt(card.dataset.level) || 0;
+        const btn = card.querySelector('.btn-level');
+        
+        if (!btn) return;
+        
+        if (cardLevel <= level) {
+            card.classList.add('active');
+            card.classList.remove('current');
+            btn.className = 'btn btn-level btn-completed';
+            btn.textContent = '✅ Активирован';
+            btn.disabled = true;
+        } else if (cardLevel === level + 1) {
+            card.classList.remove('active');
+            card.classList.add('current');
+            btn.className = 'btn btn-level btn-activate';
+            btn.textContent = 'Активировать';
+            btn.disabled = false;
+        } else {
+            card.classList.remove('active', 'current');
+            btn.className = 'btn btn-level btn-locked';
+            btn.textContent = '🔒 Уровень ' + cardLevel;
+            btn.disabled = true;
+        }
+    });
+    
+    console.log('🎯 Level buttons updated for level:', level);
+}
+
+// Access & Levels exports
+window.updateAccessLocks = updateAccessLocks;
+window.updateSectionRestrictions = updateSectionRestrictions;
+window.updateLevelButtons = updateLevelButtons;
+
+// ===== SHOW SECTION =====
+
+function showSection(sectionId) {
+    // Переход на отдельные страницы
+    if (sectionId === 'studio') {
+        window.location.href = 'studio.html';
+        return;
+    }
+    if (sectionId === 'ai-studio') {
+        window.location.href = 'ai-studio.html';
+        return;
+    }
+    
+    // Скрываем все секции
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    
+    // Показываем нужную
+    const section = document.getElementById('section-' + sectionId);
+    if (section) {
+        section.classList.add('active');
+        window.location.hash = sectionId;
+        console.log('📂 Showing section:', sectionId);
+    }
+    
+    // Обновляем навигацию
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.section === sectionId);
+    });
+}
+
+// ===== TOAST NOTIFICATIONS =====
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) {
+        console.log('Toast:', type, message);
+        return;
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+window.showSection = showSection;
+window.showToast = showToast;
 
 console.log('✅ Modules Fix loaded - all missing functions defined');
