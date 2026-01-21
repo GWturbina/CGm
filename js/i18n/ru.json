@@ -1,0 +1,285 @@
+{
+  "meta": {
+    "lang": "ru",
+    "name": "Русский",
+    "version": "1.0"
+  },
+  
+  "sidebar": {
+    "panel": "Панель",
+    "archive": "Архив",
+    "contacts": "Контакты",
+    "analytics": "Аналитика",
+    "referrals": "Рефералы",
+    "crm": "CRM",
+    "surveys": "Опросы",
+    "blog": "Мой блог",
+    "mailings": "Рассылки",
+    "studio": "GlobalStudio",
+    "aiStudio": "AI Studio",
+    "mlm": "МЛМ Проекты",
+    "organizer": "Организатор",
+    "coauthors": "Соавторы",
+    "wallet": "Кошелек",
+    "settings": "Настройки",
+    "admin": "Админка"
+  },
+  
+  "panel": {
+    "title": "Обзор панели",
+    "tariffsBtn": "Тарифы и возможности",
+    "createCardBtn": "Создать открытку",
+    "cardgiftId": "CardGift ID:",
+    "globalwayId": "GlobalWay ID:",
+    "level": "Уровень:",
+    "walletLabel": "Кошелёк:",
+    "notConnected": "Не подключен",
+    "loading": "Загрузка...",
+    "teamTotal": "Всего в команде",
+    "activeUsers": "Активных пользователей",
+    "income": "Доходы (opBNB)",
+    "conversion": "Конверсия",
+    "upgradeTitle": "Повысьте уровень — откройте новые возможности!",
+    "currentLevel": "Ваш текущий уровень:",
+    "status": "Статус:",
+    "maxLevel": "Максимальный уровень достигнут!",
+    "allLevelsBtn": "Все уровни и возможности",
+    "activateLevelBtn": "Активировать уровень",
+    "quickActions": "Быстрые действия",
+    "createCard": "Создать открытку",
+    "manageContacts": "Управление контактами",
+    "viewTeam": "Просмотр команды",
+    "copyRefLink": "Копировать реф. ссылку",
+    "lastActivity": "Последняя активность",
+    "noActivity": "Нет последней активности"
+  },
+  
+  "contacts": {
+    "title": "Управление контактами",
+    "addContact": "Добавить контакт",
+    "importExport": "Импорт/Экспорт",
+    "searchTitle": "Поиск контактов",
+    "searchPlaceholder": "Поиск по имени или контакту...",
+    "searchBtn": "Поиск",
+    "clearBtn": "Очистить",
+    "allCategories": "Все категории",
+    "database": "База контактов",
+    "total": "Всего:",
+    "contactsWord": "контактов",
+    "connectWallet": "Подключите кошелек для управления контактами",
+    "noContacts": "У вас пока нет контактов",
+    "tableHeaders": {
+      "name": "Имя",
+      "platform": "Платформа",
+      "contact": "Контакт",
+      "pushConsent": "Согласие на пуш",
+      "source": "Источник",
+      "userLevel": "Уровень пользователя",
+      "dateAdded": "Дата добавления",
+      "actions": "Действия"
+    }
+  },
+  
+  "platforms": {
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "phone": "Телефон",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "tiktok": "TikTok",
+    "twitter": "Twitter/X",
+    "viber": "Viber",
+    "all": "Все"
+  },
+  
+  "archive": {
+    "title": "Архив открыток",
+    "createNew": "Создать новую",
+    "export": "Экспорт",
+    "tabs": {
+      "my": "Мои открытки",
+      "corporate": "Корпоративные",
+      "leader": "От лидера",
+      "myTemplates": "Мои шаблоны",
+      "moderation": "На модерации"
+    },
+    "searchPlaceholder": "Поиск открыток...",
+    "selectAll": "Выбрать все",
+    "deleteSelected": "Удалить выбранные",
+    "clearAll": "Очистить всё",
+    "makeTemplate": "Сделать шаблоном",
+    "empty": {
+      "title": "Открыток пока нет",
+      "text": "Создайте свою первую открытку!",
+      "corporateTitle": "Корпоративных шаблонов пока нет",
+      "corporateText": "Скоро здесь появятся готовые открытки!",
+      "leaderTitle": "Шаблонов от лидера пока нет",
+      "leaderText": "Ваш лидер ещё не создал шаблоны для команды",
+      "myTemplatesTitle": "У вас пока нет шаблонов",
+      "myTemplatesText": "Создайте шаблоны для вашей команды!",
+      "moderationTitle": "Нет шаблонов на модерации",
+      "moderationText": "Все шаблоны проверены!"
+    },
+    "createTemplate": "Создать шаблон",
+    "templateHint": "Шаблоны будут видны вашей команде",
+    "moderationInfo": "Шаблоны от СуперАдминов, ожидающие одобрения"
+  },
+  
+  "referrals": {
+    "title": "Реферальная сеть",
+    "copyLink": "Копировать ссылку",
+    "refresh": "Обновить",
+    "stats": {
+      "total": "Всего рефералов",
+      "viral": "Вирусный маркетинг",
+      "active": "Активные (в GW)",
+      "month": "За этот месяц"
+    },
+    "yourLink": "Ваша реферальная ссылка",
+    "copy": "Копировать",
+    "share": "Поделиться",
+    "shortLink": "Короткая ссылка:",
+    "restricted": {
+      "title": "Доступ ограничен",
+      "text": "Реферальная система доступна с уровня Партнёр (пакет 3)",
+      "upgradeBtn": "Повысить уровень"
+    },
+    "myReferrals": "Мои рефералы",
+    "filters": {
+      "allSources": "Все источники",
+      "viral": "Вирусный маркетинг",
+      "registration": "Регистрация",
+      "fromCard": "Из открытки",
+      "allLines": "Все линии"
+    },
+    "empty": {
+      "title": "Пока нет рефералов",
+      "text": "Поделитесь ссылкой или создайте открытку с вирусным маркетингом"
+    },
+    "structure": "Структура команды",
+    "legend": {
+      "active": "Активный уровень",
+      "withRefs": "С рефералами",
+      "empty": "Пустой уровень"
+    }
+  },
+  
+  "crm": {
+    "title": "CRM System",
+    "subtitle": "GlobalCRM v3.0",
+    "description": "Полноценная система управления контактами, воронка продаж, задачи и аналитика",
+    "openBtn": "Открыть GlobalCRM",
+    "features": {
+      "contacts": "Контакты",
+      "funnel": "Воронка",
+      "tasks": "Задачи",
+      "analytics": "Аналитика",
+      "training": "Обучение"
+    }
+  },
+  
+  "surveys": {
+    "title": "Вирусные опросы",
+    "createBtn": "Создать опрос",
+    "templatesBtn": "Шаблоны",
+    "stats": {
+      "total": "Всего опросов",
+      "responses": "Ответов",
+      "referrals": "Рефералов",
+      "conversion": "Конверсия"
+    },
+    "quickstart": {
+      "title": "Создайте свой первый вирусный опрос!",
+      "text": "Собирайте контакты через сарафанное радио",
+      "createBtn": "Создать с нуля",
+      "templateBtn": "Использовать шаблон"
+    },
+    "howItWorks": {
+      "title": "Как работают вирусные опросы",
+      "step1": "Создайте опрос",
+      "step1desc": "Выберите шаблон или создайте свой",
+      "step2": "Поделитесь ссылкой",
+      "step2desc": "Telegram, WhatsApp, email",
+      "step3": "Участник получает подарок",
+      "step3desc": "И приглашает друзей за бонус",
+      "step4": "Вирусное распространение",
+      "step4desc": "Цепочка продолжается автоматически"
+    }
+  },
+  
+  "wallet": {
+    "title": "Кошелек",
+    "connect": "Подключить кошелек",
+    "disconnect": "Отключить",
+    "connected": "Подключен",
+    "notConnected": "Не подключен"
+  },
+  
+  "settings": {
+    "title": "Настройки",
+    "language": "Язык",
+    "theme": "Тема",
+    "notifications": "Уведомления",
+    "save": "Сохранить"
+  },
+  
+  "news": {
+    "title": "Новости и уведомления",
+    "noNews": "Нет новостей",
+    "loadError": "Ошибка загрузки"
+  },
+  
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успешно",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "close": "Закрыть",
+    "yes": "Да",
+    "no": "Нет",
+    "copy": "Копировать",
+    "copied": "Скопировано!",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "all": "Все",
+    "new": "Новый",
+    "active": "Активный",
+    "inactive": "Неактивный"
+  },
+  
+  "levels": {
+    "0": "Не активирован",
+    "1": "Стартовый",
+    "2": "Контакты",
+    "3": "Партнёр",
+    "4": "Бизнес",
+    "5": "Маркетолог",
+    "6": "Рассылки",
+    "7": "Студия",
+    "8": "Предприниматель",
+    "9": "Организатор",
+    "10": "Организатор",
+    "11": "Организатор",
+    "12": "Максимум"
+  },
+  
+  "access": {
+    "locked": "Заблокировано",
+    "unlock": "Активировать пакет",
+    "required": "Требуется уровень"
+  },
+  
+  "toast": {
+    "walletConnected": "Кошелек подключен!",
+    "walletDisconnected": "Кошелек отключен",
+    "linkCopied": "Ссылка скопирована!",
+    "savedSuccess": "Сохранено успешно",
+    "deleteConfirm": "Вы уверены, что хотите удалить?",
+    "accessDenied": "Доступ ограничен",
+    "error": "Произошла ошибка"
+  }
+}
