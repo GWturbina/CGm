@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CardGift">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title id="pageTitle">CardGift - Greeting Card</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+    
+    <!-- Dynamic Open Graph для превью в мессенджерах -->
+    <meta property="og:title" content="🎉 Personal Greeting Card - CardGift" id="ogTitle">
+    <meta property="og:description" content="Beautiful personalized card created with CardGift Web3 platform" id="ogDescription">
+    <meta property="og:image" content="" id="ogImage">
+    <meta property="og:image:width" content="1200" id="ogImageWidth">
+    <meta property="og:image:height" content="630" id="ogImageHeight">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="" id="ogUrl">
+    <meta property="og:site_name" content="CardGift">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="🎉 Personal Greeting Card - CardGift" id="twitterTitle">
+    <meta name="twitter:description" content="Beautiful personalized card created with CardGift Web3 platform" id="twitterDescription">
+    <meta name="twitter:image" content="" id="twitterImage">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/card-viewer.css">
+    
+    <!-- WEB3 Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <link rel="stylesheet" href="/css/exit-popup.css">
+</head>
+<body>
+    <!-- LANGUAGE SWITCHER -->
+    <div class="language-switcher">
+        <button class="lang-btn" onclick="changeLanguage('en')" id="lang-en">EN</button>
+        <button class="lang-btn" onclick="changeLanguage('ru')" id="lang-ru">RU</button>
+        <button class="lang-btn active" onclick="changeLanguage('ua')" id="lang-ua">UA</button>
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Loading card...</div>
+        <div style="margin-top: 20px; font-size: 14px; opacity: 0.7;" id="loadingSubtext">Powered by CardGift Web3</div>
+    </div>
+    
+    <!-- ERROR SCREEN -->
+    <div id="errorScreen" class="error-screen hidden">
+        <div class="error-icon">😔</div>
+        <div class="error-title" id="errorTitle">Card not found</div>
+        <div class="error-text" id="errorText">Check the link or create a new card</div>
+        <a href="/generator.html" class="error-button" id="errorButton">Create Card</a>
+        <div style="margin-top: 20px; font-size: 12px; opacity: 0.6;" id="errorSubtext">CardGift - Web3 Digital Cards</div>
+    </div>
+
+    <!-- MAIN CARD CONTAINER -->
+    <div id="mainCard" class="mobile-container hidden">
+        <!-- User Level Indicator -->
+        <div id="userLevelIndicator" class="user-level-indicator hidden"></div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span style="font-size: 14px;">🔋</span>
+                <span style="font-size: 12px;">📶</span>
+                <span style="font-size: 11px;">📴</span>
+            </div>
+            <div class="status-right">
+                <span id="currentTime">12:34</span>
+            </div>
+        </div>
+        
+        <!-- Top Marquee -->
+        <div class="top-marquee" id="topMarquee" onclick="handleMarqueeClick()">
+            <div class="marquee-content" id="marqueeContent">
+                <!-- Текст бегущей строки -->
+            </div>
+        </div>
+        
+        <!-- Card Area -->
+        <div class="card-area" id="cardArea">
+            <!-- Background Image/Video -->
+            <div class="background-image" id="backgroundImage"></div>
+            
+            <!-- Content Overlay -->
+            <div class="card-content" id="cardContent">
+                <div class="card-title" id="cardTitle">🎉 Welcome to CardGift! 🌟</div>
+                <div class="card-subtitle" id="cardSubtitle">Create amazing digital cards with Web3</div>
+                <div class="greeting-text" id="greetingText">This is a demonstration card with Web3 integration and enhanced features.</div>
+            </div>
+        </div>
+        
+        <!-- Bottom Area -->
+        <div class="bottom-area">
+            <!-- CTA Section -->
+            <div class="cta-section" id="ctaSection">
+                <div class="cta-text" id="ctaText">Welcome to CardGift! 🎉</div>
+                <div class="cta-subtitle" id="ctaSubtitle">This is a demo card with Web3 integration.</div>
+            </div>
+            
+            <!-- Action Button -->
+            <button class="action-button" id="actionButton" onclick="handleActionClick()">
+                Get Started
+            </button>
+        </div>
+        
+        <!-- Bottom Banner -->
+        <div class="bottom-banner" id="bottomBanner" onclick="handleBottomBannerClick()">
+            <span id="bottomBannerText">🎁 CardGift - Web3 Digital Cards</span>
+        </div>
+    </div>
+
+    <!-- Main JavaScript -->
+    <script src="/js/card-viewer.js"></script>
+
+    <!-- Service Worker -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ SW registered'))
+                .catch(err => console.log('SW error:', err));
+        });
+    }
+</script>
+<script src="/js/viral-mechanics.js"></script>
+</body>
+</html>
