@@ -25,12 +25,24 @@ window.currentTempId = window.currentTempId || null;
 async function initWallet() {
     console.log('🔐 Initializing wallet...');
     
+    // Проверяем WalletState
+    if (window.WalletState && WalletState.isConnected()) {
+        window.walletAddress = WalletState.address.toLowerCase();
+        window.walletConnected = true;
+        console.log('✅ Wallet restored from WalletState:', window.walletAddress);
+    }
+    
+    // Проверяем localStorage
     var savedAddress = localStorage.getItem('cardgift_wallet') || localStorage.getItem('cg_wallet_address');
     
-    if (savedAddress) {
+    if (savedAddress && !window.walletConnected) {
         window.walletAddress = savedAddress.toLowerCase();
         window.walletConnected = true;
-        
+        console.log('✅ Wallet restored from localStorage:', window.walletAddress);
+    }
+    
+    if (window.walletConnected && window.walletAddress) {
+        // Используем IdLinkingService v4.0
         if (window.IdLinkingService) {
             try {
                 const result = await IdLinkingService.onWalletConnected(window.walletAddress);
@@ -39,15 +51,136 @@ async function initWallet() {
                     window.currentTempId = result.tempId;
                     window.currentGwId = result.gwId;
                     window.currentDisplayId = result.displayId;
-                    console.log('✅ Wallet linked:', result);
+                    window.currentCgId = result.displayId;
+                    
+                    console.log('✅ Wallet linked:', {
+                        displayId: result.displayId,
+                        gwId: result.gwId,
+                        level: result.level
+                    });
                 }
             } catch (e) {
                 console.warn('IdLinkingService error:', e);
             }
         }
         
+        // Сохраняем уровень
+        localStorage.setItem('cardgift_level', window.currentUserLevel);
+        
+        // Обновляем UI
         updateWalletUI();
+        
+        // Вызываем дополнительные функции обновления
+        if (typeof updateAccessLocks === 'function') updateAccessLocks();
+        if (typeof updateLevelButtons === 'function') updateLevelButtons();
+        if (typeof updateUserIds === 'function') updateUserIds();
+        
+        return;
     }
+    
+    // Проверяем AuthService
+    if (window.AuthService) {
+        try {
+            var user = await AuthService.init();
+            if (user && user.wallet_address) {
+                window.walletAddress = user.wallet_address.toLowerCase();
+                window.walletConnected = true;
+                
+                if (window.IdLinkingService) {
+                    const result = await IdLinkingService.onWalletConnected(window.walletAddress);
+                    if (result && result.success) {
+                        window.currentUserLevel = result.level || 0;
+                        window.currentDisplayId = result.displayId;
+                        window.currentGwId = result.gwId;
+                    }
+                }
+                
+                console.log('✅ User loaded from AuthService:', window.walletAddress);
+                
+                updateWalletUI();
+                if (typeof updateAccessLocks === 'function') updateAccessLocks();
+                if (typeof updateLevelButtons === 'function') updateLevelButtons();
+                if (typeof updateUserIds === 'function') updateUserIds();
+                return;
+            }
+        } catch (e) {
+            console.warn('AuthService init error:', e);
+        }
+    }
+    
+    // Автоподключение через provider если есть
+    const provider = getWeb3Provider();
+    if (provider) {
+        try {
+            // Проверяем уже подключенные аккаунты (без запроса)
+            const accounts = await provider.request({ method: 'eth_accounts' });
+            if (accounts && accounts.length > 0) {
+                window.walletAddress = accounts[0].toLowerCase();
+                window.walletConnected = true;
+                
+                localStorage.setItem('cardgift_wallet', window.walletAddress);
+                localStorage.setItem('cg_wallet_address', window.walletAddress);
+                
+                if (window.WalletState) {
+                    WalletState.setConnected(window.walletAddress, 204);
+                }
+                
+                console.log('✅ Auto-connected wallet:', window.walletAddress);
+                
+                if (window.IdLinkingService) {
+                    const result = await IdLinkingService.onWalletConnected(window.walletAddress);
+                    if (result && result.success) {
+                        window.currentUserLevel = result.level || 0;
+                        window.currentDisplayId = result.displayId;
+                        window.currentGwId = result.gwId;
+                    }
+                }
+                
+                updateWalletUI();
+                if (typeof updateAccessLocks === 'function') updateAccessLocks();
+                if (typeof updateLevelButtons === 'function') updateLevelButtons();
+                if (typeof updateUserIds === 'function') updateUserIds();
+            }
+        } catch (e) {
+            console.warn('Auto-connect check failed:', e);
+        }
+    }
+    
+    // Добавляем кнопки если на мобильном
+    if (isMobile() && !window.walletConnected) {
+        addSafePalButton();
+    }
+}
+
+function addSafePalButton() {
+    setTimeout(() => {
+        const walletSection = document.getElementById('section-wallet');
+        if (!walletSection) return;
+        if (document.getElementById('openInSafePalBtn')) return;
+        
+        const walletCard = walletSection.querySelector('.wallet-card');
+        if (walletCard) {
+            const safePalDiv = document.createElement('div');
+            safePalDiv.style.cssText = 'margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;';
+            safePalDiv.innerHTML = `
+                <p style="color:#4CAF50; font-size:14px; margin-bottom:15px; text-align:center;">
+                    📱 На мобильном? Откройте в приложении SafePal:
+                </p>
+                <button id="openInSafePalBtn" onclick="openInSafePal()" style="
+                    width: 100%;
+                    padding: 15px;
+                    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">🔐 Открыть в SafePal</button>
+            `;
+            walletCard.appendChild(safePalDiv);
+        }
+    }, 500);
 }
 
 function updateWalletUI() {
@@ -288,6 +421,7 @@ window.connectMetaMask = connectMetaMask;
 window.connectWalletConnect = connectWalletConnect;
 window.connectWalletGeneric = connectWalletGeneric;
 window.disconnectWallet = disconnectWallet;
+window.addSafePalButton = addSafePalButton;
 
 // Referral
 window.copyReferralLink = copyReferralLink;
