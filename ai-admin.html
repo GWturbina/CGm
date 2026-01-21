@@ -1,0 +1,591 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Studio Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --primary: #8b5cf6;
+            --success: #10b981;
+            --error: #ef4444;
+            --text: #ffffff;
+            --text-muted: #9ca3af;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 16px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .admin-badge {
+            background: linear-gradient(135deg, var(--primary), #ec4899);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .wallet-info {
+            text-align: right;
+        }
+        
+        .wallet-address {
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        
+        /* Access Denied */
+        .access-denied {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-card);
+            border-radius: 16px;
+        }
+        
+        .access-denied h2 {
+            color: var(--error);
+            margin-bottom: 16px;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        /* Add Credits Form */
+        .add-credits-card {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .add-credits-card h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #ec4899);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139,92,246,0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+        
+        /* Users Table */
+        .users-card {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 16px;
+        }
+        
+        .users-card h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        
+        td {
+            font-size: 14px;
+        }
+        
+        .wallet-cell {
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .balance-cell {
+            font-weight: bold;
+            color: var(--success);
+        }
+        
+        .status-active {
+            color: var(--success);
+        }
+        
+        .status-blocked {
+            color: var(--error);
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-right: 4px;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .notification.error {
+            background: var(--error);
+            color: white;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            
+            .wallet-info {
+                text-align: center;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>
+                🤖 AI Studio Admin
+                <span class="admin-badge">ADMIN</span>
+            </h1>
+            <div class="wallet-info">
+                <div>Администратор</div>
+                <div class="wallet-address" id="adminWallet">Подключите кошелёк...</div>
+            </div>
+        </header>
+        
+        <!-- Access Denied (по умолчанию) -->
+        <div id="accessDenied" class="access-denied">
+            <h2>🚫 Доступ запрещён</h2>
+            <p>Эта страница доступна только администраторам</p>
+            <br>
+            <button class="btn btn-primary" onclick="connectWallet()">🔗 Подключить кошелёк</button>
+        </div>
+        
+        <!-- Main Content (скрыто по умолчанию) -->
+        <div id="mainContent" style="display: none;">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">Всего пользователей</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalCredits">0</div>
+                    <div class="stat-label">Выдано кредитов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeToday">0</div>
+                    <div class="stat-label">Активны сегодня</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="blockedUsers">0</div>
+                    <div class="stat-label">Заблокировано</div>
+                </div>
+            </div>
+            
+            <!-- Add Credits -->
+            <div class="add-credits-card">
+                <h2>➕ Пополнить кредиты</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Кошелёк пользователя</label>
+                        <input type="text" class="form-input" id="targetWallet" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label>Количество кредитов</label>
+                        <input type="number" class="form-input" id="creditsAmount" placeholder="10" value="10">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="addCredits()">💰 Пополнить</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Users List -->
+            <div class="users-card">
+                <h2>
+                    👥 Пользователи
+                    <button class="btn btn-secondary" onclick="loadUsers()">🔄 Обновить</button>
+                </h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Кошелёк</th>
+                                <th>Баланс</th>
+                                <th>Сегодня</th>
+                                <th>Лимит/день</th>
+                                <th>Всего</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <tr>
+                                <td colspan="7" class="loading">Загрузка...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Подключаем config.js для DEV_WALLETS -->
+    <script src="js/config.js"></script>
+    
+    <script>
+        // DEV кошельки из CONFIG с fallback
+        const DEV_WALLETS = (window.CONFIG?.DEV_WALLETS || [
+            '0xa3496cacc8523421dd151f1d92a456c2dafa28c2',
+            '0x7bcd1753868895971e12448412cb3216d47884c8'
+        ]).map(w => w.toLowerCase());
+        
+        let adminWallet = null;
+        
+        // Подключение кошелька
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                showNotification('Установите MetaMask или SafePal', 'error');
+                return;
+            }
+            
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                if (accounts && accounts.length > 0) {
+                    adminWallet = accounts[0].toLowerCase();
+                    document.getElementById('adminWallet').textContent = 
+                        adminWallet.slice(0, 6) + '...' + adminWallet.slice(-4);
+                    
+                    // Проверяем доступ
+                    if (DEV_WALLETS.includes(adminWallet)) {
+                        document.getElementById('accessDenied').style.display = 'none';
+                        document.getElementById('mainContent').style.display = 'block';
+                        loadUsers();
+                    } else {
+                        showNotification('У вас нет прав администратора', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Wallet error:', error);
+                showNotification('Ошибка подключения: ' + error.message, 'error');
+            }
+        }
+        
+        // Загрузка пользователей
+        async function loadUsers() {
+            try {
+                const response = await fetch(`/api/ai/credits?action=list&adminWallet=${adminWallet}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+                
+                renderUsers(data.users);
+                updateStats(data.users);
+                
+            } catch (error) {
+                console.error('Load users error:', error);
+                showNotification('Ошибка загрузки: ' + error.message, 'error');
+            }
+        }
+        
+        // Отрисовка таблицы
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTable');
+            
+            if (!users || users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">Нет пользователей</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td class="wallet-cell">${user.wallet_address.slice(0, 6)}...${user.wallet_address.slice(-4)}</td>
+                    <td class="balance-cell">${user.credits_balance}</td>
+                    <td>${user.credits_used_today}</td>
+                    <td>${user.daily_limit}</td>
+                    <td>${user.total_earned}</td>
+                    <td class="${user.is_blocked ? 'status-blocked' : 'status-active'}">
+                        ${user.is_blocked ? '🚫 Блок' : '✅ Актив'}
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary action-btn" onclick="quickAdd('${user.wallet_address}')">+10</button>
+                        <button class="btn btn-secondary action-btn" onclick="copyWallet('${user.wallet_address}')">📋</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Обновление статистики
+        function updateStats(users) {
+            const today = new Date().toISOString().split('T')[0];
+            
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('totalCredits').textContent = 
+                users.reduce((sum, u) => sum + u.total_earned, 0);
+            document.getElementById('activeToday').textContent = 
+                users.filter(u => u.last_reset_date === today && u.credits_used_today > 0).length;
+            document.getElementById('blockedUsers').textContent = 
+                users.filter(u => u.is_blocked).length;
+        }
+        
+        // Пополнить кредиты
+        async function addCredits() {
+            const wallet = document.getElementById('targetWallet').value.trim();
+            const amount = parseInt(document.getElementById('creditsAmount').value);
+            
+            if (!wallet || !wallet.startsWith('0x')) {
+                showNotification('Введите корректный кошелёк', 'error');
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                showNotification('Введите количество кредитов', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/ai/credits?action=add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        wallet,
+                        amount,
+                        adminWallet
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+                
+                showNotification(`✅ Добавлено ${amount} кредитов`, 'success');
+                document.getElementById('targetWallet').value = '';
+                loadUsers();
+                
+            } catch (error) {
+                console.error('Add credits error:', error);
+                showNotification('Ошибка: ' + error.message, 'error');
+            }
+        }
+        
+        // Быстрое добавление
+        async function quickAdd(wallet) {
+            try {
+                const response = await fetch('/api/ai/credits?action=add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        wallet,
+                        amount: 10,
+                        adminWallet
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('✅ +10 кредитов', 'success');
+                    loadUsers();
+                }
+            } catch (error) {
+                showNotification('Ошибка', 'error');
+            }
+        }
+        
+        // Копировать кошелёк
+        function copyWallet(wallet) {
+            navigator.clipboard.writeText(wallet);
+            showNotification('📋 Скопировано', 'success');
+        }
+        
+        // Уведомления
+        function showNotification(message, type) {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            
+            setTimeout(() => notif.remove(), 3000);
+        }
+        
+        // Автоподключение
+        window.addEventListener('load', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts && accounts.length > 0) {
+                    adminWallet = accounts[0].toLowerCase();
+                    document.getElementById('adminWallet').textContent = 
+                        adminWallet.slice(0, 6) + '...' + adminWallet.slice(-4);
+                    
+                    if (DEV_WALLETS.includes(adminWallet)) {
+                        document.getElementById('accessDenied').style.display = 'none';
+                        document.getElementById('mainContent').style.display = 'block';
+                        loadUsers();
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
