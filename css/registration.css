@@ -1,0 +1,485 @@
+/* =====================================================
+   CARDGIFT - REGISTRATION PAGE STYLES
+   Стили для страницы регистрации
+   ===================================================== */
+
+/* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
+body.registration-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.registration-container {
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    z-index: 1;
+    margin-top: 50px;
+}
+
+.registration-box {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #ffd700;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    backdrop-filter: blur(20px);
+}
+
+.registration-box h2 {
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: clamp(24px, 6vw, 32px);
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ===== ИНФОРМАЦИЯ О РЕФЕРЕРЕ ===== */
+.referral-info {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 25px;
+    text-align: center;
+    display: none;
+}
+
+.referral-info.show {
+    display: block;
+}
+
+.referral-info .icon {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+/* ===== ФОРМА ===== */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    color: #ffd700;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 15px;
+    background: rgba(26, 26, 26, 0.8);
+    border: 2px solid #444;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    background: rgba(26, 26, 26, 0.9);
+}
+
+.form-group select option {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+.hint {
+    color: #888;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+    transition: color 0.3s ease;
+}
+
+/* Стили для ошибок валидации */
+.hint.error {
+    color: #ff4444;
+    font-weight: 500;
+}
+
+input.invalid,
+select.invalid {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.3) !important;
+}
+
+input.invalid:focus,
+select.invalid:focus {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.4) !important;
+}
+
+/* ===== СОГЛАСИЕ ===== */
+.consent-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: rgba(255, 215, 0, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.consent-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.consent-text {
+    color: #CCC;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.consent-text strong {
+    color: #FFD700;
+}
+
+/* ===== КНОПКА ОТПРАВКИ ===== */
+.submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: #666;
+    color: #333;
+    border: none;
+    border-radius: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.submit-btn:disabled {
+    background: #666;
+    color: #333;
+    cursor: not-allowed;
+}
+
+.submit-btn:enabled {
+    background: linear-gradient(45deg, #ffd700, #ffa500);
+    color: #1a1a1a;
+    cursor: pointer;
+    animation: pulse 2s infinite;
+}
+
+.submit-btn:enabled:hover {
+    background: linear-gradient(45deg, #ffed4e, #ffb84d);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+}
+
+.submit-btn:enabled:active {
+    transform: translateY(0);
+}
+
+.submit-btn.loading {
+    pointer-events: none;
+    color: transparent;
+}
+
+.submit-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top-color: #1a1a1a;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ===== КНОПКА ПОДКЛЮЧЕНИЯ КОШЕЛЬКА ===== */
+.wallet-connect-small {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.wallet-btn-small {
+    background: rgba(30, 136, 229, 0.1);
+    border: 1px solid rgba(30, 136, 229, 0.3);
+    color: #1E88E5;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.wallet-btn-small:hover {
+    opacity: 1;
+    background: rgba(30, 136, 229, 0.2);
+    border-color: #1E88E5;
+}
+
+.wallet-btn-small:disabled {
+    background: #666;
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.wallet-status-small {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #4CAF50;
+    display: none;
+    opacity: 0.8;
+}
+
+.wallet-status-small.show {
+    display: block;
+}
+
+/* ===== СООБЩЕНИЯ ===== */
+.success-message {
+    text-align: center;
+    color: #4CAF50;
+    display: none;
+    animation: fadeInUp 0.5s ease;
+}
+
+.success-message.show {
+    display: block;
+}
+
+.success-message .icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+}
+
+.success-message h3 {
+    color: #4CAF50;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.success-message p {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #CCC;
+}
+
+.countdown {
+    font-size: 24px;
+    color: #FFD700;
+    font-weight: bold;
+}
+
+.error-message {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid #ff4444;
+    color: #ff6666;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+    animation: shake 0.5s ease-in-out;
+}
+
+/* ===== WEB3 ПРЕДЛОЖЕНИЕ ===== */
+.web3-offer {
+    margin-top: 25px;
+    padding: 25px;
+    border: 2px solid #FFD700;
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,165,0,0.1) 100%);
+    text-align: center;
+    backdrop-filter: blur(10px);
+    display: none;
+    animation: fadeInUp 1s ease;
+}
+
+.web3-offer.show {
+    display: block;
+}
+
+.web3-offer .offer-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+    animation: bounce 2s infinite;
+}
+
+.web3-offer h3 {
+    color: #FFD700;
+    font-size: clamp(18px, 5vw, 24px);
+    margin-bottom: 15px;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.web3-offer p {
+    color: #CCC;
+    margin-bottom: 20px;
+    font-size: clamp(14px, 3.5vw, 16px);
+    line-height: 1.5;
+}
+
+.web3-offer-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.web3-offer-btn {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 25px;
+    font-size: clamp(14px, 3.5vw, 16px);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 180px;
+}
+
+.web3-offer-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    background: linear-gradient(45deg, #ffed4e, #ffb84d);
+}
+
+.web3-offer-btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #CCC;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.web3-offer-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFF;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.web3-offer .benefits {
+    margin-top: 20px;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.web3-offer .benefits h4 {
+    color: #FFD700;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.web3-offer .benefits ul {
+    list-style: none;
+    padding: 0;
+}
+
+.web3-offer .benefits li {
+    color: #CCC;
+    margin: 8px 0;
+    padding-left: 20px;
+    position: relative;
+    font-size: 14px;
+}
+
+.web3-offer .benefits li:before {
+    content: '✨';
+    position: absolute;
+    left: 0;
+    color: #FFD700;
+}
+
+.web3-offer .requirement {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(30, 136, 229, 0.1);
+    border: 1px solid rgba(30, 136, 229, 0.3);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #1E88E5;
+}
+
+/* ===== АНИМАЦИИ ===== */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+/* ===== АДАПТИВ ===== */
+@media (max-width: 600px) {
+    .registration-container {
+        padding: 10px;
+    }
+    
+    .registration-box {
+        padding: 25px;
+    }
+    
+    .registration-box h2 {
+        font-size: 22px;
+        margin-bottom: 25px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: 12px;
+    }
+    
+    .submit-btn {
+        padding: 15px;
+        font-size: 16px;
+    }
+
+    .web3-offer-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .web3-offer-btn {
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .registration-container {
+        margin-top: 45px;
+    }
+
+    .web3-offer {
+        padding: 20px;
+    }
+}
