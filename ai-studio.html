@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Studio - CardGift</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Стили CardGift -->
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/ai-studio.css">
+</head>
+<body>
+    <!-- Основной контент - БЕЗ ЗАСТАВКИ -->
+    <div id="mainContent" class="main-container">
+        
+        <!-- Trial Banner -->
+        <div id="trialBanner" style="display: none;"></div>
+        
+        <!-- Шапка -->
+        <header class="studio-header">
+            <div class="header-left">
+                <a href="dashboard.html" class="back-btn">← Назад</a>
+                <div class="logo">
+                    <span class="logo-icon">🤖</span>
+                    <span class="logo-text">AI Studio</span>
+                    <span class="logo-badge">BETA</span>
+                </div>
+            </div>
+            
+            <!-- НОВЫЕ КНОПКИ -->
+            <div class="header-buttons">
+                <button class="btn-rules" onclick="showRulesModal()">
+                    🚫 Правила
+                </button>
+                <button class="btn-settings-api" onclick="showSettingsModal()">
+                    ⚙️ Настройки API
+                </button>
+            </div>
+            
+            <div class="header-center">
+                <div class="limits-display">
+                    <div class="limit-item" id="textLimit">
+                        <span class="limit-icon">📝</span>
+                        <span class="limit-value">0/0</span>
+                    </div>
+                    <div class="limit-item" id="imageLimit">
+                        <span class="limit-icon">🎨</span>
+                        <span class="limit-value">0/0</span>
+                    </div>
+                    <div class="limit-item" id="voiceLimit">
+                        <span class="limit-icon">🎤</span>
+                        <span class="limit-value">0/0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="credits-display" id="creditsDisplay" title="Ваши кредиты">💳 0</div>
+                <div class="lang-switcher">
+                    <button class="lang-btn" id="langEn" onclick="switchLang('en')">EN</button>
+                    <button class="lang-btn active" id="langRu" onclick="switchLang('ru')">RU</button>
+                    <button class="lang-btn" id="langUa" onclick="switchLang('ua')">UA</button>
+                </div>
+                <div class="wallet-info">
+                    <div class="wallet-address" id="walletAddress">Не подключен</div>
+                    <div class="user-level" id="userLevel">Level: 0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Табы -->
+        <nav class="content-tabs">
+            <button class="tab-btn active" data-tab="text">
+                <span class="tab-icon">📝</span>
+                <span class="tab-name">Текст</span>
+            </button>
+            <button class="tab-btn" data-tab="image">
+                <span class="tab-icon">🎨</span>
+                <span class="tab-name">Изображение</span>
+            </button>
+            <button class="tab-btn" data-tab="voice">
+                <span class="tab-icon">🎤</span>
+                <span class="tab-name">Голос</span>
+            </button>
+            <button class="tab-btn disabled" data-tab="video">
+                <span class="tab-icon">🎬</span>
+                <span class="tab-name">Видео</span>
+                <span class="coming-soon">Soon</span>
+            </button>
+            <button class="tab-btn" data-tab="music">
+                <span class="tab-icon">🎵</span>
+                <span class="tab-name">Музыка</span>
+            </button>
+        </nav>
+
+        <!-- Основная область -->
+        <main class="studio-main">
+            <!-- Шаблоны -->
+            <aside class="templates-panel">
+                <h3>📋 Шаблоны</h3>
+                <div class="templates-list" id="templatesList"></div>
+            </aside>
+
+            <!-- Генерация -->
+            <section class="generation-area">
+                <!-- Текст -->
+                <div class="tab-content active" id="textTab">
+                    <div class="generation-card">
+                        <h2>📝 Генерация текста</h2>
+                        <p class="description">Создавайте поздравления, письма, посты с помощью AI</p>
+                        
+                        <div class="form-group">
+                            <label>Стиль текста</label>
+                            <select id="textStyle" class="form-select">
+                                <option value="greeting">Поздравление</option>
+                                <option value="business">Деловой</option>
+                                <option value="motivational">Мотивационный</option>
+                                <option value="friendly">Дружеский</option>
+                                <option value="romantic">Романтический</option>
+                                <option value="club">GlobalWay клуб</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Ваш запрос</label>
+                            <textarea id="textPrompt" class="form-textarea" rows="4" 
+                                placeholder="Опишите, какой текст вы хотите создать..."></textarea>
+                        </div>
+                        
+                        <button class="btn btn-generate" id="generateTextBtn">
+                            ✨ Сгенерировать
+                        </button>
+                        
+                        <div class="result-area" id="textResult" style="display: none;">
+                            <h3>Результат</h3>
+                            <div class="result-content" id="textResultContent"></div>
+                            <div class="result-actions">
+                                <button class="btn btn-secondary" id="copyTextBtn">📋 Копировать</button>
+                                <button class="btn btn-secondary" id="useTextInCardBtn">🎁 В открытку</button>
+                                <button class="btn btn-primary" onclick="AIStudio.addToProject('text')">🎬 В проект</button>
+                                <button class="btn btn-secondary" id="saveTextBtn">💾 Сохранить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Изображение -->
+                <div class="tab-content" id="imageTab">
+                    <div class="generation-card">
+                        <h2>🎨 Генерация изображения</h2>
+                        <p class="description">Создавайте открытки, баннеры, обложки</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Формат</label>
+                                <select id="imageFormat" class="form-select">
+                                    <option value="1:1">Квадрат (1:1)</option>
+                                    <option value="16:9">Широкий (16:9)</option>
+                                    <option value="9:16">Вертикальный (9:16)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Стиль</label>
+                                <select id="imageStyle" class="form-select">
+                                    <option value="realistic">Реалистичный</option>
+                                    <option value="cartoon">Мультяшный</option>
+                                    <option value="artistic">Художественный</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Описание</label>
+                            <textarea id="imagePrompt" class="form-textarea" rows="4"
+                                placeholder="Опишите, что должно быть на изображении..."></textarea>
+                        </div>
+                        
+                        <button class="btn btn-generate" id="generateImageBtn">✨ Сгенерировать</button>
+                        
+                        <div class="result-area" id="imageResult" style="display: none;">
+                            <h3>Результат</h3>
+                            <div class="image-preview" id="imagePreview"></div>
+                            <div class="result-actions">
+                                <button class="btn btn-secondary" id="downloadImageBtn">📥 Скачать</button>
+                                <button class="btn btn-secondary" id="useImageInCardBtn">🎁 В открытку</button>
+                                <button class="btn btn-primary" onclick="AIStudio.addToProject('image')">🎬 В проект</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Голос -->
+                <div class="tab-content" id="voiceTab">
+                    <div class="generation-card">
+                        <h2>🎤 Генерация голоса</h2>
+                        <p class="description">Превратите текст в реалистичную речь с эмоциями</p>
+                        
+                        <!-- Выбор голоса и языка -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>🗣️ Голос <button type="button" class="btn-voice-test" id="testVoiceBtn" onclick="AIStudio.testVoice()" title="Прослушать голос">▶️ Тест</button></label>
+                                <select id="voiceSelect" class="form-select">
+                                    <optgroup label="👨 Мужские">
+                                        <option value="alex-nekrasov">Алекс Некрасов (уверенный)</option>
+                                        <option value="taras-boyko">Тарас Бойко (резонансный)</option>
+                                        <option value="vladimir">Владимир (лёгкий)</option>
+                                        <option value="evgeniy">Евгений (информативный)</option>
+                                        <option value="leonid-drapey">Леонид Драпей (мудрый)</option>
+                                        <option value="voice-m6">Голос М6</option>
+                                        <option value="voice-m7">Голос М7</option>
+                                        <option value="voice-m8">Голос М8</option>
+                                        <option value="voice-m9">Голос М9</option>
+                                        <option value="voice-m10">Голос М10</option>
+                                    </optgroup>
+                                    <optgroup label="👩 Женские">
+                                        <option value="anna-stepanenko">Анна Степаненко (яркая)</option>
+                                        <option value="voice-f2">Голос Ж2</option>
+                                        <option value="voice-f3">Голос Ж3</option>
+                                        <option value="voice-f4">Голос Ж4</option>
+                                        <option value="voice-f5">Голос Ж5</option>
+                                        <option value="voice-f6">Голос Ж6</option>
+                                        <option value="voice-f7">Голос Ж7</option>
+                                        <option value="voice-f8">Голос Ж8</option>
+                                        <option value="voice-f9">Голос Ж9</option>
+                                        <option value="voice-f10">Голос Ж10</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>🌍 Язык</label>
+                                <select id="voiceLanguage" class="form-select">
+                                    <option value="ru">🇷🇺 Русский</option>
+                                    <option value="en">🇬🇧 English</option>
+                                    <option value="uk">🇺🇦 Українська</option>
+                                    <option value="de">🇩🇪 Deutsch</option>
+                                    <option value="fr">🇫🇷 Français</option>
+                                    <option value="es">🇪🇸 Español</option>
+                                    <option value="pl">🇵🇱 Polski</option>
+                                    <option value="it">🇮🇹 Italiano</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Эмоции и скорость -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>😊 Эмоция</label>
+                                <select id="voiceEmotion" class="form-select">
+                                    <option value="neutral">😐 Нейтральная</option>
+                                    <option value="happy">😊 Радостная</option>
+                                    <option value="sad">😢 Грустная</option>
+                                    <option value="excited">🤩 Возбуждённая</option>
+                                    <option value="serious">😤 Серьёзная</option>
+                                    <option value="friendly">🤗 Дружелюбная</option>
+                                    <option value="calm">😌 Спокойная</option>
+                                    <option value="professional">💼 Профессиональная</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>⚡ Скорость: <span id="speedValue">1.0x</span></label>
+                                <input type="range" id="voiceSpeed" class="form-range" min="0.5" max="2.0" step="0.1" value="1.0">
+                            </div>
+                        </div>
+                        
+                        <!-- Стабильность и чёткость -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>🎚️ Стабильность: <span id="stabilityValue">50%</span></label>
+                                <input type="range" id="voiceStability" class="form-range" min="0" max="100" step="5" value="50">
+                            </div>
+                            <div class="form-group">
+                                <label>🔊 Чёткость: <span id="clarityValue">75%</span></label>
+                                <input type="range" id="voiceClarity" class="form-range" min="0" max="100" step="5" value="75">
+                            </div>
+                        </div>
+                        
+                        <!-- Текст -->
+                        <div class="form-group">
+                            <label>📝 Текст для озвучки</label>
+                            <textarea id="voiceText" class="form-textarea" rows="4"
+                                placeholder="Введите текст (до 1000 символов)..."></textarea>
+                            <div class="char-counter"><span id="voiceCharCount">0</span>/1000</div>
+                        </div>
+                        
+                        <button class="btn btn-generate" id="generateVoiceBtn">🎤 Сгенерировать голос</button>
+                        
+                        <div class="result-area" id="voiceResult" style="display: none;">
+                            <h3>🔊 Результат</h3>
+                            <div class="audio-player">
+                                <audio id="voiceAudio" controls></audio>
+                            </div>
+                            <div class="result-actions">
+                                <button class="btn btn-secondary" id="downloadVoiceBtn">📥 Скачать MP3</button>
+                                <button class="btn btn-primary" onclick="AIStudio.addToProject('voice')">🎬 В проект</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Coming Soon -->
+                <div class="tab-content" id="videoTab">
+                    <div class="generation-card coming-soon-card">
+                        <div class="coming-soon-icon">🎬</div>
+                        <h2>Видео генерация скоро!</h2>
+                        <p class="description">Создавайте говорящие аватары и видео-открытки</p>
+                    </div>
+                </div>
+
+                <!-- Music Tab -->
+                <div class="tab-content" id="musicTab">
+                    <div class="generation-card">
+                        <h3>🎵 Музыкальная библиотека</h3>
+                        <p class="description">Выберите трек из категории слева или загрузите свой</p>
+                        
+                        <!-- Результат -->
+                        <div class="result-area" id="musicResult" style="display: none;">
+                            <h4>Сейчас играет:</h4>
+                            <audio id="musicAudio" controls style="width: 100%; margin: 16px 0;"></audio>
+                            <div class="result-actions">
+                                <button class="btn btn-secondary" id="downloadMusicBtn">
+                                    ⬇️ Скачать
+                                </button>
+                                <button class="btn btn-primary" onclick="AIStudio.addToProject('music')">
+                                    🎬 В проект (фон)
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="music-info" style="margin-top: 20px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                            <p style="color: var(--text-muted); font-size: 14px;">
+                                💡 Нажмите на трек слева чтобы прослушать. 
+                                Используйте категории для фильтрации.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Правая панель: Проект + Архив -->
+            <aside class="right-panel">
+                <!-- Панель проекта -->
+                <div class="project-panel">
+                    <div class="project-header">
+                        <h3>🎬 Проект <span class="project-counter" id="projectCounter" style="display:none;">0</span></h3>
+                        <button class="btn-icon" onclick="AIStudio.clearProject()" title="Очистить">🗑️</button>
+                    </div>
+                    <div class="project-list" id="projectPanel">
+                        <div class="project-empty">Добавьте контент в проект</div>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="AIStudio.openInGlobalStudio()">
+                        🎬 Открыть в GlobalStudio
+                    </button>
+                </div>
+
+                <!-- Архив -->
+                <div class="archive-panel">
+                    <h3>📦 Мой архив</h3>
+                    <div class="archive-filters">
+                        <button class="filter-btn active" data-filter="all">Все</button>
+                        <button class="filter-btn" data-filter="text">📝</button>
+                        <button class="filter-btn" data-filter="image">🎨</button>
+                        <button class="filter-btn" data-filter="voice">🎤</button>
+                    </div>
+                    <div class="archive-list" id="archiveList">
+                        <div class="archive-empty">Архив пуст</div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Футер -->
+        <footer class="studio-footer">
+            <div class="footer-links">
+                <a href="generator.html">Создать открытку</a>
+                <a href="dashboard.html">Кабинет</a>
+            </div>
+            <div>Powered by <span class="highlight">CardGift</span> × <span class="highlight">GlobalWay</span></div>
+        </footer>
+    </div>
+
+    <!-- ====== МОДАЛЬНОЕ ОКНО ПРАВИЛ - НОВОЕ ====== -->
+    <div class="modal-overlay" id="rulesModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>🚫 Правила использования</h3>
+                <button class="modal-close" onclick="closeModal('rulesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--text-muted);">
+                    AI Studio запрещает создание контента, содержащего:
+                </p>
+                <ul class="rules-list">
+                    <li><span>🔞 Порнография:</span> любой контент сексуального характера</li>
+                    <li><span>⚔️ Насилие:</span> призывы к насилию, убийствам, терроризму</li>
+                    <li><span>👶 Педофилия:</span> любой контент с несовершеннолетними</li>
+                    <li><span>🏳️‍🌈 ЛГБТ пропаганда:</span> пропаганда нетрадиционных отношений</li>
+                    <li><span>💉 Наркотики:</span> пропаганда и распространение</li>
+                    <li><span>💀 Экстремизм:</span> расизм, нацизм, ненависть</li>
+                    <li><span>🤬 Мат:</span> нецензурная лексика</li>
+                </ul>
+                <p style="margin-top: 16px; padding: 12px; background: rgba(239,68,68,0.1); border-radius: 8px; font-size: 13px;">
+                    ⚠️ Нарушение правил приведёт к блокировке аккаунта без возврата средств
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('rulesModal')">Понятно</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== МОДАЛЬНОЕ ОКНО НАСТРОЕК API - НОВОЕ ====== -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>⚙️ Настройки API</h3>
+                <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- ElevenLabs -->
+                <div class="api-setting">
+                    <div class="api-setting-header">
+                        <div class="api-setting-title">
+                            <span>🎤</span> ElevenLabs
+                        </div>
+                        <span class="api-status not-connected" id="elevenlabsStatus">Не подключен</span>
+                    </div>
+                    <div class="api-input-row">
+                        <input type="password" id="elevenlabsKey" placeholder="Введите API ключ ElevenLabs">
+                        <button class="btn-clear-key" id="clearElevenlabs" onclick="clearApiKey('elevenlabs')" title="Очистить">🗑️</button>
+                    </div>
+                    <div class="api-hint">
+                        Получите ключ на <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank">elevenlabs.io</a>
+                    </div>
+                </div>
+                
+                <!-- OpenAI (DALL-E) -->
+                <div class="api-setting">
+                    <div class="api-setting-header">
+                        <div class="api-setting-title">
+                            <span>🎨</span> OpenAI (DALL-E)
+                        </div>
+                        <span class="api-status not-connected" id="openaiStatus">Не подключен</span>
+                    </div>
+                    <div class="api-input-row">
+                        <input type="password" id="openaiKey" placeholder="Введите API ключ OpenAI (sk-...)">
+                        <button class="btn-clear-key" id="clearOpenai" onclick="clearApiKey('openai')" title="Очистить">🗑️</button>
+                    </div>
+                    <div class="api-hint">
+                        Получите ключ на <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('settingsModal')">Отмена</button>
+                <button class="btn btn-primary" onclick="saveApiSettings()">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-modal" id="loadingModal" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p id="loadingText">Генерация...</p>
+        </div>
+    </div>
+
+    <!-- СКРИПТЫ CARDGIFT -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/id-linking-service.js"></script>
+    <script src="js/globalway-bridge.js"></script>
+    <script src="js/content-filter.js"></script>
+    <script src="js/ai-studio.js"></script>
+    
+    <script>
+        // ====== ФУНКЦИИ ДЛЯ МОДАЛЬНЫХ ОКОН ======
+        
+        function showRulesModal() {
+            document.getElementById('rulesModal').classList.add('active');
+        }
+        
+        function showSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+            loadApiKeys();
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        // Закрытие по клику на оверлей
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+        
+        // ====== API КЛЮЧИ (v1.6 - SUPABASE) ======
+        
+        // Получить wallet адрес
+        function getWalletAddress() {
+            return window.AIStudio?.state?.walletAddress 
+                || localStorage.getItem('cardgift_wallet')
+                || localStorage.getItem('walletAddress');
+        }
+        
+        async function saveApiSettings() {
+            const elevenlabsKey = document.getElementById('elevenlabsKey').value.trim();
+            const openaiKey = document.getElementById('openaiKey').value.trim();
+            const wallet = getWalletAddress();
+            
+            if (!wallet) {
+                alert('❌ Сначала подключите кошелёк');
+                return;
+            }
+            
+            // Определяем какие ключи сохранять
+            const currentKeys = await loadApiKeysFromSupabase(wallet);
+            const keysToSave = {};
+            
+            if (elevenlabsKey && !elevenlabsKey.includes('•')) {
+                keysToSave.elevenlabs_api_key = elevenlabsKey;
+            } else if (currentKeys.elevenlabs) {
+                keysToSave.elevenlabs_api_key = currentKeys.elevenlabs;
+            }
+            
+            if (openaiKey && !openaiKey.includes('•')) {
+                keysToSave.openai_api_key = openaiKey;
+            } else if (currentKeys.openai) {
+                keysToSave.openai_api_key = currentKeys.openai;
+            }
+            
+            // Сохраняем в Supabase
+            try {
+                if (window.SupabaseClient && SupabaseClient.client) {
+                    const { error } = await SupabaseClient.client
+                        .from('ai_credits')
+                        .update({
+                            openai_api_key: keysToSave.openai_api_key || null,
+                            elevenlabs_api_key: keysToSave.elevenlabs_api_key || null,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('wallet_address', wallet.toLowerCase());
+                    
+                    if (error) {
+                        // Если записи нет — создаём
+                        if (error.code === 'PGRST116') {
+                            await SupabaseClient.client
+                                .from('ai_credits')
+                                .insert({
+                                    wallet_address: wallet.toLowerCase(),
+                                    openai_api_key: keysToSave.openai_api_key || null,
+                                    elevenlabs_api_key: keysToSave.elevenlabs_api_key || null,
+                                    balance: 0,
+                                    daily_limit: 50
+                                });
+                        } else {
+                            throw error;
+                        }
+                    }
+                }
+                
+                // Также сохраняем в localStorage как кеш
+                localStorage.setItem('ai_studio_api_keys', JSON.stringify({
+                    openai: keysToSave.openai_api_key,
+                    elevenlabs: keysToSave.elevenlabs_api_key
+                }));
+                
+                // Обновляем UI
+                if (keysToSave.elevenlabs_api_key) {
+                    document.getElementById('elevenlabsStatus').textContent = '✅ Подключен';
+                    document.getElementById('elevenlabsStatus').className = 'api-status connected';
+                }
+                if (keysToSave.openai_api_key) {
+                    document.getElementById('openaiStatus').textContent = '✅ Подключен';
+                    document.getElementById('openaiStatus').className = 'api-status connected';
+                }
+                
+                closeModal('settingsModal');
+                alert('✅ Настройки сохранены в аккаунт');
+                
+            } catch (e) {
+                console.error('Save API keys error:', e);
+                alert('❌ Ошибка сохранения: ' + e.message);
+            }
+        }
+        
+        async function loadApiKeysFromSupabase(wallet) {
+            if (!wallet || !window.SupabaseClient || !SupabaseClient.client) {
+                return { openai: null, elevenlabs: null };
+            }
+            
+            try {
+                const { data, error } = await SupabaseClient.client
+                    .from('ai_credits')
+                    .select('openai_api_key, elevenlabs_api_key')
+                    .eq('wallet_address', wallet.toLowerCase())
+                    .single();
+                
+                if (!error && data) {
+                    return {
+                        openai: data.openai_api_key,
+                        elevenlabs: data.elevenlabs_api_key
+                    };
+                }
+            } catch (e) {
+                console.warn('Load API keys error:', e);
+            }
+            
+            return { openai: null, elevenlabs: null };
+        }
+        
+        async function loadApiKeys() {
+            const wallet = getWalletAddress();
+            let keys = { openai: null, elevenlabs: null };
+            
+            // Сначала пробуем Supabase
+            if (wallet) {
+                keys = await loadApiKeysFromSupabase(wallet);
+                
+                // Кешируем в localStorage
+                if (keys.openai || keys.elevenlabs) {
+                    localStorage.setItem('ai_studio_api_keys', JSON.stringify(keys));
+                }
+            }
+            
+            // Fallback на localStorage
+            if (!keys.openai && !keys.elevenlabs) {
+                const saved = localStorage.getItem('ai_studio_api_keys');
+                if (saved) {
+                    keys = JSON.parse(saved);
+                }
+            }
+            
+            // Обновляем UI
+            if (keys.elevenlabs) {
+                document.getElementById('elevenlabsKey').value = '••••••••••••';
+                document.getElementById('elevenlabsStatus').textContent = '✅ Подключен';
+                document.getElementById('elevenlabsStatus').className = 'api-status connected';
+            }
+            if (keys.openai) {
+                document.getElementById('openaiKey').value = '••••••••••••';
+                document.getElementById('openaiStatus').textContent = '✅ Подключен';
+                document.getElementById('openaiStatus').className = 'api-status connected';
+            }
+            
+            updateClearButtonsVisibility();
+        }
+        
+        async function clearApiKey(keyType) {
+            if (!confirm(`Удалить ключ ${keyType === 'elevenlabs' ? 'ElevenLabs' : 'OpenAI'}?`)) {
+                return;
+            }
+            
+            const wallet = getWalletAddress();
+            
+            // Удаляем из Supabase
+            if (wallet && window.SupabaseClient && SupabaseClient.client) {
+                try {
+                    const updateData = {};
+                    updateData[keyType === 'elevenlabs' ? 'elevenlabs_api_key' : 'openai_api_key'] = null;
+                    
+                    await SupabaseClient.client
+                        .from('ai_credits')
+                        .update(updateData)
+                        .eq('wallet_address', wallet.toLowerCase());
+                } catch (e) {
+                    console.warn('Clear API key error:', e);
+                }
+            }
+            
+            // Удаляем из localStorage
+            const saved = localStorage.getItem('ai_studio_api_keys');
+            const keys = saved ? JSON.parse(saved) : {};
+            delete keys[keyType];
+            localStorage.setItem('ai_studio_api_keys', JSON.stringify(keys));
+            
+            // Обновляем UI
+            const inputId = keyType === 'elevenlabs' ? 'elevenlabsKey' : 'openaiKey';
+            const statusId = keyType === 'elevenlabs' ? 'elevenlabsStatus' : 'openaiStatus';
+            
+            document.getElementById(inputId).value = '';
+            document.getElementById(statusId).textContent = 'Не подключен';
+            document.getElementById(statusId).className = 'api-status not-connected';
+            
+            alert(`✅ Ключ ${keyType === 'elevenlabs' ? 'ElevenLabs' : 'OpenAI'} удалён`);
+        }
+        
+        function updateClearButtonsVisibility() {
+            const canSee = window.AIStudio && window.AIStudio.canUseOwnApi && window.AIStudio.canUseOwnApi();
+            
+            const clearElevenlabs = document.getElementById('clearElevenlabs');
+            const clearOpenai = document.getElementById('clearOpenai');
+            
+            if (clearElevenlabs) clearElevenlabs.classList.toggle('visible', canSee);
+            if (clearOpenai) clearOpenai.classList.toggle('visible', canSee);
+        }
+        
+        // Переключение языка
+        function switchLang(lang) {
+            localStorage.setItem('preferredLanguage', lang);
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('lang' + lang.charAt(0).toUpperCase() + lang.slice(1))?.classList.add('active');
+        }
+    </script>
+</body>
+</html>
