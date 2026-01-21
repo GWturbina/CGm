@@ -32,7 +32,7 @@ async function initPushNotifications() {
     
     try {
         // Регистрация Service Worker
-        const registration = await navigator.serviceWorker.register('/sw-push.js');
+        const registration = await navigator.serviceWorker.register('/sw.js');
         console.log('✅ Service Worker registered:', registration.scope);
         
         // Проверить существующую подписку
