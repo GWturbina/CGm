@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Настройки блога | CardGift</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #0a0a14;
+            --bg-secondary: #12121e;
+            --bg-card: #1a1a2e;
+            --bg-input: #0d0d1a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6a6a7a;
+            --border: #2a2a3e;
+            --accent: #f59e0b;
+            --accent-hover: #fbbf24;
+            --success: #10b981;
+            --error: #ef4444;
+            --cardgift-gold: #FFD700;
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f0f2f5;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a5a;
+            --text-muted: #8a8a9a;
+            --border: #e0e0e8;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            border-color: var(--accent);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:hover {
+            border-color: var(--accent);
+        }
+        
+        /* Main */
+        .main {
+            padding: 80px 20px 40px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .page-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+        
+        /* Cards */
+        .settings-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title span {
+            font-size: 20px;
+        }
+        
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus {
+            border-color: var(--accent);
+        }
+        
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        textarea.form-input {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+        
+        /* Username Input with Prefix */
+        .input-with-prefix {
+            display: flex;
+            align-items: stretch;
+        }
+        
+        .input-prefix {
+            padding: 12px 15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+            color: var(--text-muted);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        
+        .input-with-prefix .form-input {
+            border-radius: 0 10px 10px 0;
+        }
+        
+        /* Color Picker */
+        .color-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.active {
+            border-color: #fff;
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+        
+        /* Avatar Upload */
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .avatar-actions {
+            flex: 1;
+        }
+        
+        .avatar-actions p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        
+        .btn-upload {
+            padding: 10px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .btn-upload:hover {
+            border-color: var(--accent);
+        }
+        
+        .btn-remove {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--error);
+            border-radius: 8px;
+            color: var(--error);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* OG Preview Section */
+        .og-preview-section {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .og-preview-box {
+            width: 300px;
+            height: 158px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .og-preview-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+        }
+        
+        .og-preview-actions {
+            flex: 1;
+        }
+        
+        /* Stats Preview */
+        .stats-preview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* Blog Link */
+        .blog-link-box {
+            background: var(--bg-card);
+            border: 1px solid var(--success);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .blog-link-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--success);
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .btn-copy {
+            padding: 8px 16px;
+            background: var(--success);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        /* Save Button */
+        .save-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            margin-top: 10px;
+        }
+        
+        .btn-save {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, var(--cardgift-gold), #FFA500);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-save:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateX(150%);
+            transition: transform 0.3s;
+            z-index: 2000;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            border-color: var(--success);
+        }
+        
+        .toast.error {
+            border-color: var(--error);
+        }
+        
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .stats-preview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .avatar-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .og-preview-section {
+                flex-direction: column;
+            }
+            
+            .og-preview-box {
+                width: 100%;
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <a href="/dashboard.html" class="back-btn">
+                <span>←</span>
+                <span>Dashboard</span>
+            </a>
+            <div class="logo">
+                <div class="logo-icon">🎁</div>
+                <span class="logo-text">CardGift</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <a href="/blog-editor.html" class="header-btn">
+                <span>✏️</span>
+                <span>Редактор</span>
+            </a>
+            <a href="#" class="header-btn" id="previewBtn">
+                <span>👁️</span>
+                <span>Мой блог</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+        <h1 class="page-title">⚙️ Настройки блога</h1>
+        <p class="page-subtitle">Настройте внешний вид и информацию о вашем блоге</p>
+        
+        <!-- Welcome Banner (for first time) -->
+        <div class="settings-card" id="welcomeBanner" style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.05)); border-color: rgba(255,215,0,0.3); display: none;">
+            <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                <div style="font-size: 48px;">👋</div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h3 style="margin-bottom: 8px; color: var(--cardgift-gold);">Добро пожаловать в блог CardGift!</h3>
+                    <p style="color: var(--text-secondary); margin: 0;">Настройте свой блог и начните привлекать рефералов. Рекомендуем прочитать руководство.</p>
+                </div>
+                <a href="/blog-guide.html" target="_blank" style="padding: 12px 24px; background: linear-gradient(135deg, var(--cardgift-gold), #FFA500); color: #000; text-decoration: none; border-radius: 10px; font-weight: 600; white-space: nowrap;">📖 Читать руководство</a>
+            </div>
+        </div>
+        
+        <!-- Help Link -->
+        <div style="text-align: right; margin-bottom: 15px;">
+            <a href="/blog-guide.html" target="_blank" style="color: var(--accent); text-decoration: none; font-size: 14px;">📖 Полное руководство по блогу →</a>
+        </div>
+        
+        <!-- Blog Link -->
+        <div class="settings-card">
+            <div class="card-title"><span>🔗</span> Ссылка на ваш блог</div>
+            <div class="blog-link-box">
+                <input type="text" id="blogFullLink" readonly value="Загрузка...">
+                <button class="btn-copy" onclick="copyBlogLink()">📋 Копировать</button>
+            </div>
+            <p class="form-hint" style="margin-top: 10px;">
+                💡 Короткая ссылка: <span id="blogShortLink" style="color: var(--success);">—</span>
+            </p>
+        </div>
+        
+        <!-- Username & Basic Info -->
+        <div class="settings-card">
+            <div class="card-title"><span>📝</span> Основная информация</div>
+            
+            <div class="form-group">
+                <label class="form-label">Username (логин для ссылки)</label>
+                <div class="input-with-prefix">
+                    <span class="input-prefix">cg-beryl.vercel.app/b/</span>
+                    <input type="text" class="form-input" id="blogUsername" placeholder="myname" maxlength="20" 
+                           oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_]/g, ''); updateLinks();">
+                </div>
+                <p class="form-hint">Только латинские буквы, цифры и _ (3-20 символов)</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Название блога</label>
+                <input type="text" class="form-input" id="blogTitle" placeholder="Мой блог" maxlength="50">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <textarea class="form-input" id="blogDescription" placeholder="Расскажите о чём ваш блог..." maxlength="1000" rows="6"></textarea>
+                <p class="form-hint"><span id="descCount">0</span>/1000 символов</p>
+            </div>
+        </div>
+        
+        <!-- Appearance -->
+        <div class="settings-card">
+            <div class="card-title"><span>🎨</span> Внешний вид</div>
+            
+            <div class="form-group">
+                <label class="form-label">Цвет темы</label>
+                <div class="color-options">
+                    <div class="color-option active" data-color="#FFD700" style="background: #FFD700;" onclick="selectColor(this)"></div>
+                    <div class="color-option" data-color="#4CAF50" style="background: #4CAF50;" onclick="selectColor(this)"></div>
+                    <div class="color-option" data-color="#2196F3" style="background: #2196F3;" onclick="selectColor(this)"></div>
+                    <div class="color-option" data-color="#9C27B0" style="background: #9C27B0;" onclick="selectColor(this)"></div>
+                    <div class="color-option" data-color="#FF5722" style="background: #FF5722;" onclick="selectColor(this)"></div>
+                    <div class="color-option" data-color="#E91E63" style="background: #E91E63;" onclick="selectColor(this)"></div>
+                    <div class="color-option" data-color="#00BCD4" style="background: #00BCD4;" onclick="selectColor(this)"></div>
+                    <div class="color-option" data-color="#FF9800" style="background: #FF9800;" onclick="selectColor(this)"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Логотип блога</label>
+                <div class="avatar-section">
+                    <div class="avatar-preview" id="avatarPreview">📝</div>
+                    <div class="avatar-actions">
+                        <p>JPG, PNG до 2MB. Рекомендуемый размер: 200x200px</p>
+                        <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
+                        <button class="btn-upload" onclick="document.getElementById('avatarInput').click()">📤 Загрузить</button>
+                        <button class="btn-remove" onclick="removeAvatar()">🗑️ Удалить</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Обложка блога (шапка)</label>
+                <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 10px;">
+                    Баннер вверху вашего блога. Рекомендуемый размер: 1500×500px
+                </p>
+                <div class="og-preview-section">
+                    <div class="og-preview-box" id="coverPreviewBox" style="height: 120px;">
+                        <div class="og-preview-placeholder" id="coverPlaceholder">
+                            <div style="font-size: 32px; margin-bottom: 10px;">🖼️</div>
+                            <div>Нет обложки</div>
+                        </div>
+                        <img id="coverPreviewImage" style="display: none; width: 100%; height: 100%; object-fit: cover;" alt="Cover Preview">
+                    </div>
+                    <div class="og-preview-actions">
+                        <input type="file" id="coverInput" accept="image/*" style="display: none;" onchange="handleCoverUpload(event)">
+                        <button class="btn-upload" onclick="document.getElementById('coverInput').click()">📤 Загрузить обложку</button>
+                        <button class="btn-remove" onclick="removeCover()">🗑️ Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- OG Preview Image -->
+        <div class="settings-card">
+            <div class="card-title"><span>🖼️</span> Картинка для превью (при шаринге)</div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">
+                Эта картинка показывается когда вы делитесь блогом в мессенджерах. 
+                Если не загружена — генерируется автоматически.
+            </p>
+            
+            <div class="og-preview-section">
+                <div class="og-preview-box" id="ogPreviewBox">
+                    <div class="og-preview-placeholder" id="ogPlaceholder">
+                        <div style="font-size: 32px; margin-bottom: 10px;">🖼️</div>
+                        <div>Нет картинки</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Будет сгенерирована автоматически</div>
+                    </div>
+                    <img id="ogPreviewImage" style="display: none; width: 100%; height: 100%; object-fit: cover;" alt="OG Preview">
+                </div>
+                <div class="og-preview-actions">
+                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 10px;">
+                        Рекомендуемый размер: <b>1200×630</b> пикселей
+                    </p>
+                    <input type="file" id="ogImageInput" accept="image/*" style="display: none;" onchange="handleOgImageUpload(event)">
+                    <button class="btn-upload" onclick="document.getElementById('ogImageInput').click()">📤 Загрузить картинку</button>
+                    <button class="btn-remove" onclick="removeOgImage()">🗑️ Удалить</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Background Image -->
+        <div class="settings-card">
+            <div class="card-title"><span>🎨</span> Фон блога</div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">
+                Загрузите фоновую картинку для вашего блога. Она будет показываться за контентом.
+            </p>
+            
+            <div class="og-preview-section">
+                <div class="og-preview-box" id="bgPreviewBox" style="height: 150px;">
+                    <div class="og-preview-placeholder" id="bgPlaceholder">
+                        <div style="font-size: 32px; margin-bottom: 10px;">🎨</div>
+                        <div>Нет фона</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Используется стандартный тёмный фон</div>
+                    </div>
+                    <img id="bgPreviewImage" style="display: none; width: 100%; height: 100%; object-fit: cover;" alt="Background Preview">
+                </div>
+                <div class="og-preview-actions">
+                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 10px;">
+                        Рекомендуемый размер: <b>1920×1080</b> или больше
+                    </p>
+                    <input type="file" id="bgImageInput" accept="image/*" style="display: none;" onchange="handleBgImageUpload(event)">
+                    <button class="btn-upload" onclick="document.getElementById('bgImageInput').click()">📤 Загрузить фон</button>
+                    <button class="btn-remove" onclick="removeBgImage()">🗑️ Удалить</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="settings-card">
+            <div class="card-title"><span>📊</span> Статистика блога</div>
+            <div class="stats-preview">
+                <div class="stat-item">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-value" id="statPosts">0</div>
+                    <div class="stat-label">Постов</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">👁️</div>
+                    <div class="stat-value" id="statViews">0</div>
+                    <div class="stat-label">Просмотров</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-value" id="statLikes">0</div>
+                    <div class="stat-label">Лайков</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">🔔</div>
+                    <div class="stat-value" id="statSubs">0</div>
+                    <div class="stat-label">Подписчиков</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Save -->
+        <div class="settings-card">
+            <div class="save-section">
+                <p style="color: var(--text-muted); font-size: 13px;">
+                    Не забудьте сохранить изменения
+                </p>
+                <button class="btn-save" id="saveBtn" onclick="saveSettings()">
+                    <span>💾</span>
+                    <span>Сохранить настройки</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span id="toastIcon">✅</span>
+        <span id="toastText">Сохранено!</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════════
+        // BLOG SETTINGS PAGE
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        let currentUser = null;
+        let blogSettings = {};
+        let selectedColor = '#FFD700';
+        let avatarBase64 = null;
+        let ogImageBase64 = null;
+        let bgImageBase64 = null;
+        let coverBase64 = null;
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            await loadSettings();
+            await loadStats();
+            setupListeners();
+            
+            document.getElementById('loadingOverlay').style.display = 'none';
+        });
+        
+        async function checkAuth() {
+            // Ищем GW ID по всем возможным ключам (как в dashboard.js)
+            const gwId = localStorage.getItem('cardgift_gw_id') 
+                      || localStorage.getItem('cardgift_display_id')
+                      || localStorage.getItem('currentGwId')
+                      || localStorage.getItem('gw_id');
+            
+            const wallet = localStorage.getItem('cardgift_wallet') 
+                        || localStorage.getItem('cg_wallet_address');
+            
+            console.log('🔍 Auth check:', { gwId, wallet });
+            
+            if (!gwId && !wallet) {
+                showToast('❌ Войдите в систему', 'error');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 1500);
+                return;
+            }
+            
+            // Если есть wallet но нет gwId - пробуем получить из Supabase
+            if (!gwId && wallet) {
+                try {
+                    await waitForSupabase();
+                    const { data } = await SupabaseClient.client
+                        .from('users')
+                        .select('gw_id')
+                        .eq('wallet_address', wallet.toLowerCase())
+                        .single();
+                    
+                    if (data?.gw_id) {
+                        currentUser = { gw_id: data.gw_id, wallet: wallet };
+                        console.log('✅ Got GW ID from wallet:', data.gw_id);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Could not get GW ID from wallet:', e);
+                }
+            }
+            
+            currentUser = { gw_id: gwId, wallet: wallet };
+            console.log('✅ User authenticated:', currentUser);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // LOAD SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        async function loadSettings() {
+            if (!currentUser?.gw_id) return;
+            
+            try {
+                await waitForSupabase();
+                
+                const { data, error } = await SupabaseClient.client
+                    .from('blog_settings')
+                    .select('*')
+                    .eq('user_gw_id', currentUser.gw_id)
+                    .maybeSingle();
+                
+                if (error && error.code !== 'PGRST116') throw error;
+                
+                if (data) {
+                    blogSettings = data;
+                    applySettings(data);
+                } else {
+                    // First time - show welcome banner
+                    document.getElementById('welcomeBanner').style.display = 'block';
+                    // Default
+                    blogSettings = {
+                        user_gw_id: currentUser.gw_id,
+                        username: '',
+                        blog_title: 'Мой блог',
+                        blog_description: '',
+                        theme_color: '#FFD700',
+                        avatar_url: null
+                    };
+                }
+                
+                updateLinks();
+                updatePreviewBtn();
+                
+            } catch (e) {
+                console.error('Load settings error:', e);
+                showToast('❌ Ошибка загрузки', 'error');
+            }
+        }
+        
+        function applySettings(data) {
+            document.getElementById('blogUsername').value = data.username || '';
+            document.getElementById('blogTitle').value = data.blog_title || '';
+            document.getElementById('blogDescription').value = data.blog_description || '';
+            
+            // Color
+            if (data.theme_color) {
+                selectedColor = data.theme_color;
+                document.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.color === data.theme_color);
+                });
+            }
+            
+            // Avatar
+            if (data.avatar_url) {
+                document.getElementById('avatarPreview').innerHTML = `<img src="${data.avatar_url}" alt="Avatar">`;
+                avatarBase64 = data.avatar_url;
+            }
+            
+            // OG Image
+            if (data.og_image_url) {
+                document.getElementById('ogPreviewImage').src = data.og_image_url;
+                document.getElementById('ogPreviewImage').style.display = 'block';
+                document.getElementById('ogPlaceholder').style.display = 'none';
+                ogImageBase64 = data.og_image_url;
+            }
+            
+            // Background Image
+            if (data.background_image) {
+                document.getElementById('bgPreviewImage').src = data.background_image;
+                document.getElementById('bgPreviewImage').style.display = 'block';
+                document.getElementById('bgPlaceholder').style.display = 'none';
+                bgImageBase64 = data.background_image;
+            }
+            
+            // Cover Image
+            if (data.cover_url) {
+                document.getElementById('coverPreviewImage').src = data.cover_url;
+                document.getElementById('coverPreviewImage').style.display = 'block';
+                document.getElementById('coverPlaceholder').style.display = 'none';
+                coverBase64 = data.cover_url;
+            }
+            
+            // Description count
+            document.getElementById('descCount').textContent = (data.blog_description || '').length;
+        }
+        
+        function waitForSupabase() {
+            return new Promise(resolve => {
+                const check = () => {
+                    if (window.SupabaseClient?.client) resolve();
+                    else setTimeout(check, 100);
+                };
+                check();
+            });
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // LOAD STATS
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        async function loadStats() {
+            if (!currentUser?.gw_id) return;
+            
+            try {
+                // Posts count
+                const { count: postsCount } = await SupabaseClient.client
+                    .from('blog_posts')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_gw_id', currentUser.gw_id)
+                    .eq('published', true);
+                
+                // Total views & likes
+                const { data: posts } = await SupabaseClient.client
+                    .from('blog_posts')
+                    .select('views_count, likes_count')
+                    .eq('user_gw_id', currentUser.gw_id);
+                
+                let totalViews = 0, totalLikes = 0;
+                if (posts) {
+                    posts.forEach(p => {
+                        totalViews += p.views_count || 0;
+                        totalLikes += p.likes_count || 0;
+                    });
+                }
+                
+                // Subscribers
+                const { count: subsCount } = await SupabaseClient.client
+                    .from('blog_subscriptions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('blog_owner_gw_id', currentUser.gw_id);
+                
+                document.getElementById('statPosts').textContent = formatNum(postsCount || 0);
+                document.getElementById('statViews').textContent = formatNum(totalViews);
+                document.getElementById('statLikes').textContent = formatNum(totalLikes);
+                document.getElementById('statSubs').textContent = formatNum(subsCount || 0);
+                
+            } catch (e) {
+                console.error('Load stats error:', e);
+            }
+        }
+        
+        function formatNum(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return n.toString();
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // UPDATE UI
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function updateLinks() {
+            const username = document.getElementById('blogUsername').value.trim();
+            const baseUrl = window.location.origin;
+            
+            if (username && username.length >= 3) {
+                const fullLink = baseUrl + '/blog.html?user=' + username;
+                const shortLink = baseUrl + '/b/' + username;
+                
+                document.getElementById('blogFullLink').value = fullLink;
+                document.getElementById('blogShortLink').textContent = shortLink;
+            } else {
+                const gwLink = baseUrl + '/blog.html?user=' + (currentUser?.gw_id || '');
+                document.getElementById('blogFullLink').value = gwLink;
+                document.getElementById('blogShortLink').textContent = 'Задайте username для короткой ссылки';
+            }
+        }
+        
+        function updatePreviewBtn() {
+            const username = document.getElementById('blogUsername').value.trim() || blogSettings.username || currentUser?.gw_id;
+            document.getElementById('previewBtn').href = '/blog.html?user=' + username;
+        }
+        
+        function setupListeners() {
+            // Description counter
+            document.getElementById('blogDescription').addEventListener('input', function() {
+                document.getElementById('descCount').textContent = this.value.length;
+            });
+            
+            // Username -> update links
+            document.getElementById('blogUsername').addEventListener('input', updateLinks);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // COLOR SELECTION
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function selectColor(el) {
+            document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
+            el.classList.add('active');
+            selectedColor = el.dataset.color;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // AVATAR
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('❌ Файл слишком большой (макс. 2MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                avatarBase64 = ev.target.result;
+                document.getElementById('avatarPreview').innerHTML = `<img src="${avatarBase64}" alt="Avatar">`;
+                showToast('✅ Изображение загружено', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeAvatar() {
+            avatarBase64 = null;
+            document.getElementById('avatarPreview').innerHTML = '📝';
+            document.getElementById('avatarInput').value = '';
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // OG IMAGE (PREVIEW FOR SHARING)
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function handleOgImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('❌ Файл слишком большой (макс. 5MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                ogImageBase64 = ev.target.result;
+                document.getElementById('ogPreviewImage').src = ogImageBase64;
+                document.getElementById('ogPreviewImage').style.display = 'block';
+                document.getElementById('ogPlaceholder').style.display = 'none';
+                showToast('✅ Картинка превью загружена', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeOgImage() {
+            ogImageBase64 = null;
+            document.getElementById('ogPreviewImage').style.display = 'none';
+            document.getElementById('ogPreviewImage').src = '';
+            document.getElementById('ogPlaceholder').style.display = 'flex';
+            document.getElementById('ogImageInput').value = '';
+            showToast('🗑️ Картинка превью удалена', 'info');
+        }
+        
+        function handleBgImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('❌ Файл слишком большой (макс. 5MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                bgImageBase64 = ev.target.result;
+                document.getElementById('bgPreviewImage').src = bgImageBase64;
+                document.getElementById('bgPreviewImage').style.display = 'block';
+                document.getElementById('bgPlaceholder').style.display = 'none';
+                showToast('✅ Фон блога загружен', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeBgImage() {
+            bgImageBase64 = null;
+            document.getElementById('bgPreviewImage').style.display = 'none';
+            document.getElementById('bgPreviewImage').src = '';
+            document.getElementById('bgPlaceholder').style.display = 'flex';
+            document.getElementById('bgImageInput').value = '';
+            showToast('🗑️ Фон удалён', 'info');
+        }
+        
+        function handleCoverUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('❌ Файл слишком большой (макс. 5MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                coverBase64 = ev.target.result;
+                document.getElementById('coverPreviewImage').src = coverBase64;
+                document.getElementById('coverPreviewImage').style.display = 'block';
+                document.getElementById('coverPlaceholder').style.display = 'none';
+                showToast('✅ Обложка загружена', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeCover() {
+            coverBase64 = null;
+            document.getElementById('coverPreviewImage').style.display = 'none';
+            document.getElementById('coverPreviewImage').src = '';
+            document.getElementById('coverPlaceholder').style.display = 'flex';
+            document.getElementById('coverInput').value = '';
+            showToast('🗑️ Обложка удалена', 'info');
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SAVE
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        async function saveSettings() {
+            if (!currentUser?.gw_id) {
+                showToast('❌ Войдите в систему', 'error');
+                return;
+            }
+            
+            const username = document.getElementById('blogUsername').value.trim().toLowerCase();
+            const title = document.getElementById('blogTitle').value.trim() || 'Мой блог';
+            const description = document.getElementById('blogDescription').value.trim();
+            
+            // Validate username
+            if (username && (username.length < 3 || username.length > 20)) {
+                showToast('❌ Username: 3-20 символов', 'error');
+                return;
+            }
+            
+            if (username && !/^[a-z0-9_]+$/.test(username)) {
+                showToast('❌ Username: только буквы, цифры, _', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span><span>Сохранение...</span>';
+            
+            try {
+                const data = {
+                    user_gw_id: currentUser.gw_id,
+                    username: username || null,
+                    blog_title: title,
+                    blog_description: description,
+                    theme_color: selectedColor,
+                    avatar_url: avatarBase64,
+                    og_image_url: ogImageBase64,
+                    background_image: bgImageBase64,
+                    cover_url: coverBase64,
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { error } = await SupabaseClient.client
+                    .from('blog_settings')
+                    .upsert(data, { onConflict: 'user_gw_id' });
+                
+                if (error) {
+                    if (error.code === '23505' && error.message.includes('username')) {
+                        showToast('❌ Этот username уже занят', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span>💾</span><span>Сохранить настройки</span>';
+                        return;
+                    }
+                    throw error;
+                }
+                
+                // Save username locally for quick access
+                if (username) {
+                    localStorage.setItem('blog_username', username);
+                }
+                
+                showToast('✅ Настройки сохранены!', 'success');
+                updatePreviewBtn();
+                
+            } catch (e) {
+                console.error('Save error:', e);
+                showToast('❌ Ошибка: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>💾</span><span>Сохранить настройки</span>';
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // HELPERS
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function copyBlogLink() {
+            const input = document.getElementById('blogFullLink');
+            navigator.clipboard.writeText(input.value).then(() => {
+                showToast('📋 Ссылка скопирована!', 'success');
+            });
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastIcon').textContent = type === 'success' ? '✅' : '❌';
+            document.getElementById('toastText').textContent = message;
+            toast.className = 'toast show ' + type;
+            
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 3000);
+        }
+        
+        console.log('✅ Blog Settings Page loaded');
+    </script>
+</body>
+</html>
