@@ -530,6 +530,170 @@ function showAddContactModal() {
     document.body.appendChild(modal);
 }
 
+async function addContact() {
+    console.log('📝 addContact() called');
+    
+    const name = document.getElementById('contactName')?.value.trim();
+    const platform = document.getElementById('contactPlatform')?.value;
+    const contact = document.getElementById('contactValue')?.value.trim();
+    const pushConsent = document.getElementById('contactPush')?.checked;
+    
+    if (!name || !contact) {
+        if (typeof showToast === 'function') {
+            showToast('Заполните имя и контакт', 'error');
+        }
+        return;
+    }
+    
+    const cgId = window.currentDisplayId || window.currentGwId || window.currentCgId || localStorage.getItem('cardgift_cg_id');
+    
+    if (!cgId) {
+        if (typeof showToast === 'function') {
+            showToast('Ошибка: не найден ID пользователя', 'error');
+        }
+        return;
+    }
+    
+    // Используем ContactsService если доступен
+    if (window.ContactsService) {
+        const result = await ContactsService.addContact(cgId, {
+            name,
+            messenger: platform,
+            contact,
+            pushConsent,
+            source: 'Manual'
+        });
+        
+        if (result.success) {
+            if (typeof loadContacts === 'function') await loadContacts();
+            closeModal();
+            if (typeof showToast === 'function') {
+                showToast('Контакт добавлен!', 'success');
+            }
+        } else {
+            if (typeof showToast === 'function') {
+                showToast(result.error || 'Ошибка добавления', 'error');
+            }
+        }
+    } else {
+        // Fallback - localStorage
+        const newContact = {
+            id: Date.now(),
+            name,
+            messenger: platform,
+            contact,
+            pushConsent,
+            source: 'Manual',
+            created_at: new Date().toISOString()
+        };
+        
+        window.contacts = window.contacts || [];
+        window.contacts.push(newContact);
+        
+        if (typeof saveContacts === 'function') saveContacts();
+        if (typeof renderContacts === 'function') renderContacts();
+        closeModal();
+        if (typeof showToast === 'function') {
+            showToast('Контакт добавлен!', 'success');
+        }
+    }
+}
+
+// ===== CONNECT WALLET (главная функция подключения) =====
+
+async function connectWallet() {
+    const provider = getWeb3Provider();
+    
+    if (!provider) {
+        // На мобильном - открываем в SafePal
+        if (isMobile()) {
+            openInSafePal();
+            return null;
+        }
+        if (typeof showToast === 'function') {
+            showToast('Кошелёк не найден! Установите SafePal или MetaMask', 'error');
+        }
+        return null;
+    }
+    
+    try {
+        console.log('Connecting wallet...');
+        
+        let accounts;
+        try {
+            accounts = await provider.request({ method: 'eth_requestAccounts' });
+        } catch (e) {
+            console.warn('eth_requestAccounts failed:', e);
+            if (provider.enable) {
+                accounts = await provider.enable();
+            } else {
+                throw e;
+            }
+        }
+        
+        if (!accounts || accounts.length === 0) {
+            throw new Error('No accounts found');
+        }
+        
+        const address = accounts[0];
+        console.log('Got address:', address);
+        
+        // Проверяем сеть
+        try {
+            const chainId = await provider.request({ method: 'eth_chainId' });
+            const currentChainId = parseInt(chainId, 16);
+            if (currentChainId !== 204) {
+                console.log('Switching to opBNB...');
+                if (typeof switchToOpBNB === 'function') {
+                    await switchToOpBNB();
+                }
+            }
+        } catch (e) {
+            console.warn('Network check failed:', e);
+        }
+        
+        // Сохраняем
+        window.walletAddress = address.toLowerCase();
+        window.walletConnected = true;
+        
+        localStorage.setItem('cardgift_wallet', window.walletAddress);
+        localStorage.setItem('cg_wallet_address', window.walletAddress);
+        
+        if (window.WalletState) {
+            WalletState.setConnected(window.walletAddress, 204);
+        }
+        
+        console.log('Wallet connected:', window.walletAddress);
+        
+        // Связываем с IdLinkingService
+        if (window.IdLinkingService) {
+            const result = await IdLinkingService.onWalletConnected(window.walletAddress);
+            if (result && result.success) {
+                window.currentUserLevel = result.level || 0;
+                window.currentDisplayId = result.displayId;
+                window.currentGwId = result.gwId;
+            }
+        }
+        
+        // Обновляем UI
+        updateWalletUI();
+        if (typeof updateAccessLocks === 'function') updateAccessLocks();
+        if (typeof updateLevelButtons === 'function') updateLevelButtons();
+        if (typeof updateUserIds === 'function') updateUserIds();
+        if (typeof loadContacts === 'function') loadContacts();
+        if (typeof loadCards === 'function') loadCards();
+        
+        return address;
+        
+    } catch (error) {
+        console.error('Wallet connection error:', error);
+        if (typeof showToast === 'function') {
+            showToast('Ошибка подключения кошелька', 'error');
+        }
+        return null;
+    }
+}
+
 // ===== PWA FUNCTIONS =====
 
 function initPWA() {
@@ -690,6 +854,10 @@ window.openModal = openModal;
 
 // Contact Modal
 window.showAddContactModal = showAddContactModal;
+window.addContact = addContact;
+
+// Connect Wallet (главная функция)
+window.connectWallet = connectWallet;
 
 // PWA
 window.initPWA = initPWA;
