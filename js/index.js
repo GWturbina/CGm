@@ -231,7 +231,7 @@ function showReferralBanner(refId) {
         gap: 12px;
         max-width: 90%;
     `;
-    banner.innerHTML = \`
+    banner.innerHTML = `
         <span>🎁 Вас пригласил партнёр #\${refId}</span>
         <a href="registration.html?ref=\${refId}" style="background: white; color: #2E7D32; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: 600;">Регистрация</a>
         <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">✕</button>
