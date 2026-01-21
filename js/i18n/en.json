@@ -1,0 +1,285 @@
+{
+  "meta": {
+    "lang": "en",
+    "name": "English",
+    "version": "1.0"
+  },
+  
+  "sidebar": {
+    "panel": "Panel",
+    "archive": "Archive",
+    "contacts": "Contacts",
+    "analytics": "Analytics",
+    "referrals": "Referrals",
+    "crm": "CRM",
+    "surveys": "Surveys",
+    "blog": "My Blog",
+    "mailings": "Mailings",
+    "studio": "GlobalStudio",
+    "aiStudio": "AI Studio",
+    "mlm": "MLM Projects",
+    "organizer": "Organizer",
+    "coauthors": "Co-authors",
+    "wallet": "Wallet",
+    "settings": "Settings",
+    "admin": "Admin"
+  },
+  
+  "panel": {
+    "title": "Dashboard Overview",
+    "tariffsBtn": "Plans & Features",
+    "createCardBtn": "Create Card",
+    "cardgiftId": "CardGift ID:",
+    "globalwayId": "GlobalWay ID:",
+    "level": "Level:",
+    "walletLabel": "Wallet:",
+    "notConnected": "Not connected",
+    "loading": "Loading...",
+    "teamTotal": "Total in Team",
+    "activeUsers": "Active Users",
+    "income": "Income (opBNB)",
+    "conversion": "Conversion",
+    "upgradeTitle": "Upgrade your level — unlock new features!",
+    "currentLevel": "Your current level:",
+    "status": "Status:",
+    "maxLevel": "Maximum level reached!",
+    "allLevelsBtn": "All Levels & Features",
+    "activateLevelBtn": "Activate Level",
+    "quickActions": "Quick Actions",
+    "createCard": "Create Card",
+    "manageContacts": "Manage Contacts",
+    "viewTeam": "View Team",
+    "copyRefLink": "Copy Referral Link",
+    "lastActivity": "Recent Activity",
+    "noActivity": "No recent activity"
+  },
+  
+  "contacts": {
+    "title": "Contact Management",
+    "addContact": "Add Contact",
+    "importExport": "Import/Export",
+    "searchTitle": "Search Contacts",
+    "searchPlaceholder": "Search by name or contact...",
+    "searchBtn": "Search",
+    "clearBtn": "Clear",
+    "allCategories": "All Categories",
+    "database": "Contact Database",
+    "total": "Total:",
+    "contactsWord": "contacts",
+    "connectWallet": "Connect wallet to manage contacts",
+    "noContacts": "You don't have any contacts yet",
+    "tableHeaders": {
+      "name": "Name",
+      "platform": "Platform",
+      "contact": "Contact",
+      "pushConsent": "Push Consent",
+      "source": "Source",
+      "userLevel": "User Level",
+      "dateAdded": "Date Added",
+      "actions": "Actions"
+    }
+  },
+  
+  "platforms": {
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "phone": "Phone",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "tiktok": "TikTok",
+    "twitter": "Twitter/X",
+    "viber": "Viber",
+    "all": "All"
+  },
+  
+  "archive": {
+    "title": "Card Archive",
+    "createNew": "Create New",
+    "export": "Export",
+    "tabs": {
+      "my": "My Cards",
+      "corporate": "Corporate",
+      "leader": "From Leader",
+      "myTemplates": "My Templates",
+      "moderation": "Moderation"
+    },
+    "searchPlaceholder": "Search cards...",
+    "selectAll": "Select All",
+    "deleteSelected": "Delete Selected",
+    "clearAll": "Clear All",
+    "makeTemplate": "Make Template",
+    "empty": {
+      "title": "No cards yet",
+      "text": "Create your first card!",
+      "corporateTitle": "No corporate templates yet",
+      "corporateText": "Ready-made cards coming soon!",
+      "leaderTitle": "No templates from leader yet",
+      "leaderText": "Your leader hasn't created team templates yet",
+      "myTemplatesTitle": "You don't have templates yet",
+      "myTemplatesText": "Create templates for your team!",
+      "moderationTitle": "No templates in moderation",
+      "moderationText": "All templates are approved!"
+    },
+    "createTemplate": "Create Template",
+    "templateHint": "Templates will be visible to your team",
+    "moderationInfo": "Templates from SuperAdmins awaiting approval"
+  },
+  
+  "referrals": {
+    "title": "Referral Network",
+    "copyLink": "Copy Link",
+    "refresh": "Refresh",
+    "stats": {
+      "total": "Total Referrals",
+      "viral": "Viral Marketing",
+      "active": "Active (in GW)",
+      "month": "This Month"
+    },
+    "yourLink": "Your Referral Link",
+    "copy": "Copy",
+    "share": "Share",
+    "shortLink": "Short link:",
+    "restricted": {
+      "title": "Access Restricted",
+      "text": "Referral system available from Partner level (package 3)",
+      "upgradeBtn": "Upgrade Level"
+    },
+    "myReferrals": "My Referrals",
+    "filters": {
+      "allSources": "All Sources",
+      "viral": "Viral Marketing",
+      "registration": "Registration",
+      "fromCard": "From Card",
+      "allLines": "All Lines"
+    },
+    "empty": {
+      "title": "No referrals yet",
+      "text": "Share link or create a card with viral marketing"
+    },
+    "structure": "Team Structure",
+    "legend": {
+      "active": "Active level",
+      "withRefs": "With referrals",
+      "empty": "Empty level"
+    }
+  },
+  
+  "crm": {
+    "title": "CRM System",
+    "subtitle": "GlobalCRM v3.0",
+    "description": "Complete contact management system, sales funnel, tasks and analytics",
+    "openBtn": "Open GlobalCRM",
+    "features": {
+      "contacts": "Contacts",
+      "funnel": "Funnel",
+      "tasks": "Tasks",
+      "analytics": "Analytics",
+      "training": "Training"
+    }
+  },
+  
+  "surveys": {
+    "title": "Viral Surveys",
+    "createBtn": "Create Survey",
+    "templatesBtn": "Templates",
+    "stats": {
+      "total": "Total Surveys",
+      "responses": "Responses",
+      "referrals": "Referrals",
+      "conversion": "Conversion"
+    },
+    "quickstart": {
+      "title": "Create your first viral survey!",
+      "text": "Collect contacts through word of mouth",
+      "createBtn": "Create from scratch",
+      "templateBtn": "Use template"
+    },
+    "howItWorks": {
+      "title": "How viral surveys work",
+      "step1": "Create survey",
+      "step1desc": "Choose a template or create your own",
+      "step2": "Share the link",
+      "step2desc": "Telegram, WhatsApp, email",
+      "step3": "Participant gets a gift",
+      "step3desc": "And invites friends for bonus",
+      "step4": "Viral spread",
+      "step4desc": "Chain continues automatically"
+    }
+  },
+  
+  "wallet": {
+    "title": "Wallet",
+    "connect": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "connected": "Connected",
+    "notConnected": "Not connected"
+  },
+  
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "save": "Save"
+  },
+  
+  "news": {
+    "title": "News & Notifications",
+    "noNews": "No news",
+    "loadError": "Load error"
+  },
+  
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "new": "New",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  
+  "levels": {
+    "0": "Not activated",
+    "1": "Starter",
+    "2": "Contacts",
+    "3": "Partner",
+    "4": "Business",
+    "5": "Marketer",
+    "6": "Mailings",
+    "7": "Studio",
+    "8": "Entrepreneur",
+    "9": "Organizer",
+    "10": "Organizer",
+    "11": "Organizer",
+    "12": "Maximum"
+  },
+  
+  "access": {
+    "locked": "Locked",
+    "unlock": "Activate package",
+    "required": "Required level"
+  },
+  
+  "toast": {
+    "walletConnected": "Wallet connected!",
+    "walletDisconnected": "Wallet disconnected",
+    "linkCopied": "Link copied!",
+    "savedSuccess": "Saved successfully",
+    "deleteConfirm": "Are you sure you want to delete?",
+    "accessDenied": "Access denied",
+    "error": "An error occurred"
+  }
+}
