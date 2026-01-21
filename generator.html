@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+    <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'self'; 
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; 
+                 style-src 'self' 'unsafe-inline'; 
+                 img-src 'self' data: blob: https:;
+                 media-src 'self' data: blob: https:;
+                 connect-src 'self' ws: wss: https:;
+                 frame-src https://www.youtube.com https://embed.tiktok.com https://www.instagram.com;">
+         
+    <meta charset="UTF-8">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CardGift">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title id="pageTitle">CardGift - Digital Card Generator</title>
+    
+    <!-- PWA Meta tags -->
+    <meta name="description" content="Создавайте потрясающие цифровые открытки за секунды!">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="CardGift – Digital Card Generator" id="ogTitle">
+    <meta property="og:description" content="Создавайте потрясающие цифровые открытки за секунды!" id="ogDescription">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CardGift">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/generator.css">
+    
+    <!-- WEB3 Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    
+    <!-- Wallet (config и bridge загружаются в конце body) -->
+    <script src="/js/wallet-state.js?v=2"></script>
+    <script src="/js/wallet.js?v=2"></script>
+    <script src="/js/api.js?v=2"></script>
+    <script src="/js/cardService.js?v=2"></script>
+    
+    <!-- Additional Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <!-- LANGUAGE SWITCHER -->
+    <div class="language-switcher">
+        <button class="lang-btn active" onclick="switchLanguage('en')" id="langEn">EN</button>
+        <button class="lang-btn" onclick="switchLanguage('ru')" id="langRu">RU</button>
+        <button class="lang-btn" onclick="switchLanguage('ua')" id="langUa">UA</button>
+    </div>
+
+    <div class="header">
+        <div class="logo">CardGift</div>
+        <div class="tagline" id="tagline">Create stunning digital cards in seconds!</div>
+
+        <!-- USER PROFILE SECTION -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">👤</span> <span id="yourProfile">Your Profile</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <div style="color: #FFD700; font-weight: bold;">
+                        ID: <span id="currentUserId">Connecting...</span>
+                        <span id="userLevelBadge" class="user-level-badge user-level-0">GUEST</span>
+                    </div>
+                    <div id="userLevel" style="color: #CCC; font-size: 14px;">Guest User</div>
+                    <div id="userCards" style="color: #888; font-size: 12px;">Cards: 0/5</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="showInstructions()" class="btn btn-primary" style="padding: 8px 16px;">
+                        <span id="instructionsBtn">📋 Instructions</span>
+                    </button>
+                    <button onclick="goToDashboard()" class="btn btn-blue" style="padding: 8px 16px;">
+                        <span id="dashboardBtn">📊 Dashboard</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ГОТОВЫЕ ШАБЛОНЫ - ДВЕ КНОПКИ -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">📂</span> <span id="templatesAccess">Готовые шаблоны</span>
+            </div>
+    
+            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <button onclick="openLeaderTemplates()" class="btn btn-primary" style="flex: 1; padding: 15px; font-size: 15px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span style="font-size: 20px;">👔</span>
+                    <span>От лидера</span>
+                </button>
+                <button onclick="openCorporateTemplates()" class="btn btn-primary" style="flex: 1; padding: 15px; font-size: 15px; background: linear-gradient(135deg, #f093fb, #f5576c); border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span style="font-size: 20px;">🏢</span>
+                    <span>Корпоративные</span>
+                </button>
+            </div>
+            
+            <div style="color: #888; font-size: 11px; text-align: center;">
+                Используйте готовые открытки - редактируйте и сохраняйте со СВОЕЙ ссылкой!
+            </div>
+        </div>
+
+        <!-- BLOCKCHAIN CONNECTION -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">🔗</span> <span id="blockchainConnection">Blockchain Connection</span>
+            </div>
+            <div id="walletSection">
+                <button id="walletConnectBtn" onclick="connectWallet()" class="connect-wallet-btn">
+                    <span id="connectSafePalWallet">🔗 Connect SafePal Wallet</span>
+                </button>
+                <div id="walletStatus"></div>
+                <div id="networkStatus" style="margin-top: 10px; font-size: 12px; text-align: center; color: #888;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INSTRUCTIONS MODAL -->
+    <div id="instructionsModal" class="instructions-modal">
+        <div class="instructions-content">
+            <div class="instructions-header">📋 <span id="instructionsTitle">Руководство CardGift</span></div>
+            
+            <div class="instructions-body">
+                <h3>🚀 <span id="quickStartTitle">Быстрый старт</span></h3>
+                
+                <div class="instruction-block">
+                    <strong>1. 📸 <span id="addPhotoTitle">Добавление фото</span></strong>
+                    <ul class="instructions-list">
+                        <li id="instruction1">Нажмите на область '📸 Фото'</li>
+                        <li id="instruction2">Выберите изображение с устройства</li>
+                        <li id="instruction3"><em>Важно: Используйте вертикальные фото для мобильных (пропорции 9:16)</em></li>
+                        <li id="instruction4"><em>Избегайте: Горизонтальные фото — они плохо смотрятся на мобильных открытках</em></li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-block">
+                    <strong>2. ✍️ <span id="addTextTitle">Добавление текста</span></strong>
+                    <ul class="instructions-list">
+                        <li id="instruction5">Введите поздравление в поле текста</li>
+                        <li id="instruction6">Добавьте персональное сообщение (появляется по таймеру)</li>
+                        <li id="instruction7">Можете использовать эмодзи 🎉💕🎂</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-block">
+                    <strong>3. ⏱️ <span id="timersTitle">Настройка таймеров</span></strong>
+                    <ul class="instructions-list">
+                        <li id="instruction8">Таймер личного сообщения: Когда появляется персональный текст (1–30 сек)</li>
+                        <li id="instruction9">Таймер кнопки предложения: Когда показывается кнопка 'Получить генератор' (1–60 сек)</li>
+                        <li id="instruction10">Таймер баннера: Когда появляется рекламный баннер (если включен)</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-block">
+                    <strong>4. 📍 <span id="positionTitle">Позиционирование кнопки</span></strong>
+                    <ul class="instructions-list">
+                        <li id="instruction11">Выберите из 9 позиций для кнопки 'Понравилась открытка?'</li>
+                        <li id="instruction12">Избегайте позиций, которые закрывают важный контент</li>
+                        <li id="instruction13">Кнопка составляет 1/3 ширины экрана для аккуратного вида</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-block">
+                    <strong>5. 🎨 <span id="styleTitle">Выбор стиля</span></strong>
+                    <ul class="instructions-list">
+                        <li>✨ Золото (классический)</li>
+                        <li>🌅 Закат (романтичный)</li>
+                        <li>🌊 Океан (свежий)</li>
+                        <li>🌌 Космос (современный)</li>
+                    </ul>
+                </div>
+                
+                <h3>📢 <span id="extraFeaturesTitle">Дополнительные функции</span></h3>
+                <ul class="instructions-list">
+                    <li id="instruction14">🎨 Демо-шаблоны: Готовые тексты для разных случаев. Отлично подходят для вдохновения.</li>
+                    <li id="instruction15">📢 Рекламный баннер: Добавьте HTML-код для своего баннера. Идеально для рекламы бизнеса или мероприятий.</li>
+                    <li id="instruction16">🔗 Реферальная система: Ваш уникальный 7-значный ID. Делитесь реферальной ссылкой.</li>
+                </ul>
+                
+                <h3>🎯 <span id="mobileOptTitle">Советы для мобильной оптимизации</span></h3>
+                <div id="photoFormatsTitle"><strong>Лучшие форматы фото:</strong></div>
+                <ul class="instructions-list">
+                    <li id="instruction17">Вертикальные фото → идеальны для мобильных открыток</li>
+                    <li id="instruction18">Квадратные фото → покажутся с фоном</li>
+                    <li id="instruction19">Избегайте горизонтальных → плохо работают на мобильных</li>
+                </ul>
+                
+                <div class="instruction-important">
+                    📱 <span id="mainRule">Главное правило: Всегда думайте о мобильных! Ваши открытки будут просматривать на телефонах.</span> ✨
+                </div>
+                
+                <h3>🚀 <span id="viralMarketingTitle">Viral Marketing - Ready Templates</span></h3>
+                
+                <div class="instruction-block" style="background: rgba(255, 215, 0, 0.1); padding: 15px; border-radius: 10px; border-left: 4px solid #FFD700; margin-bottom: 20px;">
+                    <strong style="color: #FFD700;">📂 Use ready-made cards!</strong>
+                    <p style="margin: 10px 0 0 0; color: #CCC; line-height: 1.6;">
+                        No need to create cards from scratch! Use ready templates marked by team members or corporate cards.
+                    </p>
+                </div>
+                
+                <div class="instruction-block">
+                    <strong>📂 How to use ready templates:</strong>
+                    <ul class="instructions-list">
+                        <li><strong>Open templates:</strong> Click "📂 Open Ready Templates" button at the top</li>
+                        <li><strong>Choose card:</strong> Browse templates with badges:
+                            <ul style="margin-top: 5px;">
+                                <li>📋 <strong>TEMPLATE</strong> - Regular team templates</li>
+                                <li>🏢 <strong>CORPORATE</strong> - Official company templates</li>
+                            </ul>
+                        </li>
+                        <li><strong>Click to load:</strong> Card loads into generator with all settings</li>
+                        <li><strong>Edit if needed:</strong> Change text, photo, or keep as is</li>
+                        <li><strong>Save:</strong> YOUR referral link is automatically inserted! 🎯</li>
+                        <li><strong>Share:</strong> Send to friends - they get YOUR link!</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-block" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.05) 100%); padding: 15px; border-radius: 10px; border: 2px solid #4CAF50;">
+                    <strong style="color: #4CAF50; font-size: 16px;">🎯 How viral marketing works:</strong>
+                    <ol style="margin: 10px 0 0 20px; color: #CCC; line-height: 1.8;">
+                        <li>Take a ready template (from team or corporate)</li>
+                        <li>Edit to your needs (or keep as is)</li>
+                        <li>Save → YOUR referral link is auto-inserted</li>
+                        <li>Send to friends/clients via messengers</li>
+                        <li>They receive beautiful card with YOUR link!</li>
+                        <li>They click → Register via YOUR link</li>
+                        <li>You get referrals → They take your cards too</li>
+                        <li><strong style="color: #FFD700;">Chain grows exponentially! 🚀</strong></li>
+                    </ol>
+                </div>
+                
+                <div class="instruction-important" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%); border-color: #FFD700;">
+                    💡 <strong>Tip:</strong> Beginners should use ready templates! They are tested and work well. Create your own later. ✨
+                </div>
+            </div>
+            
+            <button class="close-instructions" onclick="hideInstructions()" id="closeInstructionsBtn">Close</button>
+        </div>
+    </div>
+
+    <!-- MEDIA UPLOAD -->
+    <div class="section">
+        <div class="section-header">
+            <span class="icon">📷</span> <span id="media">Photo/Video</span>
+        </div>
+
+        <label for="mediaUpload" class="media-upload">
+            <div class="media-upload-icon">📷</div>
+            <div class="media-upload-text" id="uploadMedia">Click to upload photo or video</div>
+            <div class="media-upload-subtext" id="uploadRecommendation">Recommended: vertical format (9:16)</div>
+            <input type="file" id="mediaUpload" style="display: none;" accept="image/*,video/*" onchange="handleMediaUpload(event)">
+        </label>
+
+        <div id="mediaPreview"></div>
+
+        <div id="orInsertVideo" style="margin-top: 15px; color: #CCC; font-weight: bold;">Or insert video URL:</div>
+        <input type="text" id="videoUrl" class="input-field" placeholder="YouTube, TikTok, Instagram Reels URL..." oninput="onVideoUrlChange()">
+
+        <!-- Загрузка обложки видео -->
+        <div id="videoThumbnailSection" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255,215,0,0.1); border: 1px dashed #FFD700; border-radius: 10px;">
+            <div style="color: #FFD700; font-weight: bold; margin-bottom: 10px;">
+                🖼️ <span id="thumbnailLabel">Обложка видео (необязательно)</span>
+            </div>
+            <div style="color: #AAA; font-size: 12px; margin-bottom: 10px;" id="thumbnailHint">
+                Загрузите свою картинку для превью в мессенджерах. Если не загрузите — будет использована автоматическая обложка из видео.
+            </div>
+            <label class="media-upload-area" style="min-height: 80px; cursor: pointer;" for="thumbnailUpload">
+                <div id="thumbnailPreview" style="display: none;"></div>
+                <div id="thumbnailPlaceholder">
+                    <div style="font-size: 24px;">📷</div>
+                    <div style="color: #CCC; font-size: 13px;">Нажмите для загрузки обложки</div>
+                    <div style="color: #888; font-size: 11px;">Рекомендуемый размер: 1200×630 px</div>
+                </div>
+                <input type="file" id="thumbnailUpload" style="display: none;" accept="image/*" onchange="handleThumbnailUpload(event)">
+            </label>
+            <button id="removeThumbnailBtn" style="display: none; margin-top: 10px; background: #ff4444; color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 12px;" onclick="removeThumbnail()">
+                ✕ Удалить обложку
+            </button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: center; flex-wrap: wrap;">
+            <span style="background: #FF0000; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">📺 YouTube</span>
+            <span style="background: #FF0050; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">🎵 TikTok</span>
+            <span style="background: #E4405F; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">📷 Instagram</span>
+        </div>
+    </div>
+
+    <!-- TEXT EDITOR -->
+    <div class="section" id="text" style="display: block !important; visibility: visible !important;">
+        <div class="section-header">
+            <span class="icon">✏️</span> <span id="textLabel">Текст</span>
+        </div>
+
+        <div class="text-editor" style="display: flex !important; flex-direction: column !important; gap: 15px !important;">
+            <textarea id="greetingText" placeholder="Введите ваше поздравление здесь..." class="input-field" style="display: block !important; width: 100% !important; min-height: 120px !important; background-color: #333 !important; border: 2px solid #FFD700 !important; color: #FFF !important; padding: 15px !important; border-radius: 10px !important; font-size: 16px !important; box-sizing: border-box !important;"></textarea>
+
+            <div class="text-controls" style="display: flex !important; flex-wrap: wrap !important; gap: 15px !important; margin-top: 10px !important;">
+                <button class="emoji-btn" onclick="toggleEmojiPicker()" style="background: linear-gradient(45deg, #FFD700, #FFA500) !important; color: #000 !important; border: none !important; border-radius: 30px !important; padding: 12px 20px !important; font-weight: bold !important; cursor: pointer !important;">
+                    😊 Добавить эмодзи
+                </button>
+                
+                <div class="text-position">
+                    <span>📍 <span id="textPosition">Text Position</span></span>
+                    <div class="position-grid">
+                        <button class="position-btn" data-position="topLeft" onclick="setTextPosition('topLeft')">↖</button>
+                        <button class="position-btn" data-position="top" onclick="setTextPosition('top')">↑</button>
+                        <button class="position-btn" data-position="topRight" onclick="setTextPosition('topRight')">↗</button>
+                        <button class="position-btn" data-position="left" onclick="setTextPosition('left')">←</button>
+                        <button class="position-btn" data-position="center" onclick="setTextPosition('center')">•</button>
+                        <button class="position-btn" data-position="right" onclick="setTextPosition('right')">→</button>
+                        <button class="position-btn" data-position="bottomLeft" onclick="setTextPosition('bottomLeft')">↙</button>
+                        <button class="position-btn active" data-position="bottom" onclick="setTextPosition('bottom')">↓</button>
+                        <button class="position-btn" data-position="bottomRight" onclick="setTextPosition('bottomRight')">↘</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="emojiPicker" class="emoji-picker">
+                <div class="emoji-categories">
+                    <button data-category="smileys" class="active" onclick="loadEmojis('smileys')">😊</button>
+                    <button data-category="animals" onclick="loadEmojis('animals')">🐶</button>
+                    <button data-category="food" onclick="loadEmojis('food')">🍔</button>
+                    <button data-category="travel" onclick="loadEmojis('travel')">✈️</button>
+                    <button data-category="activities" onclick="loadEmojis('activities')">⚽</button>
+                    <button data-category="objects" onclick="loadEmojis('objects')">💡</button>
+                    <button data-category="symbols" onclick="loadEmojis('symbols')">❤️</button>
+                    <button data-category="flags" onclick="loadEmojis('flags')">🏁</button>
+                </div>
+                <div class="emoji-container"></div>
+            </div>
+        </div>
+
+        <div class="template-options">
+            <div id="useTemplate">Use template:</div>
+            <button class="template-btn" onclick="useTemplate('birthday')">🎂 <span id="birthday">Birthday</span></button>
+            <button class="template-btn" onclick="useTemplate('newyear')">🎄 <span id="newyear">New Year</span></button>
+            <button class="template-btn" onclick="useTemplate('love')">💕 <span id="love">Love</span></button>
+            <button class="template-btn" onclick="useTemplate('thanks')">🙏 <span id="thanks">Thanks</span></button>
+            <button class="template-btn" onclick="useTemplate('congrats')">🎉 <span id="congrats">Congrats</span></button>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <button onclick="showInstructions()" class="btn btn-blue" style="margin-right: 10px;">
+                📋 <span id="instructions">Instructions</span>
+            </button>
+            <button onclick="showPreview()" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2); color: white; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer;">
+                👁️ <span id="preview">Preview</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- STYLE SELECTION -->
+    <div class="section">
+        <div class="section-header">
+            <span class="icon">🎨</span> <span id="style">Style</span>
+        </div>
+
+        <div class="style-options">
+            <div class="style-option active" data-style="classic" onclick="selectStyle('classic')">
+                <div class="style-icon">✨</div>
+                <div class="style-name" id="classic">Classic</div>
+            </div>
+            <div class="style-option" data-style="sunset" onclick="selectStyle('sunset')">
+                <div class="style-icon">🌅</div>
+                <div class="style-name" id="sunset">Sunset</div>
+            </div>
+            <div class="style-option" data-style="ocean" onclick="selectStyle('ocean')">
+                <div class="style-icon">🌊</div>
+                <div class="style-name" id="ocean">Ocean</div>
+            </div>
+            <div class="style-option" data-style="space" onclick="selectStyle('space')">
+                <div class="style-icon">🌌</div>
+                <div class="style-name" id="space">Space</div>
+            </div>
+            <div class="style-option" data-style="neon" onclick="selectStyle('neon')">
+                <div class="style-icon">💫</div>
+                <div class="style-name" id="neon">Neon</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADVANCED SETTINGS -->
+    <div class="section">
+        <div class="section-header">
+            <span class="icon">⚙️</span> <span id="advancedSettings">Advanced Settings</span>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-label" id="callToAction">Call to Action</div>
+            <input type="checkbox" id="ctaToggle" checked onchange="toggleCTA()">
+        </div>
+
+        <div id="ctaSettings">
+            <input type="text" id="ctaTitle" class="input-field" placeholder="Like this card?">
+            <input type="text" id="ctaButton" class="input-field" placeholder="Get Card Generator">
+            <input type="text" id="ctaUrl" class="input-field" placeholder="URL">
+
+            <div class="text-position">
+                <span id="buttonPosition">Button Position:</span>
+                <div class="position-grid">
+                    <button class="position-btn" data-position="topLeft" onclick="setCTAPosition('topLeft')">↖</button>
+                    <button class="position-btn" data-position="top" onclick="setCTAPosition('top')">↑</button>
+                    <button class="position-btn" data-position="topRight" onclick="setCTAPosition('topRight')">↗</button>
+                    <button class="position-btn" data-position="left" onclick="setCTAPosition('left')">←</button>
+                    <button class="position-btn" data-position="center" onclick="setCTAPosition('center')">•</button>
+                    <button class="position-btn" data-position="right" onclick="setCTAPosition('right')">→</button>
+                    <button class="position-btn" data-position="bottomLeft" onclick="setCTAPosition('bottomLeft')">↙</button>
+                    <button class="position-btn active" data-position="bottom" onclick="setCTAPosition('bottom')">↓</button>
+                    <button class="position-btn" data-position="bottomRight" onclick="setCTAPosition('bottomRight')">↘</button>
+                </div>
+            </div>
+            
+            <div class="timer-input">
+                <div class="timer-label" id="messageTimer">Message show delay:</div>
+                <input type="number" id="messageTimerInput" class="timer-field" value="0" min="0" max="10">
+                <div class="timer-suffix" id="seconds">seconds</div>
+            </div>
+            
+            <div class="timer-input">
+                <div class="timer-label" id="buttonTimer">Button show delay:</div>
+                <input type="number" id="buttonTimerInput" class="timer-field" value="3" min="0" max="10">
+                <div class="timer-suffix">seconds</div>
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-label" id="marqueeText">Running Text</div>
+            <input type="checkbox" id="marqueeToggle" onchange="toggleMarquee()">
+        </div>
+
+        <div id="marqueeSettings" style="display: none;">
+            <input type="text" id="marqueeTextInput" class="input-field" placeholder="Your running text...">
+            <input type="text" id="marqueeUrl" class="input-field" placeholder="URL">
+            
+            <div class="timer-input">
+                <div class="timer-label" id="marqueeTimer">Show running text after:</div>
+                <input type="number" id="marqueeTimerInput" class="timer-field" value="7" min="0" max="15">
+                <div class="timer-suffix">seconds</div>
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-label" id="banner">Banner</div>
+            <input type="checkbox" id="bannerToggle" onchange="toggleBanner()">
+        </div>
+
+        <div id="bannerSettings" style="display: none;">
+            <textarea id="bannerHtml" class="input-field" placeholder="<div>Your HTML Banner Code</div>"></textarea>
+            <input type="text" id="bannerUrl" class="input-field" placeholder="URL">
+            
+            <div class="timer-input">
+                <div class="timer-label" id="bannerTimer">Show the banner after:</div>
+                <input type="number" id="bannerTimerInput" class="timer-field" value="5" min="0" max="10">
+                <div class="timer-suffix">seconds</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================
+     BONUS OFFER SECTION для generator.html
+     Добавить после секции BANNER или перед кнопкой CREATE CARD
+     ===================================================== -->
+
+<!-- BONUS OFFER / VIRAL MECHANICS -->
+<div class="section" id="bonusOfferSection">
+    <div class="section-header">
+        <span class="icon">🎁</span> <span id="bonusOfferTitle">Бонусное предложение (вирусный маркетинг)</span>
+    </div>
+    
+    <div style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+        <div style="color: #FFD700; font-size: 14px; margin-bottom: 10px;">
+            💡 <strong>Как это работает:</strong>
+        </div>
+        <div style="color: #CCC; font-size: 13px; line-height: 1.6;">
+            Когда получатель попытается закрыть открытку — появится popup с вашим бонусным предложением.
+            Чтобы получить бонус, ему нужно поделиться открыткой с друзьями и оставить контакт.
+            Вы получите новых потенциальных клиентов! 🚀
+        </div>
+    </div>
+    
+    <!-- Включить/выключить -->
+    <label class="toggle-container" style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 20px;">
+        <input type="checkbox" id="bonusEnabled" style="width: 20px; height: 20px; accent-color: #FFD700;">
+        <span style="color: #FFF; font-size: 15px;">Включить exit-popup с подарком</span>
+    </label>
+    
+    <!-- Контент бонуса (скрыт по умолчанию) -->
+    <div id="bonusOfferContent" style="display: none;">
+        
+        <!-- Выбор типа: картинка или текст -->
+        <div style="margin-bottom: 20px;">
+            <div style="color: #CCC; margin-bottom: 10px;">Тип popup:</div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="bonus-type-btn active" data-type="image" onclick="setBonusType('image')" style="flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #FFD700; background: rgba(255,215,0,0.2); color: #FFD700; cursor: pointer; font-weight: bold;">
+                    🖼️ Картинка
+                </button>
+                <button type="button" class="bonus-type-btn" data-type="text" onclick="setBonusType('text')" style="flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #444; background: transparent; color: #888; cursor: pointer; font-weight: bold;">
+                    ✏️ Текст
+                </button>
+            </div>
+        </div>
+        
+        <!-- Загрузка картинки -->
+        <div id="bonusImageSection" style="margin-bottom: 20px;">
+            <div style="color: #FFD700; font-weight: bold; margin-bottom: 10px;">
+                🖼️ Картинка для popup (квадратная)
+            </div>
+            <div style="color: #AAA; font-size: 12px; margin-bottom: 10px;">
+                Загрузите готовую картинку с текстом предложения или сгенерируйте в AI Studio.
+                Рекомендуемый размер: 800×800 px
+            </div>
+            <label class="media-upload-area" style="min-height: 150px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed #FFD700; border-radius: 15px; background: rgba(255,215,0,0.05);" for="bonusImageUpload">
+                <div id="bonusImagePreview" style="display: none; width: 100%; max-width: 300px;">
+                    <img id="bonusImagePreviewImg" style="width: 100%; border-radius: 10px;">
+                </div>
+                <div id="bonusImagePlaceholder">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🎁</div>
+                    <div style="color: #FFD700; font-size: 14px;">Нажмите для загрузки</div>
+                    <div style="color: #888; font-size: 12px; margin-top: 5px;">или перетащите файл сюда</div>
+                </div>
+                <input type="file" id="bonusImageUpload" style="display: none;" accept="image/*" onchange="handleBonusImageUpload(event)">
+            </label>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button type="button" id="removeBonusImageBtn" style="display: none; flex: 1; background: #ff4444; color: white; border: none; padding: 10px; border-radius: 20px; cursor: pointer; font-size: 13px;" onclick="removeBonusImage()">
+                    ✕ Удалить картинку
+                </button>
+                <button type="button" style="flex: 1; background: linear-gradient(45deg, #9C27B0, #7B1FA2); color: white; border: none; padding: 10px; border-radius: 20px; cursor: pointer; font-size: 13px;" onclick="window.open('/ai-studio.html', '_blank')">
+                    🤖 Создать в AI Studio
+                </button>
+            </div>
+        </div>
+        
+        <!-- Текстовый popup (альтернатива картинке) -->
+        <div id="bonusTextSection" style="display: none; margin-bottom: 20px;">
+            <div style="color: #FFD700; font-weight: bold; margin-bottom: 10px;">
+                ✏️ Текст popup
+            </div>
+            <input type="text" id="bonusTitle" class="input-field" placeholder="Заголовок: Не спеши закрывать! 🎁" style="margin-bottom: 10px;">
+            <textarea id="bonusText" class="input-field" placeholder="Текст предложения: У меня для тебя подарок! Получи скидку 10%..." style="min-height: 80px;"></textarea>
+        </div>
+        
+        <!-- Текст кнопки -->
+        <div style="margin-bottom: 20px;">
+            <div style="color: #CCC; margin-bottom: 8px;">Текст кнопки "Получить":</div>
+            <input type="text" id="bonusButtonText" class="input-field" placeholder="Получить подарок" value="🎁 Получить подарок">
+        </div>
+        
+        <!-- Количество друзей для шеринга -->
+        <div style="margin-bottom: 20px;">
+            <div style="color: #CCC; margin-bottom: 8px;">Сколько друзей нужно пригласить:</div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <input type="range" id="bonusRequiredSlider" min="1" max="10" value="5" style="flex: 1; accent-color: #FFD700;" oninput="updateBonusRequiredDisplay()">
+                <span id="bonusRequiredDisplay" style="color: #FFD700; font-size: 24px; font-weight: bold; min-width: 40px; text-align: center;">5</span>
+            </div>
+            <div style="color: #888; font-size: 12px; margin-top: 5px;">
+                Рекомендуем 3-5 для лучшей конверсии
+            </div>
+        </div>
+        
+        <!-- Ссылка для связи (опционально) -->
+        <div style="margin-bottom: 20px;">
+            <div style="color: #CCC; margin-bottom: 8px;">Ссылка для связи с вами (опционально):</div>
+            <input type="text" id="bonusContactLink" class="input-field" placeholder="https://t.me/your_username">
+            <div style="color: #888; font-size: 12px; margin-top: 5px;">
+                Telegram, WhatsApp, или любая другая ссылка. Появится кнопка "Написать" в прощальном popup.
+            </div>
+        </div>
+        
+        <!-- Превью -->
+        <div style="margin-top: 20px;">
+            <button type="button" onclick="previewBonusPopup()" style="width: 100%; background: linear-gradient(45deg, #FF9800, #FF5722); color: white; border: none; padding: 14px; border-radius: 25px; cursor: pointer; font-size: 15px; font-weight: bold;">
+                👁️ Предпросмотр popup
+            </button>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+// ===== BONUS OFFER LOGIC =====
+
+let bonusImageData = null;
+let bonusType = 'image';
+
+// Переключение включения бонуса
+document.getElementById('bonusEnabled')?.addEventListener('change', function() {
+    const content = document.getElementById('bonusOfferContent');
+    if (content) {
+        content.style.display = this.checked ? 'block' : 'none';
+    }
+});
+
+// Выбор типа popup
+function setBonusType(type) {
+    bonusType = type;
+    
+    // Обновляем кнопки
+    document.querySelectorAll('.bonus-type-btn').forEach(btn => {
+        if (btn.dataset.type === type) {
+            btn.style.border = '2px solid #FFD700';
+            btn.style.background = 'rgba(255,215,0,0.2)';
+            btn.style.color = '#FFD700';
+            btn.classList.add('active');
+        } else {
+            btn.style.border = '2px solid #444';
+            btn.style.background = 'transparent';
+            btn.style.color = '#888';
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Показываем/скрываем секции
+    document.getElementById('bonusImageSection').style.display = type === 'image' ? 'block' : 'none';
+    document.getElementById('bonusTextSection').style.display = type === 'text' ? 'block' : 'none';
+}
+
+// Загрузка картинки бонуса
+function handleBonusImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        bonusImageData = e.target.result;
+        
+        // Показываем превью
+        const preview = document.getElementById('bonusImagePreview');
+        const previewImg = document.getElementById('bonusImagePreviewImg');
+        const placeholder = document.getElementById('bonusImagePlaceholder');
+        const removeBtn = document.getElementById('removeBonusImageBtn');
+        
+        previewImg.src = bonusImageData;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+        removeBtn.style.display = 'block';
+        
+        console.log('🖼️ Bonus image loaded');
+    };
+    reader.readAsDataURL(file);
+}
+
+// Удаление картинки бонуса
+function removeBonusImage() {
+    bonusImageData = null;
+    document.getElementById('bonusImageUpload').value = '';
+    document.getElementById('bonusImagePreview').style.display = 'none';
+    document.getElementById('bonusImagePlaceholder').style.display = 'flex';
+    document.getElementById('removeBonusImageBtn').style.display = 'none';
+}
+
+// Обновление отображения количества друзей
+function updateBonusRequiredDisplay() {
+    const slider = document.getElementById('bonusRequiredSlider');
+    const display = document.getElementById('bonusRequiredDisplay');
+    if (slider && display) {
+        display.textContent = slider.value;
+    }
+}
+
+// Получение данных бонуса для cardData
+function getBonusOfferData() {
+    const enabled = document.getElementById('bonusEnabled')?.checked || false;
+    
+    if (!enabled) {
+        return { bonusEnabled: false };
+    }
+    
+    return {
+        bonusEnabled: true,
+        bonusType: bonusType,
+        bonusImage: bonusType === 'image' ? bonusImageData : null,
+        bonusTitle: document.getElementById('bonusTitle')?.value || '🎁 Не спеши закрывать!',
+        bonusText: document.getElementById('bonusText')?.value || 'У меня для тебя подарок!',
+        bonusButtonText: document.getElementById('bonusButtonText')?.value || '🎁 Получить подарок',
+        bonusRequired: parseInt(document.getElementById('bonusRequiredSlider')?.value) || 5,
+        bonusContactLink: document.getElementById('bonusContactLink')?.value || null
+    };
+}
+
+// Предпросмотр popup
+function previewBonusPopup() {
+    const data = getBonusOfferData();
+    
+    // Создаём превью overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+    
+    const popup = document.createElement('div');
+    popup.style.cssText = `
+        background: linear-gradient(145deg, #1a1a2e, #16213e);
+        border-radius: 24px;
+        max-width: 350px;
+        width: 90%;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,215,0,0.2);
+    `;
+    
+    if (data.bonusType === 'image' && data.bonusImage) {
+        popup.innerHTML = `
+            <img src="${data.bonusImage}" style="width: 100%; display: block;">
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <button style="padding: 14px; border-radius: 25px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; font-weight: bold; border: none; font-size: 15px;">
+                    ${data.bonusButtonText}
+                </button>
+                <button style="padding: 12px; border-radius: 25px; background: transparent; color: #888; border: 1px solid #444; font-size: 14px;">
+                    Закрыть
+                </button>
+            </div>
+        `;
+    } else {
+        popup.innerHTML = `
+            <div style="padding: 30px; text-align: center;">
+                <div style="font-size: 64px; margin-bottom: 15px;">🎁</div>
+                <div style="color: #FFD700; font-size: 22px; font-weight: bold; margin-bottom: 10px;">${data.bonusTitle}</div>
+                <div style="color: #CCC; font-size: 15px; line-height: 1.5; margin-bottom: 20px;">${data.bonusText}</div>
+            </div>
+            <div style="padding: 20px; background: rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 10px;">
+                <button style="padding: 14px; border-radius: 25px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; font-weight: bold; border: none; font-size: 15px;">
+                    ${data.bonusButtonText}
+                </button>
+                <button style="padding: 12px; border-radius: 25px; background: transparent; color: #888; border: 1px solid #444; font-size: 14px;">
+                    Закрыть
+                </button>
+            </div>
+        `;
+    }
+    
+    overlay.appendChild(popup);
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    };
+    
+    // Добавляем инструкцию
+    const hint = document.createElement('div');
+    hint.style.cssText = 'position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: #888; font-size: 13px;';
+    hint.textContent = 'Нажмите вне popup чтобы закрыть';
+    overlay.appendChild(hint);
+    
+    document.body.appendChild(overlay);
+}
+
+// Экспорт функций
+window.setBonusType = setBonusType;
+window.handleBonusImageUpload = handleBonusImageUpload;
+window.removeBonusImage = removeBonusImage;
+window.updateBonusRequiredDisplay = updateBonusRequiredDisplay;
+window.getBonusOfferData = getBonusOfferData;
+window.previewBonusPopup = previewBonusPopup;
+</script>
+
+    <!-- CREATE BUTTON -->
+    <button class="create-btn" id="createCardBtn" onclick="createCard()">
+        <span id="createCard">Create Card</span>
+    </button>
+
+    <!-- PREVIEW MODAL -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closePreview()">×</button>
+            <h2 class="modal-title">Card Preview</h2>
+            <div id="previewContainer" class="preview-container">
+                <span style="color: #666;" id="previewHere">Preview will be here</span>
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button onclick="closePreview()" style="flex: 1; background: #666; color: white; border: none; border-radius: 8px; padding: 10px;">✏️ <span id="edit">Edit</span></button>
+                <button onclick="createCard(); closePreview();" style="flex: 1; background: linear-gradient(45deg, #43A047, #2E7D32); color: white; border: none; border-radius: 8px; padding: 10px;">✅ <span id="create">Create</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADER -->
+    <div id="loaderOverlay" class="loader-overlay">
+        <div class="loader"></div>
+        <div id="creating">Creating your card...</div>
+    </div>
+
+    <!-- RENDER CANVAS -->
+    <canvas id="renderCanvas"></canvas>
+
+<!-- NOTIFICATION CONTAINER -->
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <!-- MODAL: TEMPLATES -->
+    <div id="templatesModal" class="templates-modal">
+        <div class="modal-overlay" onclick="closeTemplates()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📂 <span id="templatesModalTitle">Ready Templates</span></h2>
+                <button class="modal-close" onclick="closeTemplates()">✕</button>
+            </div>
+            <div class="modal-body" id="templatesList">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Scripts -->
+    <script src="/js/config.js?v=3"></script>
+    <script src="/js/supabase.js?v=3"></script>
+    <script src="/js/globalway-bridge.js?v=3"></script>
+    <script src="/js/id-linking-service.js?v=3"></script>
+    <script src="/js/common.js?v=3"></script>
+    <script src="/js/generator.js?v=3"></script>
+    <script src="/js/cloudinary.js?v=3"></script>
+    
+    <!-- Service Worker -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ SW registered'))
+                .catch(err => console.log('SW error:', err));
+        });
+    }
+</script>
+</body>
+</html>
