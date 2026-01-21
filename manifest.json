@@ -1,65 +1,83 @@
 {
+  "id": "/",
   "name": "CardGift - Цифровые открытки",
   "short_name": "CardGift",
-  "description": "Создавайте и отправляйте красивые цифровые открытки",
-  "start_url": "/generator.html",
+  "description": "Создавайте и отправляйте красивые цифровые открытки с вирусным маркетингом",
+  "version": "2.0.0",
+  "start_url": "/dashboard.html",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#0a0a1a",
   "theme_color": "#FFD700",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "ru",
-  "categories": ["lifestyle", "social", "utilities"],
+  "dir": "ltr",
+  "categories": ["business", "lifestyle", "social", "utilities"],
+  
   "icons": [
     {
       "src": "/icons/icon-72.png",
       "sizes": "72x72",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-152.png",
       "sizes": "152x152",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
+  
   "shortcuts": [
     {
       "name": "Создать открытку",
@@ -69,12 +87,68 @@
       "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
     },
     {
+      "name": "Личный кабинет",
+      "short_name": "Кабинет",
+      "description": "Перейти в личный кабинет",
+      "url": "/dashboard.html",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
       "name": "Мой архив",
       "short_name": "Архив",
       "description": "Посмотреть сохранённые открытки",
       "url": "/dashboard.html#archive",
       "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "AI Студия",
+      "short_name": "AI",
+      "description": "Генерация контента с AI",
+      "url": "/ai-studio.html",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
     }
   ],
-  "prefer_related_applications": false
+  
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "CardGift - Главный экран"
+    }
+  ],
+  
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  
+  "handle_links": "preferred",
+  "prefer_related_applications": false,
+  
+  "related_applications": [],
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+cardgift",
+      "url": "/card-viewer.html?code=%s"
+    }
+  ],
+  
+  "share_target": {
+    "action": "/generator.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "image",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  }
 }
