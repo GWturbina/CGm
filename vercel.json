@@ -1,0 +1,70 @@
+{
+  "rewrites": [
+    {
+      "source": "/crm",
+      "destination": "/crm.html"
+    },
+    {
+      "source": "/survey",
+      "destination": "/survey.html"
+    },
+    {
+      "source": "/c/:code",
+      "destination": "/api/c/:code"
+    },
+    {
+      "source": "/c/:code*",
+      "destination": "/api/c/:code*"
+    },
+    {
+      "source": "/s/:id",
+      "destination": "/api/s/:id"
+    },
+    {
+      "source": "/r/:id",
+      "destination": "/api/r/:id"
+    },
+    {
+      "source": "/b/:username",
+      "destination": "/api/b/:username"
+    },
+    {
+      "source": "/p/:id",
+      "destination": "/api/p/:id"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" }
+      ]
+    },
+    {
+      "source": "/c/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/s/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300" }
+      ]
+    },
+    {
+      "source": "/p/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300" }
+      ]
+    },
+    {
+      "source": "/studio.html",
+      "headers": [
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }
+      ]
+    }
+  ]
+}
