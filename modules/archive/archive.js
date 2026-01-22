@@ -25,14 +25,10 @@ let leaderTemplates = [];
 // currentArchiveTab объявлена в modules-fix.js
 // cards объявлена в modules-fix.js
 let templateFilter = null; // Фильтр шаблонов
-const walletAddress = window.walletAddress || localStorage.getItem('walletAddress') || null;
+// walletAddress используем из window.walletAddress или localStorage
 
-// Fallback функции если common.js не загружен
-const escapeHtml = window.escapeHtml || function(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-};
-const showToast = window.showToast || function(msg, type) { console.log(type + ':', msg); };
+// Используем глобальные функции из common.js
+// escapeHtml и showToast уже определены там
 
 console.log('📁 Archive.js globals defined OK');
 
@@ -52,8 +48,9 @@ async function loadCards() {
     
     const cleanGwId = gwId ? gwId.toString().replace('GW', '') : null;
     const gwIdWithPrefix = gwId ? (gwId.toString().startsWith('GW') ? gwId : 'GW' + gwId) : null;
+    const walletAddr = window.walletAddress || localStorage.getItem('walletAddress') || null;
     
-    console.log('🔍 User IDs for cards:', { gwId, cleanGwId, gwIdWithPrefix, walletAddress });
+    console.log('🔍 User IDs for cards:', { gwId, cleanGwId, gwIdWithPrefix, walletAddr });
     
     // Способ 1: Пробуем загрузить из Supabase напрямую
     if (window.SupabaseClient && SupabaseClient.client) {
@@ -101,8 +98,8 @@ async function loadCards() {
             }
             
             // Способ 2: Через getUserByWallet
-            if (walletAddress && walletAddress !== '0xAUTHOR_MODE' && SupabaseClient.getUserByWallet) {
-                const user = await SupabaseClient.getUserByWallet(walletAddress);
+            if (walletAddr && walletAddr !== '0xAUTHOR_MODE' && SupabaseClient.getUserByWallet) {
+                const user = await SupabaseClient.getUserByWallet(walletAddr);
                 if (user && user.gw_id) {
                     const userId = user.gw_id.toString();
                     const userIdWithGW = userId.startsWith('GW') ? userId : 'GW' + userId;
@@ -1305,4 +1302,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v10 loaded - NO DUPLICATE VARS');
+console.log('📁 Archive Module v11 loaded - CLEAN');
