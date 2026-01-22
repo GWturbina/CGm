@@ -6,6 +6,105 @@
    Этот файл должен загружаться ПОСЛЕ config.js
    ===================================================== */
 
+// ===== УТИЛИТЫ =====
+
+/**
+ * Экранирование HTML для защиты от XSS
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+window.escapeHtml = escapeHtml;
+
+/**
+ * Сохранить карточку как шаблон (leader или corporate)
+ */
+async function saveToCardTemplates(card, type) {
+    const shortCode = card.short_code || card.shortCode;
+    const imageUrl = card.preview || card.image_url || card.mediaUrl || card.card_data?.image_url || card.card_data?.mediaUrl;
+    const title = card.title || card.card_data?.title || 'Без названия';
+    
+    const templateData = {
+        code: shortCode,
+        name: title,
+        template_type: type,
+        image_url: imageUrl,
+        card_data: {
+            style: card.card_data?.style || card.style || 'classic',
+            greeting: card.greeting || card.greetingText || card.card_data?.greeting || card.card_data?.greetingText || '',
+            videoUrl: card.videoUrl || card.card_data?.videoUrl || null
+        },
+        owner_gw_id: localStorage.getItem('cardgift_gw_id') || localStorage.getItem('gw_id'),
+        is_approved: true
+    };
+    
+    console.log('💾 Saving to card_templates:', templateData);
+    
+    try {
+        const response = await fetch('/api/create-template', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(templateData)
+        });
+        if (response.ok) {
+            console.log('✅ Saved to card_templates via API');
+            return;
+        }
+    } catch (e) {
+        console.warn('API create-template error:', e.message);
+    }
+    
+    if (window.SupabaseClient && SupabaseClient.client) {
+        const { data: existing } = await SupabaseClient.client
+            .from('card_templates')
+            .select('id')
+            .eq('code', shortCode)
+            .single();
+        
+        if (existing) {
+            await SupabaseClient.client
+                .from('card_templates')
+                .update(templateData)
+                .eq('code', shortCode);
+        } else {
+            await SupabaseClient.client
+                .from('card_templates')
+                .insert(templateData);
+        }
+        console.log('✅ Saved to card_templates via Supabase');
+    }
+}
+window.saveToCardTemplates = saveToCardTemplates;
+
+/**
+ * Удалить карточку из таблицы card_templates
+ */
+async function removeFromCardTemplates(shortCode) {
+    console.log('🗑️ Removing from card_templates:', shortCode);
+    
+    try {
+        const response = await fetch(`/api/delete-template?code=${shortCode}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            console.log('✅ Removed from card_templates via API');
+            return;
+        }
+    } catch (e) {
+        console.warn('API delete-template error:', e.message);
+    }
+    
+    if (window.SupabaseClient && SupabaseClient.client) {
+        await SupabaseClient.client
+            .from('card_templates')
+            .delete()
+            .eq('code', shortCode);
+        console.log('✅ Removed from card_templates via Supabase');
+    }
+}
+window.removeFromCardTemplates = removeFromCardTemplates;
+
 // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
 let currentLanguage = 'en';
 
