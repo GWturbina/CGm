@@ -100,6 +100,12 @@ async function loadPanelData() {
  * Обновить статистику на панели
  */
 function updatePanelStats(stats) {
+    // Защита от undefined
+    if (!stats) {
+        console.warn('⚠️ updatePanelStats called without stats, skipping');
+        return;
+    }
+    
     // Основные метрики
     animatePanelNumber('stat-team', stats.totalContacts);
     animatePanelNumber('stat-referrals', stats.totalReferrals);
