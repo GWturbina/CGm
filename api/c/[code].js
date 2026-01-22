@@ -1,6 +1,6 @@
-// Vercel Serverless Function - Короткие ссылки CardGift
-// v2.4 - Добавлен Supabase fallback
-// Файл: /api/c/[code].js
+// api/c/[code].js
+// Короткие ссылки CardGift
+// v3.0 - ИСПРАВЛЕНО: Supabase PRIMARY, правильное поле short_code
 
 module.exports = async function handler(req, res) {
     const { code } = req.query;
@@ -11,8 +11,6 @@ module.exports = async function handler(req, res) {
         return res.status(400).send('Invalid code');
     }
     
-    const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-    const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
     const baseUrl = `https://${req.headers.host}`;
     
     // Дефолтные значения
@@ -22,29 +20,35 @@ module.exports = async function handler(req, res) {
     let cardFound = false;
     let debugInfo = [];
     
-    // === 1. REDIS ===
-    if (REDIS_URL && REDIS_TOKEN) {
+    // === 1. SUPABASE (PRIMARY) ===
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (SUPABASE_URL && SUPABASE_KEY) {
         try {
-            console.log('📡 Loading from Redis...');
+            console.log('📡 Loading from Supabase...');
             
-            const response = await fetch(REDIS_URL, {
-                method: 'POST',
-                headers: { 
-                    Authorization: `Bearer ${REDIS_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(['GET', `card:${code}`])
-            });
+            // ИСПРАВЛЕНО: используем short_code, не card_code!
+            const response = await fetch(
+                `${SUPABASE_URL}/rest/v1/cards?short_code=eq.${code}&select=*`,
+                {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
             
-            const data = await response.json();
+            const cards = await response.json();
             
-            if (data.result) {
-                const card = JSON.parse(data.result);
+            if (cards && cards.length > 0) {
+                const card = cards[0];
+                const cardData = card.card_data || {};
                 cardFound = true;
-                console.log('✅ Card found in Redis:', code);
+                console.log('✅ Card found in Supabase:', code);
                 
-                // Текст
-                const greetingText = card.greeting || card.greetingText || card.message || '';
+                // Текст - из card_data
+                const greetingText = cardData.message || cardData.greeting || cardData.title || card.title || '';
                 if (greetingText) {
                     const lines = greetingText.split('\n').filter(l => l.trim());
                     if (lines.length > 0) {
@@ -53,107 +57,65 @@ module.exports = async function handler(req, res) {
                     }
                 }
                 
-                // Картинка
-                const possibleImageFields = ['cloudinaryUrl', 'mediaUrl', 'imageUrl', 'image_url', 'preview'];
-                for (const field of possibleImageFields) {
-                    if (card[field] && typeof card[field] === 'string' && card[field].startsWith('http')) {
-                        if (card[field].includes('cloudinary')) {
-                            ogImageUrl = card[field].replace('/upload/', '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/');
-                        } else {
-                            ogImageUrl = card[field];
-                        }
-                        break;
+                // Заголовок из card_data
+                if (cardData.title) {
+                    title = cardData.title.substring(0, 60);
+                }
+                
+                // Картинка - из card_data
+                const imageUrl = cardData.image_url || card.image_url || card.cloudinary_url;
+                if (imageUrl && imageUrl.startsWith('http')) {
+                    if (imageUrl.includes('cloudinary')) {
+                        ogImageUrl = imageUrl.replace('/upload/', '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/');
+                    } else {
+                        ogImageUrl = imageUrl;
                     }
+                    console.log('🖼️ Using Supabase image');
                 }
                 
                 // YouTube thumbnail
-                if (!ogImageUrl && (card.videoUrl || card.video_url)) {
-                    const videoUrl = card.videoUrl || card.video_url;
+                const videoUrl = cardData.video_url || card.video_url;
+                if (!ogImageUrl && videoUrl) {
                     const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
                     if (ytMatch) {
                         ogImageUrl = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
                     }
                 }
                 
-                debugInfo.push('Source: Redis');
+                debugInfo.push('Source: Supabase');
+                
+                // Увеличиваем счётчик просмотров
+                try {
+                    await fetch(
+                        `${SUPABASE_URL}/rest/v1/rpc/increment_card_views`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ card_short_code: code })
+                        }
+                    );
+                } catch (viewErr) {
+                    // Не критично если не сработало
+                    console.warn('Views increment failed:', viewErr.message);
+                }
+            } else {
+                console.log('📭 Card not found in Supabase:', code);
+                debugInfo.push('Not found in Supabase');
             }
         } catch (err) {
-            console.error('❌ Redis error:', err.message);
-            debugInfo.push(`Redis error: ${err.message}`);
+            console.error('❌ Supabase error:', err.message);
+            debugInfo.push(`Supabase error: ${err.message}`);
         }
+    } else {
+        console.error('❌ Supabase not configured');
+        debugInfo.push('Supabase not configured');
     }
     
-    // === 2. SUPABASE FALLBACK ===
-    if (!cardFound) {
-        const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-        
-        if (SUPABASE_URL && SUPABASE_KEY) {
-            try {
-                console.log('📡 Trying Supabase fallback...');
-                
-                const response = await fetch(
-                    `${SUPABASE_URL}/rest/v1/cards?card_code=eq.${code}&select=*`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`
-                        }
-                    }
-                );
-                
-                const cards = await response.json();
-                
-                if (cards && cards.length > 0) {
-                    const card = cards[0];
-                    cardFound = true;
-                    console.log('✅ Card found in Supabase:', code);
-                    
-                    // Текст
-                    const greetingText = card.message || card.title || '';
-                    if (greetingText) {
-                        const lines = greetingText.split('\n').filter(l => l.trim());
-                        if (lines.length > 0) {
-                            title = lines[0].substring(0, 60) || title;
-                            description = lines.slice(1).join(' ').substring(0, 150) || description;
-                        }
-                    }
-                    if (card.title && !title.includes(card.title)) {
-                        title = card.title.substring(0, 60);
-                    }
-                    
-                    // Картинка
-                    const imageUrl = card.image_url || card.cloudinary_url || card.media_url || card.preview_url;
-                    if (imageUrl && imageUrl.startsWith('http')) {
-                        if (imageUrl.includes('cloudinary')) {
-                            ogImageUrl = imageUrl.replace('/upload/', '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/');
-                        } else {
-                            ogImageUrl = imageUrl;
-                        }
-                        console.log('🖼️ Using Supabase image:', ogImageUrl.substring(0, 60) + '...');
-                    }
-                    
-                    // YouTube
-                    if (!ogImageUrl && card.video_url) {
-                        const ytMatch = card.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
-                        if (ytMatch) {
-                            ogImageUrl = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
-                        }
-                    }
-                    
-                    debugInfo.push('Source: Supabase');
-                } else {
-                    console.log('❌ Card not found in Supabase:', code);
-                    debugInfo.push('Not found in Supabase');
-                }
-            } catch (err) {
-                console.error('❌ Supabase error:', err.message);
-                debugInfo.push(`Supabase error: ${err.message}`);
-            }
-        }
-    }
-    
-    // Если картинка так и не найдена - SVG fallback
+    // Если картинка не найдена - SVG fallback
     if (!ogImageUrl) {
         ogImageUrl = `${baseUrl}/api/og-image?title=${encodeURIComponent(title)}&text=${encodeURIComponent(description)}&style=classic`;
         debugInfo.push('Fallback: SVG generator');
@@ -162,7 +124,7 @@ module.exports = async function handler(req, res) {
     const viewerUrl = `${baseUrl}/card-viewer.html?sc=${code}`;
     const shortUrl = `${baseUrl}/c/${code}`;
     
-    console.log('📋 Final OG:', title.substring(0, 30), '| Image:', ogImageUrl.substring(0, 50) + '...');
+    console.log('📋 Final OG:', title.substring(0, 30), '| Found:', cardFound);
     
     // HTML с Open Graph
     const html = `<!DOCTYPE html>
