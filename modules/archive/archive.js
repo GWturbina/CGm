@@ -1305,4 +1305,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module loaded (unified, no duplicates)');
+console.log('📁 Archive Module v8 FINAL loaded - _archiveLoadCards REGISTERED');
