@@ -349,7 +349,12 @@ function showSection(sectionId) {
         if (typeof loadContacts === 'function') loadContacts();
     }
     if (sectionId === 'archive') {
-        if (typeof loadCards === 'function') loadCards();
+        // Задержка чтобы archive.js успел переопределить loadCards
+        setTimeout(function() {
+            if (typeof window.loadCards === 'function') {
+                window.loadCards();
+            }
+        }, 100);
     }
     if (sectionId === 'referrals') {
         if (typeof updateReferralLink === 'function') updateReferralLink();
