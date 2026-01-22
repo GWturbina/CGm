@@ -22,7 +22,7 @@ console.log('📁 Archive.js START loading...');
 let archiveCategories = [];
 let corporateTemplates = [];
 let leaderTemplates = [];
-let currentArchiveTab = 'my';
+// currentArchiveTab объявлена в modules-fix.js
 let cards = []; // Массив карточек
 let templateFilter = null; // Фильтр шаблонов
 const walletAddress = window.walletAddress || localStorage.getItem('walletAddress') || null;
