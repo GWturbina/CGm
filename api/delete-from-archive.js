@@ -1,7 +1,13 @@
-// Vercel Serverless Function - Удаление карточки из АРХИВА
-// Удаляет конкретную карточку из архива пользователя
+// api/delete-from-archive.js
+// Удаление карточки из архива (Supabase)
+// v3.0 - ИСПРАВЛЕНО: Supabase вместо Redis
 
-module.exports = async function handler(req, res) {
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'DELETE, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -11,81 +17,55 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
     
-    const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-    const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-    
-    if (!REDIS_URL || !REDIS_TOKEN) {
-        console.error('❌ Redis not configured');
-        return res.status(500).json({ success: false, error: 'Redis not configured' });
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('❌ Supabase not configured');
+        return res.status(500).json({ success: false, error: 'Supabase not configured' });
     }
     
     try {
-        const { userId, cardId } = req.method === 'DELETE' ? req.query : req.body;
+        const { userId, cardId, shortCode } = req.method === 'DELETE' ? req.query : req.body;
+        const codeToDelete = cardId || shortCode;
         
-        if (!userId || !cardId) {
-            return res.status(400).json({ success: false, error: 'userId and cardId required' });
+        if (!codeToDelete) {
+            return res.status(400).json({ success: false, error: 'cardId or shortCode required' });
         }
         
-        console.log('🗑️ Deleting from archive:', userId, cardId);
+        console.log('🗑️ Deleting from archive:', codeToDelete);
         
-        const archiveKey = `archive:${userId}`;
+        const supabase = createClient(supabaseUrl, supabaseKey);
         
-        // Получаем текущий архив
-        const getResponse = await fetch(REDIS_URL, {
-            method: 'POST',
-            headers: { 
-                Authorization: `Bearer ${REDIS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(['GET', archiveKey])
-        });
+        // Мягкое удаление - помечаем статус
+        const { data, error } = await supabase
+            .from('cards')
+            .update({ 
+                status: 'deleted',
+                deleted_at: new Date().toISOString()
+            })
+            .or(`short_code.eq.${codeToDelete},id.eq.${codeToDelete}`)
+            .select();
         
-        const getData = await getResponse.json();
-        
-        if (!getData.result) {
-            return res.status(404).json({ success: false, error: 'Archive not found' });
+        if (error) {
+            console.error('❌ Supabase delete error:', error);
+            throw error;
         }
         
-        let archive = JSON.parse(getData.result);
-        
-        // Находим индекс карточки
-        const initialLength = archive.length;
-        archive = archive.filter(card => 
-            card.id !== cardId && 
-            card.shortCode !== cardId && 
-            card.short_code !== cardId && 
-            card.code !== cardId
-        );
-        
-        if (archive.length === initialLength) {
-            return res.status(404).json({ success: false, error: 'Card not found in archive' });
-        }
-        
-        // Сохраняем обновленный архив
-        const saveResponse = await fetch(REDIS_URL, {
-            method: 'POST',
-            headers: { 
-                Authorization: `Bearer ${REDIS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(['SET', archiveKey, JSON.stringify(archive)])
-        });
-        
-        const saveResult = await saveResponse.json();
-        
-        if (saveResult.error) {
-            console.error('❌ Redis error:', saveResult.error);
-            throw new Error(saveResult.error);
+        if (!data || data.length === 0) {
+            // Попробуем жёсткое удаление
+            const { error: hardError } = await supabase
+                .from('cards')
+                .delete()
+                .or(`short_code.eq.${codeToDelete},id.eq.${codeToDelete}`);
+            
+            if (hardError) {
+                return res.status(404).json({ success: false, error: 'Card not found' });
+            }
         }
         
         console.log('✅ Card deleted from archive');
-        return res.status(200).json({ 
-            success: true,
-            remainingCards: archive.length
-        });
+        return res.status(200).json({ success: true });
         
     } catch (error) {
         console.error('❌ Delete from archive error:', error);
         return res.status(500).json({ success: false, error: error.message });
     }
-};
+}
