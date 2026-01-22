@@ -991,15 +991,20 @@ function loadModerationTemplates() {
 // ============ CARDS (ЗАГРУЖАЕТСЯ ИЗ archive.js) ============
 var cards = [];
 
-// Заглушка - реальная функция в modules/archive/archive.js
+// Эта функция будет переопределена из archive.js
+// Если archive.js загрузился - вызываем его функцию
 async function loadCards() {
-    console.log('📂 loadCards: delegating to archive.js...');
-    // archive.js переопределит window.loadCards
+    // Проверяем есть ли настоящая функция из archive.js
+    if (window._archiveLoadCards) {
+        return window._archiveLoadCards();
+    }
+    console.log('⏳ Waiting for archive.js to load...');
 }
 
 function renderCards() {
-    console.log('🎴 renderCards: delegating to archive.js...');
-    // archive.js переопределит window.renderCards
+    if (window._archiveRenderCards) {
+        return window._archiveRenderCards();
+    }
 }
 
 function viewCard(shortCode) {
@@ -1504,8 +1509,7 @@ window.loadCorporateTemplates = loadCorporateTemplates;
 window.loadLeaderTemplates = loadLeaderTemplates;
 window.loadMyTemplates = loadMyTemplates;
 window.loadModerationTemplates = loadModerationTemplates;
-window.loadCards = loadCards;
-window.renderCards = renderCards;
+// loadCards и renderCards экспортируются из archive.js
 window.loadContacts = loadContacts;
 window.renderContacts = renderContacts;
 window.updateContactsCounts = updateContactsCounts;
