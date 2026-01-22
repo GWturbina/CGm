@@ -1278,6 +1278,9 @@ window.toggleCorporateTemplate = toggleCorporateTemplate;
 // КРИТИЧНО: Переопределяем функции из modules-fix.js
 window.loadCards = loadCards;
 window.renderCards = renderCards;
+// Также регистрируем под альтернативными именами
+window._archiveLoadCards = loadCards;
+window._archiveRenderCards = renderCards;
 
 // Автозагрузка если секция archive активна
 setTimeout(function() {
