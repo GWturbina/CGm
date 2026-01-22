@@ -1,5 +1,5 @@
 // Vercel Serverless Function - Короткие ссылки CardGift
-// v2.3 - Добавлена поддержка thumbnailUrl для видео-карточек
+// v2.4 - Добавлен Supabase fallback
 // Файл: /api/c/[code].js
 
 module.exports = async function handler(req, res) {
@@ -18,15 +18,15 @@ module.exports = async function handler(req, res) {
     // Дефолтные значения
     let title = '🎁 CardGift - Персональная открытка';
     let description = 'Посмотрите открытку, созданную специально для вас!';
-    let ogImageUrl = null; // Начинаем с null, потом установим
+    let ogImageUrl = null;
     let cardFound = false;
     let debugInfo = [];
     
+    // === 1. REDIS ===
     if (REDIS_URL && REDIS_TOKEN) {
         try {
             console.log('📡 Loading from Redis...');
             
-            // ✅ ИСПРАВЛЕНО: правильный синтаксис fetch()
             const response = await fetch(REDIS_URL, {
                 method: 'POST',
                 headers: { 
@@ -41,10 +41,9 @@ module.exports = async function handler(req, res) {
             if (data.result) {
                 const card = JSON.parse(data.result);
                 cardFound = true;
-                console.log('✅ Card found:', code);
-                console.log('📦 Card keys:', Object.keys(card));
+                console.log('✅ Card found in Redis:', code);
                 
-                // === ТЕКСТ ===
+                // Текст
                 const greetingText = card.greeting || card.greetingText || card.message || '';
                 if (greetingText) {
                     const lines = greetingText.split('\n').filter(l => l.trim());
@@ -53,122 +52,119 @@ module.exports = async function handler(req, res) {
                         description = lines.slice(1).join(' ').substring(0, 150) || description;
                     }
                 }
-                debugInfo.push(`Title: ${title.substring(0, 30)}...`);
                 
-                // === КАРТИНКА - проверяем ВСЕ возможные поля ===
-                // Приоритет: 
-                // 1. Cloudinary URL (лучшее качество)
-                // 2. thumbnailUrl (для видео-карточек)
-                // 3. YouTube thumbnail из videoUrl
-                // 4. Другие изображения
-                // 5. SVG генератор (fallback)
-                
-                const possibleImageFields = [
-                    'cloudinaryUrl',      // Приоритет 1: Cloudinary
-                    'mediaUrl',
-                    'imageUrl', 
-                    'image_url',
-                    'preview',
-                    'preview_url',
-                    'backgroundImage',
-                    'image',
-                    'og_image'
-                ];
-                
-                let imageUrl = null;
-                let imageSource = null;
-                
+                // Картинка
+                const possibleImageFields = ['cloudinaryUrl', 'mediaUrl', 'imageUrl', 'image_url', 'preview'];
                 for (const field of possibleImageFields) {
-                    if (card[field] && typeof card[field] === 'string' && card[field].length > 10) {
-                        // Пропускаем base64 на этом этапе
-                        if (card[field].startsWith('data:')) continue;
-                        
-                        imageUrl = card[field];
-                        imageSource = field;
-                        console.log(`🖼️ Found image in field "${field}":`, imageUrl.substring(0, 60) + '...');
-                        debugInfo.push(`Image field: ${field}`);
+                    if (card[field] && typeof card[field] === 'string' && card[field].startsWith('http')) {
+                        if (card[field].includes('cloudinary')) {
+                            ogImageUrl = card[field].replace('/upload/', '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/');
+                        } else {
+                            ogImageUrl = card[field];
+                        }
                         break;
                     }
                 }
                 
-                // === ВИДЕО ПРЕВЬЮ ===
-                // Проверяем thumbnailUrl (сохранённый в generator.js)
-                if (card.thumbnailUrl && card.thumbnailUrl.startsWith('http')) {
-                    ogImageUrl = card.thumbnailUrl;
-                    console.log('🎬 Using saved thumbnailUrl:', ogImageUrl);
-                    debugInfo.push('Source: thumbnailUrl');
-                }
-                // Проверяем YouTube из videoUrl
-                else if (card.videoUrl || card.video_url) {
+                // YouTube thumbnail
+                if (!ogImageUrl && (card.videoUrl || card.video_url)) {
                     const videoUrl = card.videoUrl || card.video_url;
                     const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
                     if (ytMatch) {
-                        // Используем hqdefault (всегда существует) вместо maxresdefault
                         ogImageUrl = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
-                        console.log('📺 YouTube thumbnail:', ogImageUrl);
-                        debugInfo.push('Source: YouTube thumbnail');
-                    }
-                }
-                // Используем найденное изображение
-                else if (imageUrl) {
-                    // Cloudinary URL - трансформируем для OG (1200x630)
-                    if (imageUrl.includes('cloudinary')) {
-                        ogImageUrl = imageUrl.replace(
-                            '/upload/', 
-                            '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/'
-                        );
-                        console.log('☁️ Cloudinary OG:', ogImageUrl.substring(0, 80) + '...');
-                        debugInfo.push('Source: Cloudinary');
-                    } 
-                    // Обычный URL
-                    else if (imageUrl.startsWith('http')) {
-                        ogImageUrl = imageUrl;
-                        console.log('🔗 External image URL');
-                        debugInfo.push('Source: External URL');
                     }
                 }
                 
-                // Проверяем base64 отдельно (только как последний fallback перед SVG)
-                if (!ogImageUrl) {
-                    for (const field of possibleImageFields) {
-                        if (card[field] && typeof card[field] === 'string' && card[field].startsWith('data:image')) {
-                            console.log('📦 Base64 detected - cannot use for OG, using SVG generator');
-                            debugInfo.push('Source: Base64 (fallback to SVG)');
-                            ogImageUrl = `${baseUrl}/api/og-image?title=${encodeURIComponent(title)}&text=${encodeURIComponent(description)}&style=${card.style || 'classic'}`;
-                            break;
-                        }
-                    }
-                }
-                
-            } else {
-                console.log('❌ Card not found in Redis:', code);
-                debugInfo.push('Card not found');
+                debugInfo.push('Source: Redis');
             }
         } catch (err) {
             console.error('❌ Redis error:', err.message);
             debugInfo.push(`Redis error: ${err.message}`);
         }
-    } else {
-        console.log('⚠️ Redis not configured');
-        debugInfo.push('Redis not configured');
     }
     
-    // Если картинка так и не найдена - используем SVG генератор
+    // === 2. SUPABASE FALLBACK ===
+    if (!cardFound) {
+        const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+        
+        if (SUPABASE_URL && SUPABASE_KEY) {
+            try {
+                console.log('📡 Trying Supabase fallback...');
+                
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/cards?card_code=eq.${code}&select=*`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                        }
+                    }
+                );
+                
+                const cards = await response.json();
+                
+                if (cards && cards.length > 0) {
+                    const card = cards[0];
+                    cardFound = true;
+                    console.log('✅ Card found in Supabase:', code);
+                    
+                    // Текст
+                    const greetingText = card.message || card.title || '';
+                    if (greetingText) {
+                        const lines = greetingText.split('\n').filter(l => l.trim());
+                        if (lines.length > 0) {
+                            title = lines[0].substring(0, 60) || title;
+                            description = lines.slice(1).join(' ').substring(0, 150) || description;
+                        }
+                    }
+                    if (card.title && !title.includes(card.title)) {
+                        title = card.title.substring(0, 60);
+                    }
+                    
+                    // Картинка
+                    const imageUrl = card.image_url || card.cloudinary_url || card.media_url || card.preview_url;
+                    if (imageUrl && imageUrl.startsWith('http')) {
+                        if (imageUrl.includes('cloudinary')) {
+                            ogImageUrl = imageUrl.replace('/upload/', '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/');
+                        } else {
+                            ogImageUrl = imageUrl;
+                        }
+                        console.log('🖼️ Using Supabase image:', ogImageUrl.substring(0, 60) + '...');
+                    }
+                    
+                    // YouTube
+                    if (!ogImageUrl && card.video_url) {
+                        const ytMatch = card.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+                        if (ytMatch) {
+                            ogImageUrl = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+                        }
+                    }
+                    
+                    debugInfo.push('Source: Supabase');
+                } else {
+                    console.log('❌ Card not found in Supabase:', code);
+                    debugInfo.push('Not found in Supabase');
+                }
+            } catch (err) {
+                console.error('❌ Supabase error:', err.message);
+                debugInfo.push(`Supabase error: ${err.message}`);
+            }
+        }
+    }
+    
+    // Если картинка так и не найдена - SVG fallback
     if (!ogImageUrl) {
         ogImageUrl = `${baseUrl}/api/og-image?title=${encodeURIComponent(title)}&text=${encodeURIComponent(description)}&style=classic`;
-        console.log('🎨 Using SVG fallback:', ogImageUrl);
         debugInfo.push('Fallback: SVG generator');
     }
     
     const viewerUrl = `${baseUrl}/card-viewer.html?sc=${code}`;
     const shortUrl = `${baseUrl}/c/${code}`;
     
-    console.log('📋 Final OG data:');
-    console.log('   Title:', title);
-    console.log('   Description:', description.substring(0, 50) + '...');
-    console.log('   Image:', ogImageUrl.substring(0, 80) + '...');
+    console.log('📋 Final OG:', title.substring(0, 30), '| Image:', ogImageUrl.substring(0, 50) + '...');
     
-    // HTML с Open Graph тегами
+    // HTML с Open Graph
     const html = `<!DOCTYPE html>
 <html lang="ru" prefix="og: https://ogp.me/ns#">
 <head>
@@ -176,7 +172,6 @@ module.exports = async function handler(req, res) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${esc(title)}</title>
     
-    <!-- Open Graph (Facebook, Telegram, WhatsApp, Viber) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="${shortUrl}">
     <meta property="og:title" content="${esc(title)}">
@@ -186,17 +181,14 @@ module.exports = async function handler(req, res) {
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:alt" content="${esc(title)}">
     <meta property="og:site_name" content="CardGift">
     <meta property="og:locale" content="ru_RU">
     
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${esc(title)}">
     <meta name="twitter:description" content="${esc(description)}">
     <meta name="twitter:image" content="${ogImageUrl}">
     
-    <!-- Instant redirect via JS only (bots don't execute JS) -->
     <script>window.location.replace('${viewerUrl}');</script>
     
     <style>
@@ -229,7 +221,6 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
     res.setHeader('X-Card-Found', cardFound ? 'true' : 'false');
-    res.setHeader('X-OG-Image', ogImageUrl.substring(0, 100));
     res.status(200).send(html);
 };
 
