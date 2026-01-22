@@ -16,6 +16,8 @@
    - archiveCategories, corporateTemplates, leaderTemplates
    ===================================================== */
 
+console.log('📁 Archive.js START loading...');
+
 // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ АРХИВА =====
 let archiveCategories = [];
 let corporateTemplates = [];
@@ -31,6 +33,8 @@ const escapeHtml = window.escapeHtml || function(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 };
 const showToast = window.showToast || function(msg, type) { console.log(type + ':', msg); };
+
+console.log('📁 Archive.js globals defined OK');
 
 // =====================================================
 // ЧАСТЬ 1: БАЗОВЫЕ ФУНКЦИИ (loadCards, saveCards, view, share, delete, search)
