@@ -972,7 +972,7 @@ function loadModerationTemplates() {
     grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Шаблоны на модерации...</div>';
 }
 
-// ============ CARDS (загрузка из Supabase) ============
+// ============ CARDS (использует SupabaseClient) ============
 var cards = [];
 
 async function loadCards() {
@@ -988,12 +988,15 @@ async function loadCards() {
     // Показываем загрузку
     grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Загрузка архива...</div>';
     
-    // Получаем userId
-    var gwId = window.currentGwId || window.currentDisplayId || localStorage.getItem('cardgift_gw_id');
+    // Получаем userId - используем ту же логику что в cardService
+    var gwId = window.currentGwId || window.currentDisplayId || localStorage.getItem('cardgift_gw_id') || localStorage.getItem('gw_id');
     
-    // Добавляем префикс GW если нет
-    if (gwId && !gwId.startsWith('GW') && !gwId.startsWith('CG_TEMP')) {
-        gwId = 'GW' + gwId;
+    if (!gwId) {
+        // Пробуем из currentUser
+        try {
+            var currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            gwId = currentUser.gw_id || currentUser.cg_id || currentUser.cgId;
+        } catch (e) {}
     }
     
     console.log('📂 Loading cards for gwId:', gwId);
@@ -1006,41 +1009,37 @@ async function loadCards() {
     }
     
     try {
-        // Загружаем из Supabase через API
-        var response = await fetch('/api/get-cards?gw_id=' + encodeURIComponent(gwId));
-        var data = await response.json();
-        
-        console.log('📂 Cards response:', data);
-        
-        if (data.success && data.cards && data.cards.length > 0) {
-            cards = data.cards;
-            if (empty) empty.style.display = 'none';
-            renderCards();
-            console.log('✅ Loaded', cards.length, 'cards from Supabase');
-        } else {
-            // Fallback - пробуем напрямую через SupabaseClient
-            if (window.SupabaseClient && SupabaseClient.client) {
-                console.log('📂 Trying direct Supabase query...');
-                var result = await SupabaseClient.client
-                    .from('cards')
-                    .select('*')
-                    .eq('owner_gw_id', gwId)
-                    .order('created_at', { ascending: false });
-                
-                if (result.data && result.data.length > 0) {
-                    cards = result.data;
-                    if (empty) empty.style.display = 'none';
-                    renderCards();
-                    console.log('✅ Loaded', cards.length, 'cards directly from Supabase');
-                    return;
-                }
-            }
+        // Используем SupabaseClient.getCards() - твой рабочий метод!
+        if (window.SupabaseClient && SupabaseClient.client) {
+            console.log('📂 Using SupabaseClient.getCards()...');
+            cards = await SupabaseClient.getCards(gwId, 100);
             
-            cards = [];
-            grid.innerHTML = '';
-            if (empty) empty.style.display = 'block';
-            console.log('📭 No cards found');
+            if (cards && cards.length > 0) {
+                console.log('✅ Loaded', cards.length, 'cards from Supabase');
+                if (empty) empty.style.display = 'none';
+                renderCards();
+                return;
+            }
         }
+        
+        // Fallback на localStorage
+        var savedCards = localStorage.getItem('cardgift_cards');
+        if (savedCards) {
+            cards = JSON.parse(savedCards);
+            if (cards.length > 0) {
+                console.log('✅ Loaded', cards.length, 'cards from localStorage');
+                if (empty) empty.style.display = 'none';
+                renderCards();
+                return;
+            }
+        }
+        
+        // Пусто
+        cards = [];
+        grid.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        console.log('📭 No cards found');
+        
     } catch (e) {
         console.error('❌ Error loading cards:', e);
         grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #f44;">Ошибка загрузки</div>';
@@ -1052,9 +1051,10 @@ function renderCards() {
     if (!grid || cards.length === 0) return;
     
     grid.innerHTML = cards.map(function(card, index) {
+        // Поля из Supabase таблицы cards
         var preview = card.image_url || card.cloudinary_url || card.preview || card.mediaUrl || '';
-        var title = card.greeting_text || card.title || card.greeting || 'Открытка #' + (index + 1);
-        var shortCode = card.short_code || card.shortCode || card.code || '';
+        var title = card.title || card.message?.split('\n')[0] || card.greeting || 'Открытка #' + (index + 1);
+        var shortCode = card.card_code || card.short_code || card.shortCode || '';
         var createdAt = card.created_at || card.createdAt || '';
         
         // Форматируем дату
@@ -1066,7 +1066,7 @@ function renderCards() {
             } catch (e) {}
         }
         
-        // Обрезаем title для превью
+        // Обрезаем title
         if (title.length > 50) {
             title = title.substring(0, 50) + '...';
         }
@@ -1082,7 +1082,7 @@ function renderCards() {
             '<div class="card-actions">' +
                 '<button class="btn-icon" onclick="event.stopPropagation(); copyCardLink(\'' + shortCode + '\')" title="Копировать ссылку">📋</button>' +
                 '<button class="btn-icon" onclick="event.stopPropagation(); shareCard(\'' + shortCode + '\')" title="Поделиться">📤</button>' +
-                '<button class="btn-icon delete" onclick="event.stopPropagation(); deleteCardFromSupabase(\'' + shortCode + '\')" title="Удалить">🗑️</button>' +
+                '<button class="btn-icon delete" onclick="event.stopPropagation(); deleteCardHandler(\'' + shortCode + '\')" title="Удалить">🗑️</button>' +
             '</div>' +
         '</div>';
     }).join('');
@@ -1117,34 +1117,28 @@ function shareCard(shortCode) {
     }
 }
 
-async function deleteCardFromSupabase(shortCode) {
+// Используем cardService.deleteCard() - твой рабочий метод!
+async function deleteCardHandler(shortCode) {
     if (!confirm('Удалить эту открытку?')) return;
     
     try {
-        // Удаляем из Supabase
-        if (window.SupabaseClient && SupabaseClient.client) {
-            var result = await SupabaseClient.client
-                .from('cards')
-                .delete()
-                .eq('short_code', shortCode);
-            
-            if (!result.error) {
+        if (window.cardService) {
+            var result = await cardService.deleteCard(shortCode);
+            if (result.success) {
                 showToast('Открытка удалена', 'success');
-                loadCards(); // Перезагружаем
+                loadCards();
                 return;
             }
         }
         
-        // Fallback через API
-        var response = await fetch('/api/delete-card?sc=' + shortCode, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
+        // Fallback - напрямую из Supabase
+        if (window.SupabaseClient && SupabaseClient.client) {
+            await SupabaseClient.client
+                .from('cards')
+                .delete()
+                .eq('card_code', shortCode);
             showToast('Открытка удалена', 'success');
             loadCards();
-        } else {
-            showToast('Ошибка удаления', 'error');
         }
     } catch (e) {
         console.error('Delete error:', e);
@@ -1155,8 +1149,8 @@ async function deleteCardFromSupabase(shortCode) {
 window.viewCard = viewCard;
 window.copyCardLink = copyCardLink;
 window.shareCard = shareCard;
-window.deleteCardFromSupabase = deleteCardFromSupabase;
-window.deleteCard = deleteCardFromSupabase;
+window.deleteCardHandler = deleteCardHandler;
+window.deleteCard = deleteCardHandler;
 
 // ============ CONTACTS (заглушки) ============
 var contacts = [];
