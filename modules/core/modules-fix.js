@@ -851,4 +851,141 @@ window.initPWA = initPWA;
 window.toggleWalletConnection = toggleWalletConnection;
 window.toggleWalletDropdown = toggleWalletDropdown;
 
+// ============ SIDEBAR INITIALIZATION ============
+function initSidebar() {
+    var navItems = document.querySelectorAll('.nav-item');
+    var toggle = document.getElementById('sidebarToggle');
+    var overlay = document.getElementById('sidebarOverlay');
+    var sidebar = document.getElementById('sidebar');
+
+    navItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+            var section = item.dataset.section;
+            var requiredLevel = parseInt(item.dataset.level) || 0;
+            
+            if (window.currentUserLevel >= requiredLevel) {
+                showSection(section);
+                closeSidebar();
+            } else {
+                showToast('Доступ ограничен. Повысьте уровень аккаунта.', 'error');
+            }
+        });
+    });
+
+    if (toggle) {
+        toggle.addEventListener('click', function() {
+            if (sidebar) sidebar.classList.toggle('open');
+            if (overlay) overlay.classList.toggle('active');
+        });
+    }
+    
+    if (overlay) {
+        overlay.addEventListener('click', closeSidebar);
+    }
+    
+    console.log('✅ Sidebar initialized, nav items:', navItems.length);
+}
+
+function closeSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+}
+
+// ============ LANGUAGE SWITCHER ============
+function initLanguageSwitcher() {
+    var buttons = document.querySelectorAll('.lang-btn');
+    buttons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            buttons.forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            showToast('Язык: ' + btn.dataset.lang.toUpperCase(), 'success');
+        });
+    });
+}
+
+// ============ DATE/TIME ============
+function updateDateTime() {
+    var el = document.getElementById('currentDateTime');
+    if (el) {
+        var now = new Date();
+        el.textContent = now.toLocaleDateString('ru-RU') + ', ' + now.toLocaleTimeString('ru-RU');
+    }
+}
+
+// ============ AUTHOR MODE ============
+var AUTHOR_KEY = 'cardgift2025';
+
+function checkAuthorMode() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var authorParam = urlParams.get('author');
+    var savedAuthor = localStorage.getItem('cardgift_author');
+    
+    if (authorParam === AUTHOR_KEY || savedAuthor === AUTHOR_KEY) {
+        enableAuthorMode();
+        if (authorParam === AUTHOR_KEY) {
+            localStorage.setItem('cardgift_author', AUTHOR_KEY);
+            window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+        }
+    }
+}
+
+function enableAuthorMode() {
+    window.currentUserLevel = 12;
+    window.walletConnected = true;
+    window.walletAddress = '0xAUTHOR_MODE';
+    
+    var logo = document.querySelector('.logo-text');
+    if (logo) logo.innerHTML = 'CardGift <span style="font-size:10px;color:#4CAF50;">👑 AUTHOR</span>';
+    
+    showToast('👑 Режим автора активирован!', 'success');
+    console.log('👑 Author mode enabled');
+}
+
+// ============ ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ ============
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Modules Fix - DOMContentLoaded');
+    
+    // Инициализация sidebar (привязка кликов к меню)
+    initSidebar();
+    
+    // Переключатель языка
+    initLanguageSwitcher();
+    
+    // Автоподключение кошелька из localStorage
+    await initWallet();
+    
+    // Дата/время
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    // Проверка режима автора
+    checkAuthorMode();
+    
+    // Обновляем UI
+    updateAccessLocks();
+    updateLevelButtons();
+    updateUserIds();
+    
+    // SafePal баннер на мобильных
+    setTimeout(showSafePalBanner, 1500);
+    
+    // Проверяем hash в URL
+    var hash = window.location.hash.replace('#', '');
+    if (hash && document.getElementById('section-' + hash)) {
+        showSection(hash);
+    }
+    
+    console.log('✅ Modules Fix - initialization complete');
+});
+
+// Экспорты для sidebar
+window.initSidebar = initSidebar;
+window.closeSidebar = closeSidebar;
+window.initLanguageSwitcher = initLanguageSwitcher;
+window.updateDateTime = updateDateTime;
+window.checkAuthorMode = checkAuthorMode;
+window.enableAuthorMode = enableAuthorMode;
+
 console.log('✅ Modules Fix v2.0 loaded - connectWallet() now opens wallet section!');
