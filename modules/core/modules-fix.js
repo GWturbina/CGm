@@ -349,12 +349,21 @@ function showSection(sectionId) {
         if (typeof loadContacts === 'function') loadContacts();
     }
     if (sectionId === 'archive') {
-        // Задержка чтобы archive.js успел переопределить loadCards
-        setTimeout(function() {
-            if (typeof window.loadCards === 'function') {
-                window.loadCards();
+        // Ждём загрузки archive.js и вызываем loadCards
+        var attempts = 0;
+        var tryLoadCards = function() {
+            attempts++;
+            if (window._archiveLoadCards) {
+                console.log('📂 Calling archive loadCards...');
+                window._archiveLoadCards();
+            } else if (attempts < 10) {
+                console.log('⏳ Waiting for archive.js... attempt', attempts);
+                setTimeout(tryLoadCards, 200);
+            } else {
+                console.error('❌ archive.js not loaded after 10 attempts');
             }
-        }, 100);
+        };
+        setTimeout(tryLoadCards, 100);
     }
     if (sectionId === 'referrals') {
         if (typeof updateReferralLink === 'function') updateReferralLink();
