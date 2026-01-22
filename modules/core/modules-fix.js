@@ -433,6 +433,30 @@ function updateLevelButtons() {
     if (levelDisplay) {
         levelDisplay.textContent = window.currentUserLevel + ' (' + (LEVEL_NAMES[window.currentUserLevel] || '—') + ')';
     }
+    
+    // Обновляем блок "ВАШ ТЕКУЩИЙ УРОВЕНЬ" на панели
+    var promoLevel = document.getElementById('promoCurrentLevel');
+    if (promoLevel) {
+        promoLevel.textContent = window.currentUserLevel;
+    }
+    
+    // Обновляем текст "Следующий уровень откроет"
+    var nextFeatureText = document.getElementById('nextFeatureText');
+    if (nextFeatureText) {
+        var nextLevel = window.currentUserLevel + 1;
+        var features = {
+            1: '📁 Архив + 📊 Панель',
+            2: '👥 Контакты + 📈 Аналитика',
+            3: '🌐 Реферальная программа',
+            4: '💼 CRM система',
+            5: '📝 Опросы + ✍️ Блог',
+            6: '📧 Рассылки',
+            7: '🎬 GlobalStudio',
+            8: '🏗️ Создание МЛМ',
+            9: '📋 Организатор бизнеса'
+        };
+        nextFeatureText.textContent = features[nextLevel] || '✨ Все возможности открыты!';
+    }
 }
 
 // ============ ОБНОВЛЕНИЕ ID ============
@@ -850,6 +874,263 @@ window.initPWA = initPWA;
 
 window.toggleWalletConnection = toggleWalletConnection;
 window.toggleWalletDropdown = toggleWalletDropdown;
+
+// ============ GENERATOR ============
+function goToGenerator() {
+    console.log('🎨 goToGenerator() called');
+    
+    var cgId = window.currentCgId || window.currentDisplayId || localStorage.getItem('cardgift_cg_id');
+    console.log('👤 CG_ID:', cgId);
+    
+    var url = 'generator.html';
+    if (cgId) {
+        url += '?userId=' + cgId;
+    }
+    
+    console.log('🚀 Navigating to:', url);
+    window.location.href = url;
+}
+
+// ============ ARCHIVE TABS ============
+var currentArchiveTab = 'my';
+
+function switchArchiveTab(tabName) {
+    currentArchiveTab = tabName;
+    
+    // Обновляем активную вкладку
+    document.querySelectorAll('.archive-tab').forEach(function(tab) {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+    
+    // Показываем соответствующий контент
+    document.querySelectorAll('.archive-tab-content').forEach(function(content) {
+        content.classList.remove('active');
+    });
+    var tabContent = document.getElementById('tab-' + tabName);
+    if (tabContent) tabContent.classList.add('active');
+    
+    // Загружаем данные
+    switch (tabName) {
+        case 'my':
+            loadMyCards();
+            break;
+        case 'corporate':
+            loadCorporateTemplates();
+            break;
+        case 'leader':
+            loadLeaderTemplates();
+            break;
+        case 'myTemplates':
+            loadMyTemplates();
+            break;
+        case 'moderation':
+            loadModerationTemplates();
+            break;
+    }
+    
+    console.log('📂 Switched to tab:', tabName);
+}
+
+function loadMyCards() {
+    console.log('📂 loadMyCards called');
+    if (typeof loadCards === 'function') {
+        loadCards();
+    }
+}
+
+function loadCorporateTemplates() {
+    var grid = document.getElementById('corporateGrid');
+    var empty = document.getElementById('emptyCorporate');
+    
+    if (!grid) return;
+    
+    grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Корпоративные шаблоны скоро появятся...</div>';
+    if (empty) empty.style.display = 'none';
+}
+
+function loadLeaderTemplates() {
+    var grid = document.getElementById('leaderGrid');
+    var empty = document.getElementById('emptyLeader');
+    
+    if (!grid) return;
+    
+    grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Шаблоны от лидеров скоро появятся...</div>';
+    if (empty) empty.style.display = 'none';
+}
+
+function loadMyTemplates() {
+    var grid = document.getElementById('myTemplatesGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Ваши шаблоны появятся здесь...</div>';
+}
+
+function loadModerationTemplates() {
+    var grid = document.getElementById('moderationGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Шаблоны на модерации...</div>';
+}
+
+// ============ CARDS (заглушки) ============
+var cards = [];
+
+function loadCards() {
+    console.log('📂 loadCards called');
+    var grid = document.getElementById('cardsGrid');
+    var empty = document.getElementById('emptyArchive');
+    
+    if (!grid) return;
+    
+    // Пробуем загрузить из localStorage
+    var savedCards = localStorage.getItem('cardgift_cards');
+    if (savedCards) {
+        try {
+            cards = JSON.parse(savedCards);
+        } catch (e) {
+            cards = [];
+        }
+    }
+    
+    if (cards.length === 0) {
+        grid.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+    } else {
+        if (empty) empty.style.display = 'none';
+        renderCards();
+    }
+}
+
+function renderCards() {
+    var grid = document.getElementById('cardsGrid');
+    if (!grid || cards.length === 0) return;
+    
+    grid.innerHTML = cards.map(function(card, index) {
+        return '<div class="card-item" data-index="' + index + '">' +
+            '<img src="' + (card.preview || card.image_url || '') + '" alt="Card">' +
+            '<div class="card-title">' + (card.title || 'Открытка #' + (index + 1)) + '</div>' +
+        '</div>';
+    }).join('');
+}
+
+// ============ CONTACTS (заглушки) ============
+var contacts = [];
+
+function loadContacts() {
+    console.log('👥 loadContacts called');
+    
+    var savedContacts = localStorage.getItem('cardgift_contacts');
+    if (savedContacts) {
+        try {
+            contacts = JSON.parse(savedContacts);
+        } catch (e) {
+            contacts = [];
+        }
+    }
+    
+    renderContacts();
+    updateContactsCounts();
+}
+
+function renderContacts() {
+    var container = document.getElementById('contactsList');
+    if (!container) return;
+    
+    if (contacts.length === 0) {
+        container.innerHTML = '<div class="empty-state">Нет контактов</div>';
+        return;
+    }
+    
+    container.innerHTML = contacts.map(function(c, i) {
+        return '<div class="contact-item">' +
+            '<span class="contact-name">' + (c.name || 'Контакт #' + (i+1)) + '</span>' +
+            '<span class="contact-platform">' + (c.messenger || c.platform || '') + '</span>' +
+        '</div>';
+    }).join('');
+}
+
+function updateContactsCounts() {
+    var countEl = document.getElementById('contactsCount');
+    if (countEl) {
+        countEl.textContent = contacts.length;
+    }
+}
+
+function saveContacts() {
+    localStorage.setItem('cardgift_contacts', JSON.stringify(contacts));
+}
+
+// ============ REFERRAL LINK ============
+function updateReferralLink() {
+    var displayId = window.currentDisplayId || window.currentGwId || window.currentTempId;
+    var linkEl = document.getElementById('referralLinkDisplay');
+    
+    if (linkEl && displayId) {
+        var link = window.location.origin + '/registration.html?ref=' + displayId;
+        linkEl.value = link;
+    }
+}
+
+// ============ UPGRADE MODAL ============
+function showUpgradeModal() {
+    showSection('wallet');
+}
+
+function closeUpgradeModal() {
+    closeModal('upgradeModal');
+}
+
+// ============ LEVEL ACTIVATION ============
+function activateLevel(level) {
+    console.log('⬆️ Activate level:', level);
+    showToast('Активация уровня ' + level + '...', 'info');
+    // TODO: Реальная активация через контракт
+}
+
+function showActivationModal(level) {
+    console.log('📋 Show activation modal for level:', level);
+}
+
+function closeActivationModal() {
+    closeModal('activationModal');
+}
+
+function confirmActivation() {
+    console.log('✅ Confirm activation');
+}
+
+// ============ GLOBALWAY ============
+function goToGlobalWay() {
+    window.open('https://gwr-navy.vercel.app', '_blank');
+}
+
+function openGlobalWay() {
+    goToGlobalWay();
+}
+
+// Экспорты
+window.goToGenerator = goToGenerator;
+window.switchArchiveTab = switchArchiveTab;
+window.loadMyCards = loadMyCards;
+window.loadCorporateTemplates = loadCorporateTemplates;
+window.loadLeaderTemplates = loadLeaderTemplates;
+window.loadMyTemplates = loadMyTemplates;
+window.loadModerationTemplates = loadModerationTemplates;
+window.loadCards = loadCards;
+window.renderCards = renderCards;
+window.loadContacts = loadContacts;
+window.renderContacts = renderContacts;
+window.updateContactsCounts = updateContactsCounts;
+window.saveContacts = saveContacts;
+window.updateReferralLink = updateReferralLink;
+window.showUpgradeModal = showUpgradeModal;
+window.closeUpgradeModal = closeUpgradeModal;
+window.activateLevel = activateLevel;
+window.showActivationModal = showActivationModal;
+window.closeActivationModal = closeActivationModal;
+window.confirmActivation = confirmActivation;
+window.goToGlobalWay = goToGlobalWay;
+window.openGlobalWay = openGlobalWay;
 
 // ============ SIDEBAR INITIALIZATION ============
 function initSidebar() {
