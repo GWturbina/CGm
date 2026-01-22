@@ -89,7 +89,7 @@ async function loadCards() {
                     // Применяем фильтр шаблонов если указан
                     cards = applyTemplateFilter(cards);
                     
-                    localStorage.setItem('cardgift_cards', JSON.stringify(cards));
+                    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
                     renderCards();
                     return;
                 } else {
@@ -123,7 +123,7 @@ async function loadCards() {
                                 card_data: card.card_data
                             }));
                             console.log('✅ Loaded', cards.length, 'cards via getCards()');
-                            localStorage.setItem('cardgift_cards', JSON.stringify(cards));
+                            try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
                             renderCards();
                             return;
                         }
@@ -163,7 +163,7 @@ async function loadCards() {
                     // Применяем фильтр шаблонов если указан
                     cards = applyTemplateFilter(cards);
                     
-                    localStorage.setItem('cardgift_cards', JSON.stringify(cards));
+                    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
                     renderCards();
                     return;
                 }
@@ -186,7 +186,7 @@ async function loadCards() {
 }
 
 function saveCards() {
-    localStorage.setItem('cardgift_cards', JSON.stringify(cards));
+    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
 }
 
 // =====================================================
@@ -1208,7 +1208,7 @@ async function toggleLeaderTemplate(cardIndex) {
     }
     
     // Сохраняем в localStorage
-    localStorage.setItem('cardgift_cards', JSON.stringify(cards));
+    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
     
     // TODO: Сохранить в Supabase/Redis
     console.log(`${newValue ? '✅' : '❌'} Card ${cardIndex} marked as leader template:`, newValue);
@@ -1239,7 +1239,7 @@ async function toggleCorporateTemplate(cardIndex) {
     }
     
     // Сохраняем в localStorage
-    localStorage.setItem('cardgift_cards', JSON.stringify(cards));
+    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
     
     // TODO: Сохранить в Supabase/Redis
     console.log(`${newValue ? '✅' : '❌'} Card ${cardIndex} marked as corporate:`, newValue);
@@ -1302,4 +1302,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v11 loaded - CLEAN');
+console.log('📁 Archive Module v12 loaded - localStorage safe');
