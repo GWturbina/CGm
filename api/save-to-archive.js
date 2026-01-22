@@ -1,7 +1,13 @@
-// Vercel Serverless Function - Сохранение карточки в АРХИВ пользователя
-// Сохраняет карточку в список архива привязанного к userId
+// api/save-to-archive.js
+// Сохранение карточки в Supabase (ИСПРАВЛЕНО: убран Redis)
+// v3.0 - Только Supabase!
 
-module.exports = async function handler(req, res) {
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,12 +15,9 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
     
-    const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-    const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-    
-    if (!REDIS_URL || !REDIS_TOKEN) {
-        console.error('❌ Redis not configured');
-        return res.status(500).json({ success: false, error: 'Redis not configured' });
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('❌ Supabase not configured');
+        return res.status(500).json({ success: false, error: 'Supabase not configured' });
     }
     
     try {
@@ -26,70 +29,59 @@ module.exports = async function handler(req, res) {
         
         console.log('💾 Saving to archive:', userId);
         
-        // Добавляем timestamp если его нет
-        if (!cardData.timestamp) {
-            cardData.timestamp = Date.now();
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        // Нормализуем userId
+        const cleanId = userId.toString().replace('GW', '').replace('CG', '');
+        const gwId = 'GW' + cleanId;
+        
+        // Генерируем short_code если его нет
+        const shortCode = cardData.shortCode || cardData.short_code || 
+                         'c' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        
+        // Сохраняем в Supabase
+        const { data, error } = await supabase
+            .from('cards')
+            .insert({
+                short_code: shortCode,
+                owner_gw_id: gwId,
+                card_data: {
+                    title: cardData.title || cardData.greetingText?.split('\n')[0] || 'Открытка',
+                    message: cardData.greeting || cardData.greetingText || '',
+                    image_url: cardData.mediaUrl || cardData.image_url || cardData.preview || null,
+                    video_url: cardData.videoUrl || null,
+                    style: cardData.style || 'classic'
+                },
+                card_type: 'standard',
+                views: 0,
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (error) {
+            // Если карточка уже существует - это ОК
+            if (error.code === '23505') {
+                console.log('⚠️ Card already exists:', shortCode);
+                return res.status(200).json({ 
+                    success: true, 
+                    cardId: shortCode,
+                    message: 'Card already exists'
+                });
+            }
+            console.error('❌ Supabase error:', error);
+            throw error;
         }
         
-        // Генерируем уникальный ID для карточки если его нет
-        if (!cardData.id) {
-            cardData.id = `card_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        }
-        
-        // Ключ архива пользователя
-        const archiveKey = `archive:${userId}`;
-        
-        // Получаем текущий архив
-        const getResponse = await fetch(REDIS_URL, {
-            method: 'POST',
-            headers: { 
-                Authorization: `Bearer ${REDIS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(['GET', archiveKey])
-        });
-        
-        const getData = await getResponse.json();
-        
-        let archive = [];
-        if (getData.result) {
-            archive = JSON.parse(getData.result);
-        }
-        
-        // Добавляем новую карточку в начало массива
-        archive.unshift(cardData);
-        
-        // Ограничиваем количество карточек в архиве (максимум 100)
-        if (archive.length > 100) {
-            archive = archive.slice(0, 100);
-        }
-        
-        // Сохраняем обновленный архив (без срока истечения)
-        const saveResponse = await fetch(REDIS_URL, {
-            method: 'POST',
-            headers: { 
-                Authorization: `Bearer ${REDIS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(['SET', archiveKey, JSON.stringify(archive)])
-        });
-        
-        const saveResult = await saveResponse.json();
-        
-        if (saveResult.error) {
-            console.error('❌ Redis error:', saveResult.error);
-            throw new Error(saveResult.error);
-        }
-        
-        console.log('✅ Card saved to archive:', cardData.id);
+        console.log('✅ Card saved to Supabase:', shortCode);
         return res.status(200).json({ 
             success: true, 
-            cardId: cardData.id,
-            totalCards: archive.length
+            cardId: data.id,
+            shortCode: shortCode
         });
         
     } catch (error) {
         console.error('❌ Save to archive error:', error);
         return res.status(500).json({ success: false, error: error.message });
     }
-};
+}
