@@ -23,7 +23,7 @@ let archiveCategories = [];
 let corporateTemplates = [];
 let leaderTemplates = [];
 // currentArchiveTab объявлена в modules-fix.js
-let cards = []; // Массив карточек
+// cards объявлена в modules-fix.js
 let templateFilter = null; // Фильтр шаблонов
 const walletAddress = window.walletAddress || localStorage.getItem('walletAddress') || null;
 
@@ -1305,4 +1305,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v8 FINAL loaded - _archiveLoadCards REGISTERED');
+console.log('📁 Archive Module v10 loaded - NO DUPLICATE VARS');
