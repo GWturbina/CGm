@@ -954,14 +954,14 @@ function renderCards() {
                 <div class="card-date">${card.date || ''}</div>
                 ${card.views ? `<div class="card-views" style="font-size: 11px; color: #888;">👁️ ${card.views}</div>` : ''}
             </div>
-            <div class="card-actions">
-                <button class="btn-icon ${!hasLink ? 'disabled' : ''}" onclick="viewCard(${i})" ${!hasLink ? 'disabled' : ''} title="Просмотр">👁️</button>
-                <button class="btn-icon ${!hasLink ? 'disabled' : ''}" onclick="shareCard(${i})" ${!hasLink ? 'disabled' : ''} title="Поделиться">📤</button>
-                <button class="btn-icon" onclick="editCard(${i})" title="Редактировать">✏️</button>
-                ${isOwner ? `<button class="btn-icon ${card.isTemplate ? 'active' : ''}" onclick="toggleLeaderTemplate(${i})" title="${card.isTemplate ? 'Убрать отметку' : 'Отметить'} как шаблон от лидера" style="color: ${card.isTemplate ? '#667eea' : '#888'};">👔</button>` : ''}
-                ${isOwner ? `<button class="btn-icon ${card.isCorporate ? 'active' : ''}" onclick="toggleCorporateTemplate(${i})" title="${card.isCorporate ? 'Убрать отметку' : 'Отметить'} как корпоративный" style="color: ${card.isCorporate ? '#f093fb' : '#888'};">🏢</button>` : ''}
-                ${(card.isTemplate || card.isCorporate) ? `<button class="btn-icon" onclick="useTemplate(${i})" title="Использовать шаблон" style="color: #4CAF50;">✨</button>` : ''}
-                <button class="btn-icon" onclick="deleteCard(${i})" title="Удалить">🗑️</button>
+            <div class="card-actions" style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; padding: 8px;">
+                <button class="btn-icon ${!hasLink ? 'disabled' : ''}" onclick="viewCard(${i})" ${!hasLink ? 'disabled' : ''} title="Просмотр" style="font-size: 14px; padding: 4px 6px;">👁️</button>
+                <button class="btn-icon ${!hasLink ? 'disabled' : ''}" onclick="shareCard(${i})" ${!hasLink ? 'disabled' : ''} title="Поделиться" style="font-size: 14px; padding: 4px 6px;">📤</button>
+                <button class="btn-icon" onclick="editCard(${i})" title="Редактировать" style="font-size: 14px; padding: 4px 6px;">✏️</button>
+                <button class="btn-icon" onclick="deleteCard(${i})" title="Удалить" style="font-size: 14px; padding: 4px 6px; color: #ff6b6b;">🗑️</button>
+                ${isOwner ? `<button class="btn-icon ${card.isTemplate ? 'active' : ''}" onclick="toggleLeaderTemplate(${i})" title="${card.isTemplate ? 'Убрать' : 'Шаблон лидера'}" style="font-size: 12px; padding: 4px 6px; color: ${card.isTemplate ? '#667eea' : '#666'};">👔</button>` : ''}
+                ${isOwner ? `<button class="btn-icon ${card.isCorporate ? 'active' : ''}" onclick="toggleCorporateTemplate(${i})" title="${card.isCorporate ? 'Убрать' : 'Корпоративный'}" style="font-size: 12px; padding: 4px 6px; color: ${card.isCorporate ? '#f093fb' : '#666'};">🏢</button>` : ''}
+                ${(card.isTemplate || card.isCorporate) ? `<button class="btn-icon" onclick="useCardAsTemplate(${i})" title="Использовать" style="font-size: 12px; padding: 4px 6px; color: #4CAF50;">✨</button>` : ''}
             </div>
         </div>
     `}).join('');
@@ -1253,6 +1253,47 @@ async function toggleCorporateTemplate(cardIndex) {
     }
 }
 
+/**
+ * Использовать карточку из архива как шаблон - открыть в генераторе
+ */
+function useCardAsTemplate(index) {
+    const card = cards[index];
+    if (!card) {
+        console.error('Card not found at index:', index);
+        return;
+    }
+    
+    console.log('✨ Using card as template:', card.short_code || card.shortCode);
+    
+    // Сохраняем данные карточки для генератора
+    const templateData = {
+        fromTemplate: true,
+        templateName: card.title || 'Шаблон',
+        cardData: card.card_data || {
+            greeting: card.greeting || card.greetingText,
+            mediaUrl: card.mediaUrl || card.preview || card.image_url
+        },
+        imageUrl: card.mediaUrl || card.preview || card.image_url,
+        shortCode: card.short_code || card.shortCode
+    };
+    
+    try {
+        localStorage.setItem('cg_template_data', JSON.stringify(templateData));
+    } catch(e) {
+        console.warn('localStorage error:', e.message);
+    }
+    
+    // Переходим в генератор
+    if (typeof showToast === 'function') {
+        showToast('Открываем шаблон в генераторе...', 'info');
+    }
+    
+    setTimeout(() => {
+        window.location.href = 'generator.html?from=template';
+    }, 300);
+}
+
+window.useCardAsTemplate = useCardAsTemplate;
 window.useTemplate = useTemplate;
 window.toggleLeaderTemplate = toggleLeaderTemplate;
 window.toggleCorporateTemplate = toggleCorporateTemplate;
@@ -1301,4 +1342,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v14 - NO localStorage, Supabase only!');
+console.log('📁 Archive Module v16 - compact buttons');
