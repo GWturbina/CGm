@@ -22,7 +22,15 @@ let corporateTemplates = [];
 let leaderTemplates = [];
 let currentArchiveTab = 'my';
 let cards = []; // Массив карточек
+let templateFilter = null; // Фильтр шаблонов
 const walletAddress = window.walletAddress || localStorage.getItem('walletAddress') || null;
+
+// Fallback функции если common.js не загружен
+const escapeHtml = window.escapeHtml || function(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+};
+const showToast = window.showToast || function(msg, type) { console.log(type + ':', msg); };
 
 // =====================================================
 // ЧАСТЬ 1: БАЗОВЫЕ ФУНКЦИИ (loadCards, saveCards, view, share, delete, search)
