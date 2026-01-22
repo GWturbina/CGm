@@ -89,8 +89,11 @@ async function loadCards() {
                     // Применяем фильтр шаблонов если указан
                     cards = applyTemplateFilter(cards);
                     
-                    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
+                    // СНАЧАЛА показываем карточки
                     renderCards();
+                    
+                    // Потом пытаемся закэшировать (не критично)
+                    
                     return;
                 } else {
                     console.log('📭 No cards in Supabase for owner_gw_id:', gwIdWithPrefix);
@@ -123,8 +126,8 @@ async function loadCards() {
                                 card_data: card.card_data
                             }));
                             console.log('✅ Loaded', cards.length, 'cards via getCards()');
-                            try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
                             renderCards();
+                            
                             return;
                         }
                     }
@@ -163,8 +166,8 @@ async function loadCards() {
                     // Применяем фильтр шаблонов если указан
                     cards = applyTemplateFilter(cards);
                     
-                    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
                     renderCards();
+                    
                     return;
                 }
             }
@@ -173,20 +176,16 @@ async function loadCards() {
         }
     }
     
-    // Способ 4: Fallback на localStorage
-    console.log('📦 Loading from localStorage...');
-    const saved = localStorage.getItem('cardgift_cards');
-    cards = saved ? JSON.parse(saved) : [];
-    console.log('📦 Loaded', cards.length, 'cards from localStorage');
-    
-    // Применяем фильтр шаблонов если указан
-    cards = applyTemplateFilter(cards);
+    // Если ничего не загрузилось - показываем пустой архив
+    console.log('📭 No cards found, showing empty archive');
+    cards = [];
     
     renderCards();
 }
 
 function saveCards() {
-    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
+    // Карточки хранятся только в Supabase
+    console.log('💾 Cards saved to Supabase (localStorage disabled)');
 }
 
 // =====================================================
@@ -1208,7 +1207,7 @@ async function toggleLeaderTemplate(cardIndex) {
     }
     
     // Сохраняем в localStorage
-    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
+    
     
     // TODO: Сохранить в Supabase/Redis
     console.log(`${newValue ? '✅' : '❌'} Card ${cardIndex} marked as leader template:`, newValue);
@@ -1239,7 +1238,7 @@ async function toggleCorporateTemplate(cardIndex) {
     }
     
     // Сохраняем в localStorage
-    try { localStorage.setItem('cardgift_cards', JSON.stringify(cards)); } catch(e) { console.warn('localStorage full:', e.message); }
+    
     
     // TODO: Сохранить в Supabase/Redis
     console.log(`${newValue ? '✅' : '❌'} Card ${cardIndex} marked as corporate:`, newValue);
@@ -1302,4 +1301,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v12 loaded - localStorage safe');
+console.log('📁 Archive Module v14 - NO localStorage, Supabase only!');
