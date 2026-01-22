@@ -344,9 +344,20 @@ function showSection(sectionId) {
         item.classList.toggle('active', item.dataset.section === sectionId);
     });
     
-    if (sectionId === 'contacts' && typeof updateContactsCounts === 'function') updateContactsCounts();
-    if (sectionId === 'archive' && typeof loadCards === 'function') loadCards();
-    if (sectionId === 'referrals' && typeof updateReferralLink === 'function') updateReferralLink();
+    // Загрузка данных при переключении секций
+    if (sectionId === 'contacts') {
+        if (typeof loadContacts === 'function') loadContacts();
+    }
+    if (sectionId === 'archive') {
+        if (typeof loadCards === 'function') loadCards();
+    }
+    if (sectionId === 'referrals') {
+        if (typeof updateReferralLink === 'function') updateReferralLink();
+        if (typeof loadReferrals === 'function') loadReferrals();
+    }
+    if (sectionId === 'panel') {
+        if (typeof loadPanelData === 'function') loadPanelData();
+    }
 }
 
 // ============ ЗАМКИ И УРОВНИ ============
@@ -1155,44 +1166,171 @@ window.deleteCard = deleteCardHandler;
 // ============ CONTACTS (заглушки) ============
 var contacts = [];
 
-function loadContacts() {
-    console.log('👥 loadContacts called');
+async function loadContacts() {
+    // Получаем ID текущего пользователя (v4.0)
+    var userId = window.currentDisplayId 
+                || window.currentGwId 
+                || window.currentTempId 
+                || window.currentCgId
+                || localStorage.getItem('cardgift_display_id')
+                || localStorage.getItem('cardgift_gw_id')
+                || localStorage.getItem('cardgift_temp_id')
+                || localStorage.getItem('cardgift_cg_id');
     
-    var savedContacts = localStorage.getItem('cardgift_contacts');
-    if (savedContacts) {
-        try {
-            contacts = JSON.parse(savedContacts);
-        } catch (e) {
-            contacts = [];
-        }
-    }
+    console.log('═══════════════════════════════════════');
+    console.log('📋 LOADING CONTACTS v4.0');
+    console.log('═══════════════════════════════════════');
+    console.log('👤 User ID:', userId);
+    console.log('📦 ContactsService:', !!window.ContactsService);
     
-    renderContacts();
-    updateContactsCounts();
-}
-
-function renderContacts() {
-    var container = document.getElementById('contactsList');
-    if (!container) return;
-    
-    if (contacts.length === 0) {
-        container.innerHTML = '<div class="empty-state">Нет контактов</div>';
+    if (!userId || userId === '—' || userId === 'undefined') {
+        console.log('⚠️ No User ID, cannot load contacts');
+        contacts = [];
+        renderContacts();
         return;
     }
     
-    container.innerHTML = contacts.map(function(c, i) {
-        return '<div class="contact-item">' +
-            '<span class="contact-name">' + (c.name || 'Контакт #' + (i+1)) + '</span>' +
-            '<span class="contact-platform">' + (c.messenger || c.platform || '') + '</span>' +
-        '</div>';
+    // Используем ContactsService v4.0
+    if (window.ContactsService) {
+        try {
+            contacts = await ContactsService.getContacts(userId);
+            console.log('✅ Contacts loaded:', contacts.length);
+        } catch (error) {
+            console.warn('ContactsService error:', error);
+            contacts = [];
+        }
+    } else {
+        // Fallback - localStorage
+        var contactsKey = 'cardgift_contacts_' + userId;
+        var saved = localStorage.getItem(contactsKey);
+        contacts = saved ? JSON.parse(saved) : [];
+        console.log('📋 Contacts from localStorage:', contacts.length);
+    }
+    
+    console.log('═══════════════════════════════════════');
+    console.log('📊 FINAL: contacts array has', contacts.length, 'items');
+    console.log('═══════════════════════════════════════');
+    
+    renderContacts();
+    updateContactsCounts();
+    
+    // Загружаем статистику
+    if (window.ContactsService && userId) {
+        try {
+            var stats = await ContactsService.getStats(userId);
+            updateStatsDisplay(stats);
+        } catch (e) {
+            console.warn('Stats error:', e);
+        }
+    }
+}
+
+function updateStatsDisplay(stats) {
+    var totalContactsEl = document.getElementById('totalContacts');
+    var totalReferralsEl = document.getElementById('totalReferrals');
+    var activeReferralsEl = document.getElementById('activeReferrals');
+    var monthContactsEl = document.getElementById('monthContacts');
+    
+    if (totalContactsEl) totalContactsEl.textContent = stats.totalContacts || 0;
+    if (totalReferralsEl) totalReferralsEl.textContent = stats.totalReferrals || 0;
+    if (activeReferralsEl) activeReferralsEl.textContent = stats.activeReferrals || 0;
+    if (monthContactsEl) monthContactsEl.textContent = stats.contactsThisMonth || 0;
+}
+
+function renderContacts() {
+    var tbody = document.getElementById('contactsTableBody');
+    var empty = document.getElementById('emptyContacts');
+    
+    if (!tbody) return;
+    
+    // Проверяем есть ли доступ к разделу
+    var cgId = window.currentCgId || localStorage.getItem('cardgift_cg_id');
+    
+    if (!cgId) {
+        tbody.innerHTML = '';
+        if (empty) {
+            empty.textContent = 'Подключите кошелек для управления контактами';
+            empty.style.display = 'block';
+        }
+        return;
+    }
+    
+    if (contacts.length === 0) {
+        tbody.innerHTML = '';
+        if (empty) {
+            empty.textContent = 'У вас пока нет контактов. Создайте открытку и поделитесь ссылкой!';
+            empty.style.display = 'block';
+        }
+        return;
+    }
+    
+    if (empty) empty.style.display = 'none';
+    
+    tbody.innerHTML = contacts.map(function(c, i) {
+        // Поддержка обоих форматов (Supabase и localStorage)
+        var name = c.name || 'Без имени';
+        var platform = c.platform || c.messenger || 'unknown';
+        var contact = c.contact || '';
+        var pushConsent = c.push_consent || c.pushConsent || false;
+        var source = c.source || 'Manual';
+        var status = c.status || 'new';
+        var date = c.created_at ? new Date(c.created_at).toLocaleDateString() : (c.date || '-');
+        var contactId = c.id || i;
+        
+        // ID пользователя (если зарегистрирован)
+        var referralBadge = c.referral_gw_id 
+            ? '<span class="gw-badge">' + c.referral_gw_id + '</span>'
+            : (c.referral_temp_id 
+                ? '<span class="temp-badge" title="' + c.referral_temp_id + '">Temp</span>' 
+                : '<span class="no-id">—</span>');
+        
+        // Статус бейдж
+        var statusBadges = {
+            'new': '<span class="status-badge new">Новый</span>',
+            'contacted': '<span class="status-badge contacted">Связались</span>',
+            'active': '<span class="status-badge active">Активен</span>',
+            'inactive': '<span class="status-badge inactive">Неактивен</span>'
+        };
+        var statusBadge = statusBadges[status] || '<span class="status-badge">' + status + '</span>';
+        
+        return '<tr data-contact-id="' + contactId + '">' +
+            '<td>' + escapeHtml(name) + '</td>' +
+            '<td><span class="platform-badge ' + platform + '">' + platform + '</span></td>' +
+            '<td>' + escapeHtml(contact) + '</td>' +
+            '<td>' + (pushConsent ? '✅' : '❌') + '</td>' +
+            '<td>' + escapeHtml(source) + '</td>' +
+            '<td>' + referralBadge + '</td>' +
+            '<td>' + statusBadge + '</td>' +
+            '<td>' + date + '</td>' +
+            '<td>' +
+                '<button class="btn-icon" onclick="editContact(\'' + contactId + '\')" title="Редактировать">✏️</button>' +
+                '<button class="btn-icon" onclick="deleteContact(\'' + contactId + '\')" title="Удалить">🗑️</button>' +
+                '<button class="btn-icon" onclick="messageContact(' + i + ')" title="Написать">💬</button>' +
+            '</td>' +
+        '</tr>';
     }).join('');
 }
 
 function updateContactsCounts() {
+    var platforms = ['telegram', 'whatsapp', 'email', 'phone', 'instagram', 'facebook', 'tiktok', 'twitter', 'viber'];
+    
+    platforms.forEach(function(p) {
+        // Поддержка обоих полей: platform и messenger
+        var count = contacts.filter(function(c) { 
+            return (c.platform || c.messenger) === p; 
+        }).length;
+        var el = document.getElementById('count-' + p);
+        if (el) el.textContent = count;
+    });
+    
+    var allEl = document.getElementById('count-all');
+    if (allEl) allEl.textContent = contacts.length;
+    
+    var totalEl = document.getElementById('totalContacts');
+    if (totalEl) totalEl.textContent = contacts.length;
+    
     var countEl = document.getElementById('contactsCount');
-    if (countEl) {
-        countEl.textContent = contacts.length;
-    }
+    if (countEl) countEl.textContent = contacts.length;
 }
 
 function saveContacts() {
@@ -1208,7 +1346,165 @@ function updateReferralLink() {
         var link = window.location.origin + '/registration.html?ref=' + displayId;
         linkEl.value = link;
     }
+    
+    // Загружаем рефералов при открытии секции
+    loadReferrals();
 }
+
+// ============ REFERRALS - ПОЛНАЯ ВЕРСИЯ ============
+var allReferrals = [];
+
+async function loadReferrals() {
+    var userId = window.currentDisplayId 
+                || window.currentGwId 
+                || window.currentTempId
+                || localStorage.getItem('cardgift_display_id')
+                || localStorage.getItem('cardgift_gw_id');
+    
+    console.log('📋 Loading referrals for:', userId);
+    
+    if (!userId || userId === '—') {
+        renderEmptyReferrals('Подключите кошелек для просмотра рефералов');
+        return;
+    }
+    
+    var tbody = document.getElementById('referralsTableBody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="7" style="padding: 40px; text-align: center; color: #888;">' +
+            '<div style="font-size: 32px; margin-bottom: 10px;">⏳</div>' +
+            '<div>Загрузка...</div></td></tr>';
+    }
+    
+    try {
+        // Нормализуем ID
+        var searchId = userId;
+        if (!searchId.toString().startsWith('GW') && /^\d+$/.test(searchId)) {
+            searchId = 'GW' + searchId;
+        }
+        
+        // 1. Загружаем из users (кто пришёл по реф ссылке)
+        var referralsFromUsers = [];
+        if (window.SupabaseClient && SupabaseClient.client) {
+            var gwNum = searchId.toString().replace('GW', '');
+            
+            var result = await SupabaseClient.client
+                .from('users')
+                .select('temp_id, gw_id, name, messenger, contact, gw_level, source, created_at, referrer_gw_id, referrer_temp_id')
+                .or('referrer_gw_id.eq.' + searchId + ',referrer_gw_id.eq.' + gwNum)
+                .order('created_at', { ascending: false });
+            
+            referralsFromUsers = result.data || [];
+            console.log('📊 Referrals from users:', referralsFromUsers.length);
+        }
+        
+        // 2. Загружаем из contacts с source='viral'
+        var viralContacts = [];
+        if (window.SupabaseClient && SupabaseClient.client) {
+            var gwNum = searchId.toString().replace('GW', '');
+            
+            var result2 = await SupabaseClient.client
+                .from('contacts')
+                .select('cg_id, name, messenger, contact, source, created_at, owner_gw_id, referral_temp_id')
+                .eq('source', 'viral')
+                .or('owner_gw_id.eq.' + searchId + ',owner_gw_id.eq.' + gwNum)
+                .order('created_at', { ascending: false });
+            
+            viralContacts = result2.data || [];
+            console.log('📊 Viral contacts:', viralContacts.length);
+        }
+        
+        // 3. Объединяем
+        var seen = {};
+        allReferrals = [];
+        
+        referralsFromUsers.forEach(function(r) {
+            var key = (r.contact || r.temp_id || '').toLowerCase();
+            if (!seen[key]) {
+                seen[key] = true;
+                allReferrals.push({
+                    id: r.gw_id || r.temp_id,
+                    name: r.name || 'Без имени',
+                    messenger: r.messenger,
+                    contact: r.contact,
+                    source: r.source || 'registration',
+                    gwLevel: r.gw_level || 0,
+                    line: 1,
+                    createdAt: r.created_at
+                });
+            }
+        });
+        
+        viralContacts.forEach(function(c) {
+            var key = (c.contact || c.cg_id || '').toLowerCase();
+            if (!seen[key]) {
+                seen[key] = true;
+                allReferrals.push({
+                    id: c.cg_id || c.referral_temp_id,
+                    name: c.name || 'Без имени',
+                    messenger: c.messenger,
+                    contact: c.contact,
+                    source: c.source || 'viral',
+                    gwLevel: 0,
+                    line: 1,
+                    createdAt: c.created_at
+                });
+            }
+        });
+        
+        console.log('📊 Total referrals:', allReferrals.length);
+        renderReferrals();
+        
+    } catch (error) {
+        console.error('❌ Error loading referrals:', error);
+        renderEmptyReferrals('Ошибка загрузки: ' + error.message);
+    }
+}
+
+function renderReferrals() {
+    var tbody = document.getElementById('referralsTableBody');
+    if (!tbody) return;
+    
+    if (allReferrals.length === 0) {
+        renderEmptyReferrals('У вас пока нет рефералов. Поделитесь своей ссылкой!');
+        return;
+    }
+    
+    tbody.innerHTML = allReferrals.map(function(r) {
+        var gwStatus = r.gwLevel > 0 
+            ? '<span class="status-badge active">GW Lvl ' + r.gwLevel + '</span>'
+            : '<span class="status-badge inactive">Не в GW</span>';
+        
+        var date = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '-';
+        
+        return '<tr>' +
+            '<td>' + (r.id || '-') + '</td>' +
+            '<td>' + escapeHtml(r.name) + '</td>' +
+            '<td>' + escapeHtml(r.contact || '-') + '</td>' +
+            '<td>' + (r.line || 1) + '</td>' +
+            '<td>' + escapeHtml(r.source || '-') + '</td>' +
+            '<td>' + gwStatus + '</td>' +
+            '<td>' + date + '</td>' +
+        '</tr>';
+    }).join('');
+    
+    // Обновляем счётчики
+    var totalEl = document.getElementById('totalReferrals');
+    var activeEl = document.getElementById('activeReferrals');
+    if (totalEl) totalEl.textContent = allReferrals.length;
+    if (activeEl) activeEl.textContent = allReferrals.filter(function(r) { return r.gwLevel > 0; }).length;
+}
+
+function renderEmptyReferrals(message) {
+    var tbody = document.getElementById('referralsTableBody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="7" style="padding: 40px; text-align: center; color: #888;">' +
+            '<div style="font-size: 48px; margin-bottom: 15px;">👥</div>' +
+            '<div>' + message + '</div></td></tr>';
+    }
+}
+
+window.loadReferrals = loadReferrals;
+window.renderReferrals = renderReferrals;
 
 // ============ PANEL STATISTICS ============
 async function updatePanelStats() {
