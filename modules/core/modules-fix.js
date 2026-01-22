@@ -983,122 +983,18 @@ function loadModerationTemplates() {
     grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Шаблоны на модерации...</div>';
 }
 
-// ============ CARDS (использует SupabaseClient) ============
+// ============ CARDS (ЗАГРУЖАЕТСЯ ИЗ archive.js) ============
 var cards = [];
 
+// Заглушка - реальная функция в modules/archive/archive.js
 async function loadCards() {
-    console.log('📂 loadCards called');
-    var grid = document.getElementById('cardsGrid');
-    var empty = document.getElementById('emptyArchive');
-    
-    if (!grid) {
-        console.warn('cardsGrid not found');
-        return;
-    }
-    
-    // Показываем загрузку
-    grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Загрузка архива...</div>';
-    
-    // Получаем userId - используем ту же логику что в cardService
-    var gwId = window.currentGwId || window.currentDisplayId || localStorage.getItem('cardgift_gw_id') || localStorage.getItem('gw_id');
-    
-    if (!gwId) {
-        // Пробуем из currentUser
-        try {
-            var currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            gwId = currentUser.gw_id || currentUser.cg_id || currentUser.cgId;
-        } catch (e) {}
-    }
-    
-    console.log('📂 Loading cards for gwId:', gwId);
-    
-    if (!gwId) {
-        grid.innerHTML = '';
-        if (empty) empty.style.display = 'block';
-        console.warn('No gwId for cards');
-        return;
-    }
-    
-    try {
-        // Используем SupabaseClient.getCards() - твой рабочий метод!
-        if (window.SupabaseClient && SupabaseClient.client) {
-            console.log('📂 Using SupabaseClient.getCards()...');
-            cards = await SupabaseClient.getCards(gwId, 100);
-            
-            if (cards && cards.length > 0) {
-                console.log('✅ Loaded', cards.length, 'cards from Supabase');
-                if (empty) empty.style.display = 'none';
-                renderCards();
-                return;
-            }
-        }
-        
-        // Fallback на localStorage
-        var savedCards = localStorage.getItem('cardgift_cards');
-        if (savedCards) {
-            cards = JSON.parse(savedCards);
-            if (cards.length > 0) {
-                console.log('✅ Loaded', cards.length, 'cards from localStorage');
-                if (empty) empty.style.display = 'none';
-                renderCards();
-                return;
-            }
-        }
-        
-        // Пусто
-        cards = [];
-        grid.innerHTML = '';
-        if (empty) empty.style.display = 'block';
-        console.log('📭 No cards found');
-        
-    } catch (e) {
-        console.error('❌ Error loading cards:', e);
-        grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #f44;">Ошибка загрузки</div>';
-    }
+    console.log('📂 loadCards: delegating to archive.js...');
+    // archive.js переопределит window.loadCards
 }
 
 function renderCards() {
-    var grid = document.getElementById('cardsGrid');
-    if (!grid || cards.length === 0) return;
-    
-    grid.innerHTML = cards.map(function(card, index) {
-        // Поля из Supabase таблицы cards
-        var preview = card.image_url || card.cloudinary_url || card.preview || card.mediaUrl || '';
-        var title = card.title || card.message?.split('\n')[0] || card.greeting || 'Открытка #' + (index + 1);
-        var shortCode = card.card_code || card.short_code || card.shortCode || '';
-        var createdAt = card.created_at || card.createdAt || '';
-        
-        // Форматируем дату
-        var dateStr = '';
-        if (createdAt) {
-            try {
-                var date = new Date(createdAt);
-                dateStr = date.toLocaleDateString('ru-RU');
-            } catch (e) {}
-        }
-        
-        // Обрезаем title
-        if (title.length > 50) {
-            title = title.substring(0, 50) + '...';
-        }
-        
-        return '<div class="card-item" data-code="' + shortCode + '" onclick="viewCard(\'' + shortCode + '\')">' +
-            '<div class="card-preview">' +
-                (preview ? '<img src="' + preview + '" alt="Card" loading="lazy">' : '<div class="no-preview">🎴</div>') +
-            '</div>' +
-            '<div class="card-info">' +
-                '<div class="card-title">' + title + '</div>' +
-                (dateStr ? '<div class="card-date">' + dateStr + '</div>' : '') +
-            '</div>' +
-            '<div class="card-actions">' +
-                '<button class="btn-icon" onclick="event.stopPropagation(); copyCardLink(\'' + shortCode + '\')" title="Копировать ссылку">📋</button>' +
-                '<button class="btn-icon" onclick="event.stopPropagation(); shareCard(\'' + shortCode + '\')" title="Поделиться">📤</button>' +
-                '<button class="btn-icon delete" onclick="event.stopPropagation(); deleteCardHandler(\'' + shortCode + '\')" title="Удалить">🗑️</button>' +
-            '</div>' +
-        '</div>';
-    }).join('');
-    
-    console.log('🎴 Rendered', cards.length, 'cards');
+    console.log('🎴 renderCards: delegating to archive.js...');
+    // archive.js переопределит window.renderCards
 }
 
 function viewCard(shortCode) {
