@@ -972,32 +972,78 @@ function loadModerationTemplates() {
     grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Шаблоны на модерации...</div>';
 }
 
-// ============ CARDS (заглушки) ============
+// ============ CARDS (загрузка из Supabase) ============
 var cards = [];
 
-function loadCards() {
+async function loadCards() {
     console.log('📂 loadCards called');
     var grid = document.getElementById('cardsGrid');
     var empty = document.getElementById('emptyArchive');
     
-    if (!grid) return;
-    
-    // Пробуем загрузить из localStorage
-    var savedCards = localStorage.getItem('cardgift_cards');
-    if (savedCards) {
-        try {
-            cards = JSON.parse(savedCards);
-        } catch (e) {
-            cards = [];
-        }
+    if (!grid) {
+        console.warn('cardsGrid not found');
+        return;
     }
     
-    if (cards.length === 0) {
+    // Показываем загрузку
+    grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Загрузка архива...</div>';
+    
+    // Получаем userId
+    var gwId = window.currentGwId || window.currentDisplayId || localStorage.getItem('cardgift_gw_id');
+    
+    // Добавляем префикс GW если нет
+    if (gwId && !gwId.startsWith('GW') && !gwId.startsWith('CG_TEMP')) {
+        gwId = 'GW' + gwId;
+    }
+    
+    console.log('📂 Loading cards for gwId:', gwId);
+    
+    if (!gwId) {
         grid.innerHTML = '';
         if (empty) empty.style.display = 'block';
-    } else {
-        if (empty) empty.style.display = 'none';
-        renderCards();
+        console.warn('No gwId for cards');
+        return;
+    }
+    
+    try {
+        // Загружаем из Supabase через API
+        var response = await fetch('/api/get-cards?gw_id=' + encodeURIComponent(gwId));
+        var data = await response.json();
+        
+        console.log('📂 Cards response:', data);
+        
+        if (data.success && data.cards && data.cards.length > 0) {
+            cards = data.cards;
+            if (empty) empty.style.display = 'none';
+            renderCards();
+            console.log('✅ Loaded', cards.length, 'cards from Supabase');
+        } else {
+            // Fallback - пробуем напрямую через SupabaseClient
+            if (window.SupabaseClient && SupabaseClient.client) {
+                console.log('📂 Trying direct Supabase query...');
+                var result = await SupabaseClient.client
+                    .from('cards')
+                    .select('*')
+                    .eq('owner_gw_id', gwId)
+                    .order('created_at', { ascending: false });
+                
+                if (result.data && result.data.length > 0) {
+                    cards = result.data;
+                    if (empty) empty.style.display = 'none';
+                    renderCards();
+                    console.log('✅ Loaded', cards.length, 'cards directly from Supabase');
+                    return;
+                }
+            }
+            
+            cards = [];
+            grid.innerHTML = '';
+            if (empty) empty.style.display = 'block';
+            console.log('📭 No cards found');
+        }
+    } catch (e) {
+        console.error('❌ Error loading cards:', e);
+        grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #f44;">Ошибка загрузки</div>';
     }
 }
 
@@ -1006,12 +1052,111 @@ function renderCards() {
     if (!grid || cards.length === 0) return;
     
     grid.innerHTML = cards.map(function(card, index) {
-        return '<div class="card-item" data-index="' + index + '">' +
-            '<img src="' + (card.preview || card.image_url || '') + '" alt="Card">' +
-            '<div class="card-title">' + (card.title || 'Открытка #' + (index + 1)) + '</div>' +
+        var preview = card.image_url || card.cloudinary_url || card.preview || card.mediaUrl || '';
+        var title = card.greeting_text || card.title || card.greeting || 'Открытка #' + (index + 1);
+        var shortCode = card.short_code || card.shortCode || card.code || '';
+        var createdAt = card.created_at || card.createdAt || '';
+        
+        // Форматируем дату
+        var dateStr = '';
+        if (createdAt) {
+            try {
+                var date = new Date(createdAt);
+                dateStr = date.toLocaleDateString('ru-RU');
+            } catch (e) {}
+        }
+        
+        // Обрезаем title для превью
+        if (title.length > 50) {
+            title = title.substring(0, 50) + '...';
+        }
+        
+        return '<div class="card-item" data-code="' + shortCode + '" onclick="viewCard(\'' + shortCode + '\')">' +
+            '<div class="card-preview">' +
+                (preview ? '<img src="' + preview + '" alt="Card" loading="lazy">' : '<div class="no-preview">🎴</div>') +
+            '</div>' +
+            '<div class="card-info">' +
+                '<div class="card-title">' + title + '</div>' +
+                (dateStr ? '<div class="card-date">' + dateStr + '</div>' : '') +
+            '</div>' +
+            '<div class="card-actions">' +
+                '<button class="btn-icon" onclick="event.stopPropagation(); copyCardLink(\'' + shortCode + '\')" title="Копировать ссылку">📋</button>' +
+                '<button class="btn-icon" onclick="event.stopPropagation(); shareCard(\'' + shortCode + '\')" title="Поделиться">📤</button>' +
+                '<button class="btn-icon delete" onclick="event.stopPropagation(); deleteCardFromSupabase(\'' + shortCode + '\')" title="Удалить">🗑️</button>' +
+            '</div>' +
         '</div>';
     }).join('');
+    
+    console.log('🎴 Rendered', cards.length, 'cards');
 }
+
+function viewCard(shortCode) {
+    if (shortCode) {
+        window.open('/card-viewer.html?sc=' + shortCode, '_blank');
+    }
+}
+
+function copyCardLink(shortCode) {
+    var link = window.location.origin + '/c/' + shortCode;
+    navigator.clipboard.writeText(link).then(function() {
+        showToast('Ссылка скопирована! 📋', 'success');
+    }).catch(function() {
+        showToast('Не удалось скопировать', 'error');
+    });
+}
+
+function shareCard(shortCode) {
+    var link = window.location.origin + '/c/' + shortCode;
+    if (navigator.share) {
+        navigator.share({
+            title: 'CardGift - Открытка',
+            url: link
+        });
+    } else {
+        copyCardLink(shortCode);
+    }
+}
+
+async function deleteCardFromSupabase(shortCode) {
+    if (!confirm('Удалить эту открытку?')) return;
+    
+    try {
+        // Удаляем из Supabase
+        if (window.SupabaseClient && SupabaseClient.client) {
+            var result = await SupabaseClient.client
+                .from('cards')
+                .delete()
+                .eq('short_code', shortCode);
+            
+            if (!result.error) {
+                showToast('Открытка удалена', 'success');
+                loadCards(); // Перезагружаем
+                return;
+            }
+        }
+        
+        // Fallback через API
+        var response = await fetch('/api/delete-card?sc=' + shortCode, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showToast('Открытка удалена', 'success');
+            loadCards();
+        } else {
+            showToast('Ошибка удаления', 'error');
+        }
+    } catch (e) {
+        console.error('Delete error:', e);
+        showToast('Ошибка удаления', 'error');
+    }
+}
+
+window.viewCard = viewCard;
+window.copyCardLink = copyCardLink;
+window.shareCard = shareCard;
+window.deleteCardFromSupabase = deleteCardFromSupabase;
+window.deleteCard = deleteCardFromSupabase;
 
 // ============ CONTACTS (заглушки) ============
 var contacts = [];
@@ -1070,6 +1215,58 @@ function updateReferralLink() {
         linkEl.value = link;
     }
 }
+
+// ============ PANEL STATISTICS ============
+async function updatePanelStats() {
+    console.log('📊 Updating panel stats...');
+    
+    var teamEl = document.getElementById('stat-team');
+    var activeEl = document.getElementById('stat-active');
+    var earningsEl = document.getElementById('stat-earnings');
+    var conversionEl = document.getElementById('stat-conversion');
+    
+    // Пробуем загрузить из GlobalWay контракта
+    if (window.GlobalWayBridge && window.walletAddress) {
+        try {
+            // Получаем данные из контракта
+            if (typeof GlobalWayBridge.getUserStats === 'function') {
+                var stats = await GlobalWayBridge.getUserStats(window.walletAddress);
+                if (stats) {
+                    if (teamEl) teamEl.textContent = stats.totalTeam || 0;
+                    if (activeEl) activeEl.textContent = stats.activeUsers || 0;
+                    if (earningsEl) earningsEl.textContent = (stats.earnings || 0).toFixed(3);
+                    if (conversionEl) conversionEl.textContent = (stats.conversion || 0) + '%';
+                    console.log('✅ Stats loaded from contract');
+                    return;
+                }
+            }
+            
+            // Fallback - получаем referrals count
+            if (typeof GlobalWayBridge.getReferralsCount === 'function') {
+                var count = await GlobalWayBridge.getReferralsCount(window.walletAddress);
+                if (teamEl) teamEl.textContent = count || 0;
+            }
+        } catch (e) {
+            console.warn('Stats from contract failed:', e);
+        }
+    }
+    
+    // Fallback - показываем данные из localStorage
+    var savedStats = localStorage.getItem('cardgift_stats');
+    if (savedStats) {
+        try {
+            var stats = JSON.parse(savedStats);
+            if (teamEl) teamEl.textContent = stats.team || 0;
+            if (activeEl) activeEl.textContent = stats.active || 0;
+            if (earningsEl) earningsEl.textContent = (stats.earnings || 0).toFixed(3);
+            if (conversionEl) conversionEl.textContent = (stats.conversion || 0) + '%';
+        } catch (e) {}
+    }
+    
+    console.log('📊 Stats updated');
+}
+
+window.updatePanelStats = updatePanelStats;
 
 // ============ UPGRADE MODAL ============
 function showUpgradeModal() {
@@ -1251,6 +1448,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // SafePal баннер на мобильных
     setTimeout(showSafePalBanner, 1500);
+    
+    // Загружаем статистику панели
+    setTimeout(updatePanelStats, 2000);
     
     // Проверяем hash в URL
     var hash = window.location.hash.replace('#', '');
