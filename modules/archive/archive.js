@@ -21,6 +21,8 @@ let archiveCategories = [];
 let corporateTemplates = [];
 let leaderTemplates = [];
 let currentArchiveTab = 'my';
+let cards = []; // Массив карточек
+const walletAddress = window.walletAddress || localStorage.getItem('walletAddress') || null;
 
 // =====================================================
 // ЧАСТЬ 1: БАЗОВЫЕ ФУНКЦИИ (loadCards, saveCards, view, share, delete, search)
