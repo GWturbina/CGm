@@ -1279,4 +1279,13 @@ window.toggleCorporateTemplate = toggleCorporateTemplate;
 window.loadCards = loadCards;
 window.renderCards = renderCards;
 
+// Автозагрузка если секция archive активна
+setTimeout(function() {
+    const archiveSection = document.getElementById('section-archive');
+    if (archiveSection && archiveSection.classList.contains('active')) {
+        console.log('📂 Archive section active, loading cards...');
+        loadCards();
+    }
+}, 200);
+
 console.log('📁 Archive Module loaded (unified, no duplicates)');
