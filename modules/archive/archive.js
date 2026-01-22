@@ -1275,4 +1275,8 @@ window.editCard = editCard;
 window.toggleLeaderTemplate = toggleLeaderTemplate;
 window.toggleCorporateTemplate = toggleCorporateTemplate;
 
+// КРИТИЧНО: Переопределяем функции из modules-fix.js
+window.loadCards = loadCards;
+window.renderCards = renderCards;
+
 console.log('📁 Archive Module loaded (unified, no duplicates)');
