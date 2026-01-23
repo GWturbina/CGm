@@ -2486,6 +2486,10 @@ async function createCard() {
             }
         }
 
+        // Логируем данные карточки перед отправкой
+        console.log('📋 cardData.backgroundImage:', cardData.backgroundImage?.substring(0, 80) || 'NULL');
+        console.log('📋 uploadedMedia:', uploadedMedia);
+
         let result;
         if (typeof cardService !== 'undefined' && cardService.createCard) {
             // cardService загрузит изображение в Cloudinary и вернёт shareUrl с img параметром
@@ -3835,6 +3839,8 @@ async function useTemplateFromModal(code) {
         // === АВТОМАТИЧЕСКОЕ СОЗДАНИЕ КАРТОЧКИ ===
         setTimeout(async () => {
             console.log('🚀 Auto-creating card from template...');
+            console.log('🖼️ uploadedMedia:', uploadedMedia);
+            console.log('🖼️ uploadedMedia.data:', uploadedMedia?.data?.substring(0, 80));
             
             // Проверяем есть ли у пользователя ID
             let userId = window.currentCgId || 
