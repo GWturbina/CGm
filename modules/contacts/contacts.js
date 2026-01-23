@@ -1,5 +1,5 @@
 /* =====================================================
-   CARDGIFT - CONTACTS MODULE v6.0
+   CARDGIFT - CONTACTS MODULE v7.0
    - Шаблоны приглашений
    - Валидация контактов (международный формат)
    - Предупреждение при скачивании
@@ -8,6 +8,7 @@
    - Исправлено редактирование с заметками
    - Исправлено удаление контактов
    - Расширен чат для всех платформ
+   - Модалки с !important для display
    
    Зависимости:
    - window.ContactsService (contacts-service.js)
@@ -22,7 +23,7 @@
    - walletConnected
    ===================================================== */
 
-console.log('📋 Contacts Module v6.0 - Full CRUD support');
+console.log('📋 Contacts Module v7.0 - Full CRUD + Fixed Modals');
 
 async function loadContacts() {
     // Получаем ID текущего пользователя (v4.0)
@@ -36,7 +37,7 @@ async function loadContacts() {
                 || localStorage.getItem('cardgift_cg_id');
     
     console.log('═══════════════════════════════════════');
-    console.log('📋 LOADING CONTACTS v4.0');
+    console.log('📋 LOADING CONTACTS v7.0');
     console.log('═══════════════════════════════════════');
     console.log('👤 User ID:', userId);
     console.log('📦 ContactsService:', !!window.ContactsService);
@@ -298,7 +299,7 @@ function showAddContactModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.id = 'addContactModal';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
+    modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     modal.innerHTML = `
         <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto; background: #1a1a2e; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
@@ -842,7 +843,7 @@ function editContact(contactId) {
     
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
+    modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     modal.innerHTML = `
         <div class="modal" style="max-width: 450px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
@@ -1132,7 +1133,7 @@ function clearSearch() {
 function showImportExportModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
+    modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     modal.innerHTML = `
         <div class="modal" style="max-width: 400px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
@@ -1167,7 +1168,7 @@ function showExportWarningModal() {
     
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
+    modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     modal.innerHTML = `
         <div class="modal" style="max-width: 550px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #f44336, #c62828); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
@@ -1263,7 +1264,7 @@ window.doExportContacts = doExportContacts;
 function showTermsOfUseModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
+    modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     modal.innerHTML = `
         <div class="modal" style="max-width: 650px; max-height: 90vh; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
@@ -1363,7 +1364,7 @@ window.showTermsOfUseModal = showTermsOfUseModal;
 function showContactsHelpModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
+    modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     modal.innerHTML = `
         <div class="modal" style="max-width: 700px; max-height: 90vh; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
@@ -1527,4 +1528,4 @@ window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
 
-console.log('📋 Contacts Module v6.0 loaded');
+console.log('📋 Contacts Module v7.0 - Modals with !important');
