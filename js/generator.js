@@ -4033,5 +4033,5 @@ window.showTemplatesModal = showTemplatesModal;
 window.closeGeneratorTemplatesModal = closeGeneratorTemplatesModal;
 window.useTemplateFromModal = useTemplateFromModal;
 
-console.log('🎁 CardGift Generator v4.7 loaded (templates modal ON generator)');
+console.log('🎁 CardGift Generator v8.0 - user_templates support loaded (templates modal ON generator)');
 console.log('✅ Template buttons now open modals instead of redirecting!');
