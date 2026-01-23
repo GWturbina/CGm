@@ -1195,6 +1195,26 @@ window.editCard = editCard;
 // =====================================================
 
 async function toggleLeaderTemplate(cardIndex) {
+    // Проверка прав: уровень >= 8 (Серебро) ИЛИ OWNER
+    const userGwId = localStorage.getItem('cardgift_gw_id') || window.userGwId;
+    const rootGwId = (window.CONFIG?.ROOT_GW_ID || 'GW9729645').replace('GW', '');
+    const cleanUserGwId = userGwId?.toString().replace('GW', '');
+    const userLevel = window.currentUser?.level || parseInt(localStorage.getItem('cardgift_level')) || 0;
+    
+    const isOwner = cleanUserGwId === rootGwId;
+    const isSilver = userLevel >= 8; // Уровень 8+ = Серебро
+    
+    // TODO: добавить проверку 3 личных рефералов для полного статуса Серебро
+    // const hasMinReferrals = await checkReferralCount(userGwId) >= 3;
+    
+    if (!isOwner && !isSilver) {
+        console.warn('⛔ Need level 8+ (Silver) or OWNER to mark leader templates');
+        if (typeof notificationManager !== 'undefined') {
+            notificationManager.show('⛔ Нужен уровень 8+ (Серебро) чтобы отмечать шаблоны от лидера', 'error', 3000);
+        }
+        return;
+    }
+    
     const card = cards[cardIndex];
     const newValue = !card.isTemplate;
     
@@ -1244,8 +1264,22 @@ async function toggleLeaderTemplate(cardIndex) {
 
 /**
  * Переключить отметку "Корпоративный"
+ * Только OWNER может назначать корпоративные шаблоны
  */
 async function toggleCorporateTemplate(cardIndex) {
+    // Только OWNER (ROOT_GW_ID) может отмечать корпоративные шаблоны
+    const userGwId = localStorage.getItem('cardgift_gw_id') || window.userGwId;
+    const rootGwId = (window.CONFIG?.ROOT_GW_ID || 'GW9729645').replace('GW', '');
+    const cleanUserGwId = userGwId?.toString().replace('GW', '');
+    
+    if (cleanUserGwId !== rootGwId) {
+        console.warn('⛔ Only OWNER can mark corporate templates');
+        if (typeof notificationManager !== 'undefined') {
+            notificationManager.show('⛔ Только владелец платформы может отмечать корпоративные шаблоны', 'error', 3000);
+        }
+        return;
+    }
+    
     const card = cards[cardIndex];
     const newValue = !card.isCorporate;
     
@@ -1393,4 +1427,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v18 - updateSelectedCount added');
+console.log('📁 Archive Module v19 - OWNER/Silver permissions');
