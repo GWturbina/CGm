@@ -426,7 +426,8 @@ async function loadMyCards() {
 }
 
 /**
- * Загрузить корпоративные шаблоны
+ * Загрузить корпоративные шаблоны ВЫБРАННЫЕ ПОЛЬЗОВАТЕЛЕМ
+ * Из таблицы user_templates
  */
 async function loadCorporateTemplates() {
     const grid = document.getElementById('corporateGrid');
@@ -434,40 +435,52 @@ async function loadCorporateTemplates() {
     
     if (!grid) return;
     
+    const userId = localStorage.getItem('cardgift_gw_id') || window.userGwId;
+    if (!userId) {
+        grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Подключите кошелёк чтобы видеть выбранные шаблоны</div>';
+        return;
+    }
+    
     grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Загрузка...</div>';
     
     try {
-        const { data, error } = await SupabaseClient.client
-            .from('card_templates')
-            .select(`
-                *,
-                category:template_categories(name, icon, color)
-            `)
-            .eq('template_type', 'corporate')
-            .eq('is_public', true)
-            .eq('is_approved', true)
-            .order('uses_count', { ascending: false });
+        // Загружаем выбранные пользователем корпоративные шаблоны через API
+        const response = await fetch(`/api/get-user-templates?user_gw_id=${userId}&type=corporate`);
+        const result = await response.json();
         
-        if (error) throw error;
+        if (!result.success) throw new Error(result.error);
         
-        corporateTemplates = data || [];
+        corporateTemplates = result.templates || [];
         
         if (corporateTemplates.length === 0) {
             grid.innerHTML = '';
-            empty.style.display = 'block';
+            if (empty) {
+                empty.style.display = 'block';
+                empty.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">🏢</div>
+                        <div style="color: #888; font-size: 16px; margin-bottom: 15px;">У вас пока нет выбранных корпоративных шаблонов</div>
+                        <div style="color: #666; font-size: 13px; margin-bottom: 20px;">Перейдите в генератор и выберите шаблоны от клуба</div>
+                        <button onclick="window.location.href='generator.html'" 
+                                style="background: linear-gradient(45deg, #4CAF50, #2E7D32); color: #fff; border: none; padding: 12px 30px; border-radius: 25px; font-size: 14px; cursor: pointer;">
+                            🏢 Выбрать корпоративные шаблоны
+                        </button>
+                    </div>
+                `;
+            }
             return;
         }
         
-        empty.style.display = 'none';
-        renderCorporateTemplates(grid, corporateTemplates);
+        if (empty) empty.style.display = 'none';
+        renderUserTemplates(grid, corporateTemplates, 'corporate');
         
     } catch (e) {
         console.error('Error loading corporate templates:', e);
         grid.innerHTML = `
             <div style="text-align: center; padding: 30px;">
                 <div style="font-size: 48px; margin-bottom: 15px;">🏢</div>
-                <div style="color: #888;">Корпоративные шаблоны скоро появятся!</div>
-                <div style="color: #666; font-size: 12px; margin-top: 10px;">Таблица templates ещё не создана</div>
+                <div style="color: #888;">Не удалось загрузить шаблоны</div>
+                <div style="color: #666; font-size: 12px; margin-top: 10px;">${e.message}</div>
             </div>
         `;
     }
@@ -517,7 +530,176 @@ function renderCorporateTemplates(container, templates) {
 }
 
 /**
- * Загрузить шаблоны от лидеров
+ * Рендер выбранных пользователем шаблонов
+ * С кнопками: копировать ссылку, поделиться, удалить
+ */
+function renderUserTemplates(container, templates, type) {
+    const isLeader = type === 'leader';
+    const color = isLeader ? '#FFD700' : '#4CAF50';
+    const icon = isLeader ? '👔' : '🏢';
+    
+    const html = templates.map((t, index) => {
+        const imageUrl = t.template_image_url || '';
+        const title = t.template_title || 'Шаблон';
+        const refLink = t.ref_link || '';
+        const code = t.template_code || '';
+        const selectedDate = t.selected_at ? new Date(t.selected_at).toLocaleDateString('ru-RU') : '';
+        
+        return `
+            <div class="user-template-card" data-id="${t.id}" data-code="${code}"
+                 style="background: rgba(255,255,255,0.05); border-radius: 16px; overflow: hidden; 
+                        border: 2px solid transparent; transition: all 0.3s;">
+                
+                <!-- Изображение -->
+                <div style="height: 160px; background: ${imageUrl ? `url('${imageUrl}') center/cover no-repeat` : 'linear-gradient(135deg, #333, #222)'}; position: relative;">
+                    ${!imageUrl ? `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:48px;">${icon}</div>` : ''}
+                    <div style="position: absolute; top: 8px; right: 8px; background: ${color}; color: ${isLeader ? '#000' : '#fff'}; 
+                                padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;">
+                        ${icon} ${isLeader ? 'От лидера' : 'Корпоративный'}
+                    </div>
+                </div>
+                
+                <!-- Информация -->
+                <div style="padding: 15px;">
+                    <div style="color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 8px; 
+                                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${escapeHtml(title)}
+                    </div>
+                    <div style="color: #888; font-size: 11px; margin-bottom: 12px;">
+                        Добавлено: ${selectedDate}
+                    </div>
+                    
+                    <!-- Ссылка -->
+                    <div style="background: rgba(255,215,0,0.1); border: 1px solid ${color}; border-radius: 8px; 
+                                padding: 8px; margin-bottom: 12px;">
+                        <input type="text" value="${refLink}" readonly 
+                               id="refLink_${index}"
+                               style="width: 100%; background: transparent; border: none; color: ${color}; 
+                                      font-size: 11px; text-align: center; outline: none;">
+                    </div>
+                    
+                    <!-- Кнопки -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                        <button onclick="copyUserTemplateLink('${refLink}')" 
+                                style="background: linear-gradient(45deg, ${color}, ${isLeader ? '#FFA500' : '#2E7D32'}); 
+                                       color: ${isLeader ? '#000' : '#fff'}; border: none; padding: 10px; 
+                                       border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold;">
+                            📋 Копировать
+                        </button>
+                        <button onclick="shareUserTemplateLink('${refLink}')" 
+                                style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid #555; 
+                                       padding: 10px; border-radius: 8px; font-size: 12px; cursor: pointer;">
+                            📤 Поделиться
+                        </button>
+                    </div>
+                    
+                    <!-- Кнопка удаления -->
+                    <button onclick="deleteUserTemplate('${t.id}', '${type}')" 
+                            style="width: 100%; background: rgba(255,100,100,0.1); color: #f66; 
+                                   border: 1px solid #f66; padding: 8px; border-radius: 8px; 
+                                   font-size: 11px; cursor: pointer; transition: all 0.2s;"
+                            onmouseover="this.style.background='rgba(255,100,100,0.2)'"
+                            onmouseout="this.style.background='rgba(255,100,100,0.1)'">
+                        🗑️ Убрать из коллекции
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+            ${html}
+        </div>
+    `;
+}
+
+/**
+ * Копировать реферальную ссылку шаблона
+ */
+function copyUserTemplateLink(link) {
+    navigator.clipboard.writeText(link).then(() => {
+        if (typeof notificationManager !== 'undefined') {
+            notificationManager.show('✅ Ссылка скопирована!', 'success', 2000);
+        }
+    }).catch(() => {
+        // Fallback для старых браузеров
+        const input = document.createElement('input');
+        input.value = link;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        if (typeof notificationManager !== 'undefined') {
+            notificationManager.show('✅ Ссылка скопирована!', 'success', 2000);
+        }
+    });
+}
+
+/**
+ * Поделиться ссылкой на шаблон
+ */
+async function shareUserTemplateLink(link) {
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: '🎁 Открытка для тебя!',
+                text: 'Посмотри эту открытку!',
+                url: link
+            });
+        } catch (e) {
+            console.log('Share cancelled');
+        }
+    } else {
+        copyUserTemplateLink(link);
+    }
+}
+
+/**
+ * Удалить шаблон из коллекции пользователя
+ */
+async function deleteUserTemplate(templateId, templateType) {
+    if (!confirm('Убрать этот шаблон из вашей коллекции?')) return;
+    
+    try {
+        const response = await fetch('/api/delete-user-template', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: templateId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (typeof notificationManager !== 'undefined') {
+                notificationManager.show('✅ Шаблон убран из коллекции', 'success', 2000);
+            }
+            
+            // Перезагружаем список
+            if (templateType === 'corporate') {
+                loadCorporateTemplates();
+            } else {
+                loadLeaderTemplates();
+            }
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (e) {
+        console.error('Delete error:', e);
+        if (typeof notificationManager !== 'undefined') {
+            notificationManager.show('❌ Ошибка: ' + e.message, 'error', 3000);
+        }
+    }
+}
+
+// Экспорт новых функций
+window.copyUserTemplateLink = copyUserTemplateLink;
+window.shareUserTemplateLink = shareUserTemplateLink;
+window.deleteUserTemplate = deleteUserTemplate;
+
+/**
+ * Загрузить шаблоны от лидеров ВЫБРАННЫЕ ПОЛЬЗОВАТЕЛЕМ
+ * Из таблицы user_templates
  */
 async function loadLeaderTemplates() {
     const grid = document.getElementById('leaderGrid');
@@ -525,57 +707,52 @@ async function loadLeaderTemplates() {
     
     if (!grid) return;
     
-    const userId = window.currentDisplayId || window.currentGwId;
+    const userId = localStorage.getItem('cardgift_gw_id') || window.userGwId;
     if (!userId) {
-        grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Подключите кошелёк</div>';
+        grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Подключите кошелёк чтобы видеть выбранные шаблоны</div>';
         return;
     }
     
     grid.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">Загрузка...</div>';
     
     try {
-        // Нормализуем ID
-        let gwId = userId;
-        if (!gwId.startsWith('GW') && /^\d+$/.test(gwId)) {
-            gwId = 'GW' + gwId;
-        }
+        // Загружаем выбранные пользователем лидерские шаблоны через API
+        const response = await fetch(`/api/get-user-templates?user_gw_id=${userId}&type=leader`);
+        const result = await response.json();
         
-        // Получаем цепочку спонсоров
-        const sponsors = await getSponsorsChain(gwId);
+        if (!result.success) throw new Error(result.error);
         
-        if (sponsors.length === 0) {
-            grid.innerHTML = '';
-            empty.style.display = 'block';
-            return;
-        }
-        
-        // Загружаем шаблоны от спонсоров
-        const { data, error } = await SupabaseClient.client
-            .from('card_templates')
-            .select('*')
-            .eq('template_type', 'leader')
-            .in('owner_gw_id', sponsors.map(s => s.id))
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        leaderTemplates = data || [];
+        leaderTemplates = result.templates || [];
         
         if (leaderTemplates.length === 0) {
             grid.innerHTML = '';
-            empty.style.display = 'block';
+            if (empty) {
+                empty.style.display = 'block';
+                empty.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">👔</div>
+                        <div style="color: #888; font-size: 16px; margin-bottom: 15px;">У вас пока нет выбранных шаблонов от лидеров</div>
+                        <div style="color: #666; font-size: 13px; margin-bottom: 20px;">Перейдите в генератор и выберите шаблоны от вашего лидера</div>
+                        <button onclick="window.location.href='generator.html'" 
+                                style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; border: none; padding: 12px 30px; border-radius: 25px; font-size: 14px; cursor: pointer;">
+                            👔 Выбрать шаблоны от лидера
+                        </button>
+                    </div>
+                `;
+            }
             return;
         }
         
-        empty.style.display = 'none';
-        renderLeaderTemplates(grid, leaderTemplates, sponsors);
+        if (empty) empty.style.display = 'none';
+        renderUserTemplates(grid, leaderTemplates, 'leader');
         
     } catch (e) {
         console.error('Error loading leader templates:', e);
         grid.innerHTML = `
             <div style="text-align: center; padding: 30px;">
                 <div style="font-size: 48px; margin-bottom: 15px;">👔</div>
-                <div style="color: #888;">Шаблоны от лидеров скоро появятся!</div>
+                <div style="color: #888;">Не удалось загрузить шаблоны</div>
+                <div style="color: #666; font-size: 12px; margin-top: 10px;">${e.message}</div>
             </div>
         `;
     }
@@ -1427,4 +1604,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v19 - OWNER/Silver permissions');
+console.log('📁 Archive Module v20 - User templates collection');
