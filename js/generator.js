@@ -25,6 +25,7 @@ let uploadedThumbnail = null;  // Загруженная обложка для �
 let currentUser = null;
 let walletConnected = false;
 let loadedFromTemplate = false;  // Флаг загрузки из шаблона
+let currentTemplateType = null;  // Тип шаблона: 'leader' или 'corporate'
 
 // ===== ЗАГРУЗКА ШАБЛОНА ИЗ URL =====
 async function loadTemplateFromUrl() {
@@ -3492,6 +3493,9 @@ async function openCorporateTemplates() {
  * Показать модалку с шаблонами
  */
 async function showTemplatesModal(type) {
+    // Сохраняем тип шаблона для использования в useTemplateFromModal
+    currentTemplateType = type;
+    
     // Создаём модалку если её нет
     let modal = document.getElementById('generatorTemplatesModal');
     if (!modal) {
@@ -3862,6 +3866,7 @@ async function useTemplateFromModal(code) {
             refLink: refLink,
             title: template.greetingText || template.title || 'Шаблон',
             imageUrl: template.image_url || template.mediaUrl || template.preview,
+            templateType: currentTemplateType || 'leader',
             usedAt: new Date().toISOString()
         };
         
@@ -3869,7 +3874,33 @@ async function useTemplateFromModal(code) {
         if (!usedTemplates.find(t => t.originalCode === originalCode)) {
             usedTemplates.push(templateEntry);
             localStorage.setItem('cardgift_used_templates', JSON.stringify(usedTemplates));
-            console.log('💾 Template saved to used templates');
+            console.log('💾 Template saved to localStorage');
+        }
+        
+        // === СОХРАНЯЕМ В SUPABASE через API ===
+        try {
+            const saveResponse = await fetch('/api/save-user-template', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_gw_id: userId,
+                    template_code: originalCode,
+                    template_type: currentTemplateType || 'leader',
+                    ref_link: refLink,
+                    template_title: template.greetingText?.split('\n')[0] || template.title || 'Шаблон',
+                    template_image_url: template.image_url || template.mediaUrl || template.preview,
+                    template_owner_gw_id: template.ownerGwId || template.owner_gw_id
+                })
+            });
+            
+            const saveResult = await saveResponse.json();
+            if (saveResult.success) {
+                console.log('✅ Template saved to Supabase user_templates');
+            } else {
+                console.warn('⚠️ Failed to save to Supabase:', saveResult.error);
+            }
+        } catch (e) {
+            console.warn('⚠️ API save error:', e.message);
         }
         
         // Показываем модалку с готовой ссылкой
