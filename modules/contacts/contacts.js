@@ -24,7 +24,7 @@
    - walletConnected
    ===================================================== */
 
-console.log('📋 Contacts Module v12.0 - Desktop/Mobile messenger share');
+console.log('📋 Contacts Module v13.0 - Web share URLs');
 
 // ═══════════════════════════════════════════════════════════
 // СОБСТВЕННАЯ ФУНКЦИЯ ЗАКРЫТИЯ МОДАЛОК
@@ -65,7 +65,7 @@ async function loadContacts() {
                 || localStorage.getItem('cardgift_cg_id');
     
     console.log('═══════════════════════════════════════');
-    console.log('📋 LOADING CONTACTS v12.0');
+    console.log('📋 LOADING CONTACTS v13.0');
     console.log('═══════════════════════════════════════');
     console.log('👤 User ID:', userId);
     console.log('📦 ContactsService:', !!window.ContactsService);
@@ -642,96 +642,74 @@ function sendToMessenger(messenger) {
     
     console.log('📤 sendToMessenger:', messenger);
     
-    // Копируем текст в буфер
-    navigator.clipboard.writeText(text).then(() => {
-        console.log('✅ Text copied to clipboard');
-    }).catch(() => {
-        // Fallback копирование
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        console.log('✅ Text copied (fallback)');
-    });
-    
-    // Определяем мобильное устройство
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // Копируем текст в буфер (на всякий случай)
+    navigator.clipboard.writeText(text).catch(() => {});
     
     const encodedText = encodeURIComponent(text);
-    let mobileUrl = null;
-    let webUrl = null;
+    let shareUrl = null;
     let appName = '';
     
     switch (messenger) {
         case 'telegram':
+            // Telegram Web Share - РАБОТАЕТ на десктопе и мобильном
+            shareUrl = `https://t.me/share/url?url=${encodeURIComponent(' ')}&text=${encodedText}`;
             appName = 'Telegram';
-            mobileUrl = `tg://msg?text=${encodedText}`;
-            webUrl = `https://web.telegram.org/`;
             break;
+            
         case 'whatsapp':
+            // WhatsApp Web Share - РАБОТАЕТ на десктопе и мобильном
+            shareUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
             appName = 'WhatsApp';
-            mobileUrl = `whatsapp://send?text=${encodedText}`;
-            webUrl = `https://web.whatsapp.com/`;
             break;
+            
         case 'viber':
+            // Viber - только через приложение
+            shareUrl = `viber://forward?text=${encodedText}`;
             appName = 'Viber';
-            mobileUrl = `viber://forward?text=${encodedText}`;
-            webUrl = null; // Viber Web не поддерживает
             break;
+            
         case 'facebook':
+            // Facebook Messenger share
+            shareUrl = `https://www.facebook.com/dialog/send?link=${encodeURIComponent('https://cardgift.site')}&quote=${encodedText}&app_id=0&redirect_uri=${encodeURIComponent(window.location.href)}`;
+            // Альтернатива - просто открыть messenger
+            shareUrl = `https://www.messenger.com/new`;
             appName = 'Messenger';
-            mobileUrl = `fb-messenger://share?link=&quote=${encodedText}`;
-            webUrl = `https://www.messenger.com/`;
             break;
+            
         case 'instagram':
+            // Instagram Direct - открываем веб-версию
+            shareUrl = `https://www.instagram.com/direct/inbox/`;
             appName = 'Instagram';
-            showToast('📋 Текст скопирован! Откройте Instagram → Direct → Вставьте', 'success');
-            return;
+            break;
+            
         case 'tiktok':
+            // TikTok - открываем сообщения
+            shareUrl = `https://www.tiktok.com/messages`;
             appName = 'TikTok';
-            showToast('📋 Текст скопирован! Откройте TikTok → Сообщения → Вставьте', 'success');
-            return;
+            break;
+            
         case 'email':
+            // Email - работает везде
+            shareUrl = `mailto:?subject=${encodeURIComponent('Интересное предложение')}&body=${encodedText}`;
             appName = 'Email';
-            window.location.href = `mailto:?subject=${encodeURIComponent('Интересное предложение')}&body=${encodedText}`;
-            showToast('✅ Текст скопирован, открываю почту...', 'success');
-            return;
+            break;
+            
         default:
             showToast('📋 Текст скопирован!', 'success');
             return;
     }
     
-    if (isMobile && mobileUrl) {
-        // На мобильном пробуем открыть приложение
-        console.log('📱 Mobile: trying', mobileUrl);
+    if (shareUrl) {
+        console.log('🔗 Opening:', shareUrl);
         
-        // Создаём скрытый iframe для попытки открыть приложение
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = mobileUrl;
-        document.body.appendChild(iframe);
+        // Открываем в новом окне/вкладке
+        const newWindow = window.open(shareUrl, '_blank');
         
-        // Через 2 секунды удаляем
-        setTimeout(() => {
-            document.body.removeChild(iframe);
-        }, 2000);
-        
-        showToast(`✅ Текст скопирован! ${appName} открывается...`, 'success');
-        
-    } else {
-        // На десктопе - копируем и показываем инструкцию
-        console.log('🖥️ Desktop: copy only');
-        
-        if (webUrl) {
-            showToast(`📋 Текст скопирован! Откройте ${appName} и вставьте (Ctrl+V)`, 'success');
-            // Опционально можно открыть веб-версию
-            // window.open(webUrl, '_blank');
+        if (newWindow) {
+            showToast(`✅ ${appName} открыт! Выберите контакт и отправьте`, 'success');
         } else {
-            showToast(`📋 Текст скопирован! Откройте ${appName} и вставьте`, 'success');
+            // Если заблокировано - пробуем в том же окне
+            window.location.href = shareUrl;
         }
     }
 }
@@ -1697,4 +1675,4 @@ window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
 
-console.log('📋 Contacts Module v12.0 loaded - Desktop friendly');
+console.log('📋 Contacts Module v13.0 loaded - Real messenger share');
