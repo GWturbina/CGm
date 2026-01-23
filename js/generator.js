@@ -3958,22 +3958,22 @@ function showTemplateReadyModal(refLink, shortLink, template) {
                 </button>
             </div>
             
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
                 <a href="https://t.me/share/url?url=${encodeURIComponent(refLink)}" target="_blank"
-                   style="background:#0088cc;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
-                    📱
+                   style="background:#0088cc;color:#fff;padding:12px 15px;border-radius:10px;text-decoration:none;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <span style="font-size:20px;">📱</span> Telegram
                 </a>
                 <a href="https://wa.me/?text=${encodeURIComponent('Посмотри открытку! ' + refLink)}" target="_blank"
-                   style="background:#25D366;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
-                    💬
-                </a>
-                <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(refLink)}" target="_blank"
-                   style="background:#1877F2;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
-                    📘
+                   style="background:#25D366;color:#fff;padding:12px 15px;border-radius:10px;text-decoration:none;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <span style="font-size:20px;">💬</span> WhatsApp
                 </a>
                 <a href="viber://forward?text=${encodeURIComponent('Посмотри открытку! ' + refLink)}" target="_blank"
-                   style="background:#7360F2;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
-                    📞
+                   style="background:#7360F2;color:#fff;padding:12px 15px;border-radius:10px;text-decoration:none;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <span style="font-size:20px;">📞</span> Viber
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(refLink)}" target="_blank"
+                   style="background:#1877F2;color:#fff;padding:12px 15px;border-radius:10px;text-decoration:none;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <span style="font-size:20px;">📘</span> Facebook
                 </a>
             </div>
             
@@ -4033,5 +4033,5 @@ window.showTemplatesModal = showTemplatesModal;
 window.closeGeneratorTemplatesModal = closeGeneratorTemplatesModal;
 window.useTemplateFromModal = useTemplateFromModal;
 
-console.log('🎁 CardGift Generator v8.0 - user_templates support loaded (templates modal ON generator)');
+console.log('🎁 CardGift Generator v9.0 - social buttons labels loaded (templates modal ON generator)');
 console.log('✅ Template buttons now open modals instead of redirecting!');
