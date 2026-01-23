@@ -1,10 +1,13 @@
 /* =====================================================
-   CARDGIFT - CONTACTS MODULE v5.0
+   CARDGIFT - CONTACTS MODULE v6.0
    - Шаблоны приглашений
    - Валидация контактов (международный формат)
    - Предупреждение при скачивании
    - Terms of Use модалка
    - Защита от дубликатов
+   - Исправлено редактирование с заметками
+   - Исправлено удаление контактов
+   - Расширен чат для всех платформ
    
    Зависимости:
    - window.ContactsService (contacts-service.js)
@@ -19,7 +22,7 @@
    - walletConnected
    ===================================================== */
 
-console.log('📋 Contacts Module v5.0 - Templates & Validation');
+console.log('📋 Contacts Module v6.0 - Full CRUD support');
 
 async function loadContacts() {
     // Получаем ID текущего пользователя (v4.0)
@@ -818,75 +821,264 @@ async function addContact() {
     }
 }
 
-function editContact(index) {
-    const c = contacts[index];
-    if (!c) return;
+function editContact(contactId) {
+    // Находим контакт по ID или индексу
+    let c, index;
+    if (typeof contactId === 'string' && contactId.includes('-')) {
+        // UUID из Supabase
+        index = contacts.findIndex(ct => ct.id === contactId);
+        c = contacts[index];
+    } else {
+        // Числовой индекс
+        index = parseInt(contactId);
+        c = contacts[index];
+    }
+    
+    if (!c) {
+        showToast('Контакт не найден', 'error');
+        return;
+    }
     
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
-        <div class="modal">
-            <div class="modal-header"><h3>✏️ Редактировать</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-            <div class="modal-body">
-                <div class="form-group"><label>Имя:</label><input type="text" id="editName" class="form-input" value="${escapeHtml(c.name)}"></div>
-                <div class="form-group"><label>Контакт:</label><input type="text" id="editValue" class="form-input" value="${escapeHtml(c.contact)}"></div>
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e);">
+                <h3 style="color: #FFD700;">✏️ Редактировать контакт</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-gray" onclick="closeModal()">Отмена</button>
-                <button class="btn btn-green" onclick="saveEditContact(${index})">Сохранить</button>
+            <div class="modal-body" style="padding: 25px;">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: #FFD700; display: block; margin-bottom: 8px;">👤 Имя:</label>
+                    <input type="text" id="editName" class="form-input" value="${escapeHtml(c.name || '')}"
+                           style="width: 100%; padding: 12px; background: #1a1a2e; border: 1px solid #444; border-radius: 8px; color: #fff;">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: #FFD700; display: block; margin-bottom: 8px;">📱 Платформа:</label>
+                    <select id="editPlatform" class="form-select"
+                            style="width: 100%; padding: 12px; background: #1a1a2e; border: 1px solid #444; border-radius: 8px; color: #fff;">
+                        <option value="telegram" ${(c.platform || c.messenger) === 'telegram' ? 'selected' : ''}>📱 Telegram</option>
+                        <option value="whatsapp" ${(c.platform || c.messenger) === 'whatsapp' ? 'selected' : ''}>💬 WhatsApp</option>
+                        <option value="viber" ${(c.platform || c.messenger) === 'viber' ? 'selected' : ''}>📞 Viber</option>
+                        <option value="facebook" ${(c.platform || c.messenger) === 'facebook' ? 'selected' : ''}>📘 Facebook</option>
+                        <option value="instagram" ${(c.platform || c.messenger) === 'instagram' ? 'selected' : ''}>📷 Instagram</option>
+                        <option value="email" ${(c.platform || c.messenger) === 'email' ? 'selected' : ''}>📧 Email</option>
+                        <option value="phone" ${(c.platform || c.messenger) === 'phone' ? 'selected' : ''}>📞 Телефон</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: #FFD700; display: block; margin-bottom: 8px;">📝 Контакт:</label>
+                    <input type="text" id="editValue" class="form-input" value="${escapeHtml(c.contact || '')}"
+                           style="width: 100%; padding: 12px; background: #1a1a2e; border: 1px solid #444; border-radius: 8px; color: #fff;">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: #FFD700; display: block; margin-bottom: 8px;">📋 Заметка:</label>
+                    <textarea id="editNote" rows="3" placeholder="Личная заметка о контакте..."
+                              style="width: 100%; padding: 12px; background: #1a1a2e; border: 1px solid #444; border-radius: 8px; color: #fff; resize: none;">${escapeHtml(c.note || c.notes || '')}</textarea>
+                    <small style="color: #666; font-size: 11px;">Заметка видна только вам</small>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="editPush" ${c.push_consent || c.pushConsent ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span style="color: #ccc;">Согласие на push-уведомления</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 20px; display: flex; gap: 10px;">
+                <button class="btn btn-gray" onclick="closeModal()" 
+                        style="flex: 1; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; cursor: pointer;">
+                    Отмена
+                </button>
+                <button class="btn btn-green" onclick="saveEditContact('${contactId}')" 
+                        style="flex: 1; padding: 12px; background: linear-gradient(45deg, #4CAF50, #2E7D32); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    💾 Сохранить
+                </button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
 }
 
-function saveEditContact(index) {
-    contacts[index].name = document.getElementById('editName')?.value.trim();
-    contacts[index].contact = document.getElementById('editValue')?.value.trim();
+async function saveEditContact(contactId) {
+    const name = document.getElementById('editName')?.value.trim();
+    const platform = document.getElementById('editPlatform')?.value;
+    const contact = document.getElementById('editValue')?.value.trim();
+    const note = document.getElementById('editNote')?.value.trim();
+    const pushConsent = document.getElementById('editPush')?.checked;
+    
+    if (!name || !contact) {
+        showToast('Заполните имя и контакт', 'error');
+        return;
+    }
+    
+    // Находим контакт
+    let index;
+    if (typeof contactId === 'string' && contactId.includes('-')) {
+        index = contacts.findIndex(ct => ct.id === contactId);
+    } else {
+        index = parseInt(contactId);
+    }
+    
+    if (index < 0 || !contacts[index]) {
+        showToast('Контакт не найден', 'error');
+        return;
+    }
+    
+    // Обновляем локально
+    contacts[index].name = name;
+    contacts[index].platform = platform;
+    contacts[index].messenger = platform;
+    contacts[index].contact = contact;
+    contacts[index].note = note;
+    contacts[index].push_consent = pushConsent;
+    
+    // Если есть Supabase - обновляем там тоже
+    if (window.ContactsService && contacts[index].id) {
+        try {
+            await ContactsService.updateContact(contacts[index].id, {
+                name, 
+                messenger: platform, 
+                contact, 
+                note,
+                push_consent: pushConsent
+            });
+        } catch (err) {
+            console.warn('Supabase update failed:', err);
+        }
+    }
+    
     saveContacts();
     renderContacts();
     closeModal();
-    showToast('Контакт обновлён!', 'success');
+    showToast('✅ Контакт обновлён!', 'success');
 }
 
 async function deleteContact(contactId) {
-    if (!confirm('Удалить контакт?')) return;
+    if (!confirm('❌ Удалить этот контакт?')) return;
     
-    // Используем ContactsService если доступен
-    if (window.ContactsService && typeof contactId === 'string' && contactId.includes('-')) {
-        // UUID формат - это из Supabase
-        const success = await ContactsService.deleteContact(contactId);
-        if (success) {
-            await loadContacts();
-            showToast('Контакт удалён', 'success');
-        } else {
-            showToast('Ошибка удаления', 'error');
-        }
+    console.log('🗑️ Deleting contact:', contactId);
+    
+    // Определяем индекс
+    let index;
+    let supabaseId = null;
+    
+    if (typeof contactId === 'string' && contactId.includes('-')) {
+        // UUID из Supabase
+        supabaseId = contactId;
+        index = contacts.findIndex(ct => ct.id === contactId);
     } else {
-        // Fallback - localStorage (index как число)
-        const index = parseInt(contactId);
-        if (!isNaN(index) && contacts[index]) {
-            contacts.splice(index, 1);
-            saveContacts();
-            renderContacts();
-            updateContactsCounts();
-            showToast('Контакт удалён', 'success');
+        // Числовой индекс
+        index = parseInt(contactId);
+        if (contacts[index] && contacts[index].id) {
+            supabaseId = contacts[index].id;
         }
+    }
+    
+    console.log('📍 Index:', index, 'Supabase ID:', supabaseId);
+    
+    // Удаляем из Supabase если есть
+    if (supabaseId && window.ContactsService) {
+        try {
+            const success = await ContactsService.deleteContact(supabaseId);
+            console.log('🗑️ Supabase delete result:', success);
+        } catch (err) {
+            console.warn('Supabase delete error:', err);
+        }
+    }
+    
+    // Удаляем локально
+    if (index >= 0 && contacts[index]) {
+        contacts.splice(index, 1);
+        saveContacts();
+        renderContacts();
+        updateContactsCounts();
+        showToast('✅ Контакт удалён', 'success');
+    } else {
+        // Перезагружаем из Supabase
+        await loadContacts();
+        showToast('✅ Контакт удалён', 'success');
     }
 }
 
-function messageContact(index) {
-    const c = contacts[index];
-    if (!c) return;
-    
-    let url = '';
-    switch(c.platform) {
-        case 'telegram': url = `https://t.me/${c.contact.replace('@', '')}`; break;
-        case 'whatsapp': url = `https://wa.me/${c.contact.replace(/\D/g, '')}`; break;
-        case 'email': url = `mailto:${c.contact}`; break;
-        default: showToast('Чат недоступен', 'error'); return;
+function messageContact(contactId) {
+    // Находим контакт
+    let c;
+    if (typeof contactId === 'string' && contactId.includes('-')) {
+        c = contacts.find(ct => ct.id === contactId);
+    } else {
+        c = contacts[parseInt(contactId)];
     }
-    window.open(url, '_blank');
+    
+    if (!c) {
+        showToast('Контакт не найден', 'error');
+        return;
+    }
+    
+    const platform = c.platform || c.messenger;
+    const contact = c.contact || '';
+    let url = '';
+    
+    switch(platform) {
+        case 'telegram':
+            // Убираем @ если есть
+            const tgUsername = contact.replace('@', '');
+            url = `https://t.me/${tgUsername}`;
+            break;
+            
+        case 'whatsapp':
+            // Оставляем только цифры
+            const waNumber = contact.replace(/\D/g, '');
+            url = `https://wa.me/${waNumber}`;
+            break;
+            
+        case 'viber':
+            // Viber по номеру
+            const vbNumber = contact.replace(/\D/g, '');
+            url = `viber://chat?number=%2B${vbNumber}`;
+            break;
+            
+        case 'email':
+            url = `mailto:${contact}`;
+            break;
+            
+        case 'instagram':
+            const igUsername = contact.replace('@', '');
+            url = `https://instagram.com/${igUsername}`;
+            break;
+            
+        case 'facebook':
+            // Если это ссылка - открываем напрямую
+            if (contact.includes('facebook.com')) {
+                url = contact;
+            } else {
+                url = `https://facebook.com/${contact.replace('@', '')}`;
+            }
+            break;
+            
+        case 'tiktok':
+            const ttUsername = contact.replace('@', '');
+            url = `https://tiktok.com/@${ttUsername}`;
+            break;
+            
+        case 'twitter':
+            const twUsername = contact.replace('@', '');
+            url = `https://twitter.com/${twUsername}`;
+            break;
+            
+        case 'phone':
+            // Звонок по телефону
+            url = `tel:${contact}`;
+            break;
+            
+        default:
+            showToast('💬 Чат для этой платформы недоступен', 'info');
+            return;
+    }
+    
+    if (url) {
+        console.log('💬 Opening chat:', platform, url);
+        window.open(url, '_blank');
+    }
 }
 
 function filterByPlatform(platform) {
