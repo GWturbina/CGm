@@ -24,7 +24,7 @@
    - walletConnected
    ===================================================== */
 
-console.log('📋 Contacts Module v10.0 - addContact fixed');
+console.log('📋 Contacts Module v11.0 - New Invite UX');
 
 // ═══════════════════════════════════════════════════════════
 // СОБСТВЕННАЯ ФУНКЦИЯ ЗАКРЫТИЯ МОДАЛОК
@@ -65,7 +65,7 @@ async function loadContacts() {
                 || localStorage.getItem('cardgift_cg_id');
     
     console.log('═══════════════════════════════════════');
-    console.log('📋 LOADING CONTACTS v10.0');
+    console.log('📋 LOADING CONTACTS v11.0');
     console.log('═══════════════════════════════════════');
     console.log('👤 User ID:', userId);
     console.log('📦 ContactsService:', !!window.ContactsService);
@@ -351,88 +351,93 @@ function showAddContactModal() {
             </div>
             
             <!-- Вкладка: Пригласить -->
-            <div id="inviteTab" class="modal-body">
-                <p style="color: #888; font-size: 13px; margin-bottom: 15px;">
-                    Выберите мессенджер и скопируйте готовый текст приглашения
-                </p>
+            <div id="inviteTab" class="modal-body" style="padding: 15px;">
                 
-                <!-- Кнопки мессенджеров -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
-                    <button onclick="selectInviteMessenger('telegram')" class="messenger-btn" data-messenger="telegram"
-                            style="background: #0088cc; color: #fff; border: none; padding: 15px 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span style="font-size: 24px;">📱</span>
-                        <span style="font-size: 11px;">Telegram</span>
-                    </button>
-                    <button onclick="selectInviteMessenger('whatsapp')" class="messenger-btn" data-messenger="whatsapp"
-                            style="background: #25D366; color: #fff; border: none; padding: 15px 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span style="font-size: 24px;">💬</span>
-                        <span style="font-size: 11px;">WhatsApp</span>
-                    </button>
-                    <button onclick="selectInviteMessenger('viber')" class="messenger-btn" data-messenger="viber"
-                            style="background: #7360F2; color: #fff; border: none; padding: 15px 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span style="font-size: 24px;">📞</span>
-                        <span style="font-size: 11px;">Viber</span>
-                    </button>
-                    <button onclick="selectInviteMessenger('facebook')" class="messenger-btn" data-messenger="facebook"
-                            style="background: #1877F2; color: #fff; border: none; padding: 15px 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span style="font-size: 24px;">📘</span>
-                        <span style="font-size: 11px;">Facebook</span>
-                    </button>
-                    <button onclick="selectInviteMessenger('instagram')" class="messenger-btn" data-messenger="instagram"
-                            style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff; border: none; padding: 15px 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span style="font-size: 24px;">📷</span>
-                        <span style="font-size: 11px;">Instagram</span>
-                    </button>
-                    <button onclick="selectInviteMessenger('tiktok')" class="messenger-btn" data-messenger="tiktok"
-                            style="background: #000; color: #fff; border: 1px solid #fff; padding: 15px 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span style="font-size: 24px;">🎵</span>
-                        <span style="font-size: 11px;">TikTok</span>
-                    </button>
-                    <button onclick="selectInviteMessenger('twitter')" class="messenger-btn" data-messenger="twitter"
-                            style="background: #1DA1F2; color: #fff; border: none; padding: 15px 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span style="font-size: 24px;">🐦</span>
-                        <span style="font-size: 11px;">Twitter/X</span>
-                    </button>
-                    <button onclick="selectInviteMessenger('email')" class="messenger-btn" data-messenger="email"
-                            style="background: #EA4335; color: #fff; border: none; padding: 15px 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span style="font-size: 24px;">📧</span>
-                        <span style="font-size: 11px;">Email</span>
-                    </button>
-                </div>
-                
-                <!-- Выбор типа шаблона -->
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <button id="btnInitialTemplates" onclick="showTemplateType('initial')" 
-                            style="flex: 1; padding: 10px; background: #FFD700; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        📝 Первое касание
-                    </button>
-                    <button id="btnFollowupTemplates" onclick="showTemplateType('followup')" 
-                            style="flex: 1; padding: 10px; background: #333; color: #888; border: none; border-radius: 8px; cursor: pointer;">
-                        📋 После согласия
-                    </button>
-                </div>
-                
-                <!-- Шаблоны -->
-                <div id="templatesContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
-                    ${renderTemplateButtons('initial')}
-                </div>
-                
-                <!-- Текст для копирования -->
+                <!-- Шаг 1: Выбор шаблона -->
                 <div style="margin-bottom: 15px;">
-                    <label style="color: #FFD700; font-weight: bold; display: block; margin-bottom: 8px;">📝 Текст приглашения:</label>
-                    <textarea id="inviteText" rows="6" 
-                              style="width: 100%; background: #1a1a2e; border: 1px solid #FFD700; border-radius: 8px; color: #fff; padding: 12px; font-size: 14px; resize: vertical;"
-                              placeholder="Выберите шаблон или напишите свой текст...">${inviteTemplates.initial[0].text}</textarea>
+                    <label style="color: #FFD700; font-weight: bold; display: block; margin-bottom: 10px;">
+                        1️⃣ Выберите текст приглашения:
+                    </label>
+                    
+                    <!-- Тип шаблона -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <button id="btnInitialTemplates" onclick="showTemplateType('initial')" 
+                                style="flex: 1; padding: 8px; background: #FFD700; color: #000; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;">
+                            📝 Первое касание
+                        </button>
+                        <button id="btnFollowupTemplates" onclick="showTemplateType('followup')" 
+                                style="flex: 1; padding: 8px; background: #333; color: #888; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                            📋 После согласия
+                        </button>
+                    </div>
+                    
+                    <!-- Шаблоны -->
+                    <div id="templatesContainer" style="max-height: 120px; overflow-y: auto;">
+                        ${renderTemplateButtons('initial')}
+                    </div>
                 </div>
                 
-                <!-- Кнопка копирования -->
-                <button onclick="copyInviteText()" 
-                        style="width: 100%; padding: 15px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">
-                    📋 Копировать текст
-                </button>
+                <!-- Шаг 2: Текст (можно редактировать) -->
+                <div style="margin-bottom: 15px;">
+                    <label style="color: #FFD700; font-weight: bold; display: block; margin-bottom: 8px;">
+                        2️⃣ Текст (можно редактировать):
+                    </label>
+                    <textarea id="inviteText" rows="4" 
+                              style="width: 100%; background: #1a1a2e; border: 1px solid #444; border-radius: 8px; color: #fff; padding: 10px; font-size: 13px; resize: none;"
+                              placeholder="Выберите шаблон выше...">${inviteTemplates.initial[0].text}</textarea>
+                </div>
                 
-                <p style="color: #666; font-size: 11px; text-align: center; margin-top: 10px;">
-                    После копирования вставьте текст в выбранный мессенджер
+                <!-- Шаг 3: Выбор мессенджера и отправка -->
+                <div>
+                    <label style="color: #FFD700; font-weight: bold; display: block; margin-bottom: 10px;">
+                        3️⃣ Отправить в мессенджер:
+                    </label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                        <button onclick="sendToMessenger('telegram')" 
+                                style="background: #0088cc; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">📱</span>
+                            <span style="font-size: 10px;">Telegram</span>
+                        </button>
+                        <button onclick="sendToMessenger('whatsapp')" 
+                                style="background: #25D366; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">💬</span>
+                            <span style="font-size: 10px;">WhatsApp</span>
+                        </button>
+                        <button onclick="sendToMessenger('viber')" 
+                                style="background: #7360F2; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">📞</span>
+                            <span style="font-size: 10px;">Viber</span>
+                        </button>
+                        <button onclick="sendToMessenger('facebook')" 
+                                style="background: #1877F2; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">📘</span>
+                            <span style="font-size: 10px;">Facebook</span>
+                        </button>
+                        <button onclick="sendToMessenger('instagram')" 
+                                style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743); color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">📷</span>
+                            <span style="font-size: 10px;">Instagram</span>
+                        </button>
+                        <button onclick="sendToMessenger('tiktok')" 
+                                style="background: #000; color: #fff; border: 1px solid #444; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">🎵</span>
+                            <span style="font-size: 10px;">TikTok</span>
+                        </button>
+                        <button onclick="sendToMessenger('email')" 
+                                style="background: #EA4335; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">📧</span>
+                            <span style="font-size: 10px;">Email</span>
+                        </button>
+                        <button onclick="copyInviteText()" 
+                                style="background: #FFD700; color: #000; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">📋</span>
+                            <span style="font-size: 10px;">Копировать</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <p style="color: #666; font-size: 10px; text-align: center; margin-top: 10px;">
+                    💡 Нажмите на мессенджер — текст скопируется и откроется приложение
                 </p>
             </div>
             
@@ -625,6 +630,88 @@ function copyInviteText() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// ОТПРАВКА В МЕССЕНДЖЕР
+// ═══════════════════════════════════════════════════════════
+function sendToMessenger(messenger) {
+    const text = document.getElementById('inviteText')?.value || '';
+    
+    if (!text.trim()) {
+        showToast('Сначала выберите или напишите текст', 'error');
+        return;
+    }
+    
+    console.log('📤 sendToMessenger:', messenger);
+    
+    // Сначала копируем текст в буфер
+    navigator.clipboard.writeText(text).then(() => {
+        console.log('✅ Text copied');
+    }).catch(() => {
+        // Fallback копирование
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    });
+    
+    const encodedText = encodeURIComponent(text);
+    let url = null;
+    let appName = '';
+    
+    switch (messenger) {
+        case 'telegram':
+            // Telegram share
+            url = `https://t.me/share/url?url=&text=${encodedText}`;
+            appName = 'Telegram';
+            break;
+        case 'whatsapp':
+            // WhatsApp share
+            url = `https://wa.me/?text=${encodedText}`;
+            appName = 'WhatsApp';
+            break;
+        case 'viber':
+            // Viber share
+            url = `viber://forward?text=${encodedText}`;
+            appName = 'Viber';
+            break;
+        case 'facebook':
+            // Facebook Messenger share
+            url = `fb-messenger://share?link=&quote=${encodedText}`;
+            appName = 'Facebook';
+            break;
+        case 'instagram':
+            // Instagram не поддерживает прямую отправку, только копирование
+            showToast('📋 Текст скопирован! Откройте Instagram и вставьте в Direct', 'success');
+            return;
+        case 'tiktok':
+            // TikTok не поддерживает прямую отправку
+            showToast('📋 Текст скопирован! Откройте TikTok и вставьте в сообщения', 'success');
+            return;
+        case 'email':
+            // Email
+            url = `mailto:?subject=Интересное предложение&body=${encodedText}`;
+            appName = 'Email';
+            break;
+        default:
+            showToast('📋 Текст скопирован!', 'success');
+            return;
+    }
+    
+    if (url) {
+        // Пробуем открыть
+        const newWindow = window.open(url, '_blank');
+        
+        // Если не открылось (блокировщик) - показываем сообщение
+        if (!newWindow || newWindow.closed) {
+            showToast(`📋 Текст скопирован! Откройте ${appName} и вставьте`, 'success');
+        } else {
+            showToast(`✅ Текст скопирован, ${appName} открыт!`, 'success');
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
 // ВАЛИДАЦИЯ КОНТАКТОВ
 // ═══════════════════════════════════════════════════════════
 function validateContact(platform, contact) {
@@ -763,6 +850,7 @@ window.showTemplateType = showTemplateType;
 window.selectTemplate = selectTemplate;
 window.selectInviteMessenger = selectInviteMessenger;
 window.copyInviteText = copyInviteText;
+window.sendToMessenger = sendToMessenger;
 
 async function addContact() {
     console.log('📝 addContact() called');
@@ -1584,4 +1672,4 @@ window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
 
-console.log('📋 Contacts Module v10.0 loaded - addContact + closeContactsModal');
+console.log('📋 Contacts Module v11.0 loaded - sendToMessenger ready');
