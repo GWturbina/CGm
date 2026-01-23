@@ -1,11 +1,12 @@
 /**
  * ═══════════════════════════════════════════════════════════
- * CONTACTS SERVICE v4.0
+ * CONTACTS SERVICE v5.0
  * 
  * НОВАЯ АРХИТЕКТУРА:
  * - owner_temp_id / owner_gw_id вместо owner_cg_id
  * - referrer_temp_id / referrer_gw_id вместо referrer_cg_id
  * - Поддержка обоих типов ID
+ * - updateContact и deleteContact методы
  * 
  * ═══════════════════════════════════════════════════════════
  */
@@ -403,6 +404,77 @@ const ContactsService = {
      */
     async archiveContact(contactId) {
         return await this.updateStatus(contactId, 'archived');
+    },
+    
+    /**
+     * Полное обновление контакта
+     */
+    async updateContact(contactId, updateData) {
+        console.log('📝 updateContact:', contactId, updateData);
+        
+        if (!contactId) {
+            console.error('No contact ID provided');
+            return false;
+        }
+        
+        if (!window.SupabaseClient || !SupabaseClient.client) {
+            console.warn('Supabase not available, updating locally');
+            return false;
+        }
+        
+        try {
+            const { error } = await SupabaseClient.client
+                .from('contacts')
+                .update({
+                    name: updateData.name,
+                    messenger: updateData.messenger || updateData.platform,
+                    contact: updateData.contact,
+                    note: updateData.note,
+                    push_consent: updateData.push_consent,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', contactId);
+            
+            if (error) throw error;
+            console.log('✅ Contact updated:', contactId);
+            return true;
+            
+        } catch (e) {
+            console.error('updateContact error:', e);
+            return false;
+        }
+    },
+    
+    /**
+     * Удаление контакта
+     */
+    async deleteContact(contactId) {
+        console.log('🗑️ deleteContact:', contactId);
+        
+        if (!contactId) {
+            console.error('No contact ID provided');
+            return false;
+        }
+        
+        if (!window.SupabaseClient || !SupabaseClient.client) {
+            console.warn('Supabase not available');
+            return false;
+        }
+        
+        try {
+            const { error } = await SupabaseClient.client
+                .from('contacts')
+                .delete()
+                .eq('id', contactId);
+            
+            if (error) throw error;
+            console.log('✅ Contact deleted:', contactId);
+            return true;
+            
+        } catch (e) {
+            console.error('deleteContact error:', e);
+            return false;
+        }
     },
     
     /**
