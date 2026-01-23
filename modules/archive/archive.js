@@ -1349,6 +1349,17 @@ window.saveCards = saveCards;
 window.renderCards = renderCards;
 window.viewCard = viewCard;
 window.shareCard = shareCard;
+// Функция для подсчёта выбранных карточек
+function updateSelectedCount() {
+    const selected = document.querySelectorAll('.card-select:checked').length;
+    const counter = document.getElementById('selectedCount');
+    if (counter) {
+        counter.textContent = selected;
+    }
+    console.log('📊 Selected cards:', selected);
+}
+
+window.updateSelectedCount = updateSelectedCount;
 window.deleteCard = deleteCard;
 window.searchArchive = searchArchive;
 window.exportCards = exportCards;
@@ -1382,4 +1393,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v17 - templates save to Supabase');
+console.log('📁 Archive Module v18 - updateSelectedCount added');
