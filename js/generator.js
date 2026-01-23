@@ -3823,18 +3823,43 @@ async function useTemplateFromModal(code) {
             }
         }, 300);
         
-        notificationManager.show('✅ Шаблон загружен! Нажмите "Создать открытку" для генерации со СВОЕЙ ссылкой!', 'success', 5000);
+        notificationManager.show('✅ Шаблон загружен! Создаём вашу карточку...', 'success', 3000);
         
         // Подсвечиваем кнопку создания
         const createBtn = document.getElementById('createCardBtn');
         if (createBtn) {
             createBtn.style.animation = 'pulse 1s infinite';
             createBtn.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
-            setTimeout(() => {
+        }
+        
+        // === АВТОМАТИЧЕСКОЕ СОЗДАНИЕ КАРТОЧКИ ===
+        setTimeout(async () => {
+            console.log('🚀 Auto-creating card from template...');
+            
+            // Проверяем есть ли у пользователя ID
+            let userId = window.currentCgId || 
+                         localStorage.getItem('cardgift_cg_id') || 
+                         localStorage.getItem('cardgift_gw_id');
+            
+            if (!userId) {
+                console.log('👤 New user - will get ID after card creation');
+            } else {
+                console.log('👤 Existing user ID:', userId);
+            }
+            
+            // Убираем анимацию кнопки
+            if (createBtn) {
                 createBtn.style.animation = '';
                 createBtn.style.boxShadow = '';
-            }, 5000);
-        }
+            }
+            
+            // Вызываем создание карточки
+            if (typeof createCard === 'function') {
+                await createCard();
+            } else {
+                console.error('createCard function not found');
+            }
+        }, 1500);
         
     } catch (error) {
         console.error('❌ Error using template:', error);
