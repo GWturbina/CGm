@@ -819,24 +819,16 @@ window.previewBonusPopup = previewBonusPopup;
         </div>
     </div>
     
-    <!-- Main Scripts -->
+<!-- Main Scripts -->
     <script src="/js/config.js?v=3"></script>
     <script src="/js/supabase.js?v=3"></script>
     <script src="/js/globalway-bridge.js?v=3"></script>
     <script src="/js/id-linking-service.js?v=3"></script>
     <script src="/js/common.js?v=3"></script>
-    <script src="/js/generator.js?v=3"></script>
+    <script src="/js/generator.js?v=4"></script>
     <script src="/js/cloudinary.js?v=3"></script>
     
-    <!-- Service Worker -->
-    <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('✅ SW registered'))
-                .catch(err => console.log('SW error:', err));
-        });
-    }
-</script>
+    <!-- PWA Auto Update (включает регистрацию SW) -->
+    <script src="/js/pwa-updater.js"></script>
 </body>
 </html>
