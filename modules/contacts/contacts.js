@@ -304,7 +304,7 @@ function showAddContactModal() {
     modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     console.log('🔵 Modal style:', modal.style.cssText);
     modal.innerHTML = `
-        <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto; background: #1a1a2e; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <div class="modal" style="display: block !important; max-width: 600px; max-height: 90vh; overflow-y: auto; background: #1a1a2e; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">➕ Добавить контакт</h3>
                 <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
@@ -851,7 +851,7 @@ function editContact(contactId) {
     modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     console.log('🟣 Modal created');
     modal.innerHTML = `
-        <div class="modal" style="max-width: 450px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <div class="modal" style="display: block !important; max-width: 450px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">✏️ Редактировать контакт</h3>
                 <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
@@ -1143,7 +1143,7 @@ function showImportExportModal() {
     modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     console.log('🟢 Modal created');
     modal.innerHTML = `
-        <div class="modal" style="max-width: 400px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <div class="modal" style="display: block !important; max-width: 400px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">📁 Импорт/Экспорт</h3>
                 <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
@@ -1180,7 +1180,7 @@ function showExportWarningModal() {
     modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     console.log('🟡 Modal created');
     modal.innerHTML = `
-        <div class="modal" style="max-width: 550px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <div class="modal" style="display: block !important; max-width: 550px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #f44336, #c62828); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="color: #fff; margin: 0; font-size: 18px;">⚠️ ВНИМАНИЕ</h3>
                 <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
@@ -1278,7 +1278,7 @@ function showTermsOfUseModal() {
     modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     console.log('🟠 Modal created');
     modal.innerHTML = `
-        <div class="modal" style="max-width: 650px; max-height: 90vh; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <div class="modal" style="display: block !important; max-width: 650px; max-height: 90vh; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">📜 Правила использования раздела «Контакты»</h3>
                 <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
@@ -1380,7 +1380,7 @@ function showContactsHelpModal() {
     modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
     console.log('🔴 Modal created');
     modal.innerHTML = `
-        <div class="modal" style="max-width: 700px; max-height: 90vh; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <div class="modal" style="display: block !important; max-width: 700px; max-height: 90vh; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">📖 Инструкция по работе с контактами</h3>
                 <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
