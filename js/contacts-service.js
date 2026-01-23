@@ -297,15 +297,16 @@ const ContactsService = {
      * Добавить контакт
      */
     async addContact(ownerId, contactData) {
-        console.log('📝 addContact to:', ownerId);
+        console.log('📝 addContact to:', ownerId, contactData);
         
         if (!ownerId) {
             return { success: false, error: 'No owner ID' };
         }
         
         const idType = this.getIdType(ownerId);
+        console.log('📋 ID type:', idType);
         
-        // Формируем данные для вставки
+        // Формируем данные для вставки (только существующие колонки)
         const insertData = {
             owner_temp_id: idType === 'temp' ? ownerId : null,
             owner_gw_id: idType === 'gw' ? this.normalizeGwId(ownerId) : null,
@@ -314,8 +315,10 @@ const ContactsService = {
             contact: contactData.contact,
             source: contactData.source || 'manual',
             status: 'new',
-            created_at: new Date().toISOString()
+            push_consent: contactData.push_consent || false
         };
+        
+        console.log('📋 Insert data:', insertData);
         
         if (!window.SupabaseClient || !SupabaseClient.client) {
             return this.addContactToLocalStorage(ownerId, insertData);
@@ -334,6 +337,7 @@ const ContactsService = {
                     console.log('⚠️ Contact already exists');
                     return { success: true, duplicate: true };
                 }
+                console.error('❌ Insert error:', error);
                 throw error;
             }
             
@@ -430,8 +434,7 @@ const ContactsService = {
                     name: updateData.name,
                     messenger: updateData.messenger || updateData.platform,
                     contact: updateData.contact,
-                    push_consent: updateData.push_consent,
-                    updated_at: new Date().toISOString()
+                    push_consent: updateData.push_consent
                 })
                 .eq('id', contactId);
             
