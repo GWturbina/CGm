@@ -64,6 +64,8 @@ const cardService = {
             
             // Загружаем картинку в Cloudinary если есть base64
             const imageData = card.mediaUrl || card.backgroundImage;
+            console.log('🖼️ cardService imageData:', imageData?.substring(0, 80) || 'NULL');
+            
             if (imageData && imageData.startsWith('data:')) {
                 console.log('☁️ Uploading image to Cloudinary...');
                 
@@ -80,6 +82,13 @@ const cardService = {
                 } else {
                     console.warn('⚠️ CloudinaryService not available');
                 }
+            } else if (imageData && imageData.startsWith('http')) {
+                // Изображение уже URL (из шаблона) - используем как есть
+                console.log('🖼️ Using existing image URL:', imageData.substring(0, 50) + '...');
+                card.mediaUrl = imageData;
+                card.cloudinaryUrl = imageData;
+                card.isCloudImage = true;
+                delete card.backgroundImage;
             }
             
             // 1. Сохраняем в Redis (для быстрого доступа и OG превью)
@@ -385,4 +394,4 @@ const cardService = {
 cardService.cleanupOldCards();
 
 window.cardService = cardService;
-console.log('📦 CardService v5.4 loaded (fixed Supabase field names)');
+console.log('📦 CardService v5.5 loaded (template URL support)');
