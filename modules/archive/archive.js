@@ -1206,10 +1206,30 @@ async function toggleLeaderTemplate(cardIndex) {
         cards[cardIndex].isCorporate = false;
     }
     
-    // Сохраняем в localStorage
+    // Сохраняем в Supabase
+    if (card.id && window.SupabaseClient && SupabaseClient.client) {
+        try {
+            const updatedCardData = {
+                ...card.card_data,
+                isTemplate: newValue,
+                isCorporate: newValue ? false : (card.isCorporate || false)
+            };
+            
+            const { error } = await SupabaseClient.client
+                .from('cards')
+                .update({ card_data: updatedCardData })
+                .eq('id', card.id);
+            
+            if (error) {
+                console.error('Failed to save to Supabase:', error);
+            } else {
+                console.log('✅ Saved to Supabase: isTemplate =', newValue);
+            }
+        } catch (e) {
+            console.error('Supabase update error:', e);
+        }
+    }
     
-    
-    // TODO: Сохранить в Supabase/Redis
     console.log(`${newValue ? '✅' : '❌'} Card ${cardIndex} marked as leader template:`, newValue);
     
     // Перерисовываем
@@ -1237,10 +1257,30 @@ async function toggleCorporateTemplate(cardIndex) {
         cards[cardIndex].isTemplate = false;
     }
     
-    // Сохраняем в localStorage
+    // Сохраняем в Supabase
+    if (card.id && window.SupabaseClient && SupabaseClient.client) {
+        try {
+            const updatedCardData = {
+                ...card.card_data,
+                isCorporate: newValue,
+                isTemplate: newValue ? false : (card.isTemplate || false)
+            };
+            
+            const { error } = await SupabaseClient.client
+                .from('cards')
+                .update({ card_data: updatedCardData })
+                .eq('id', card.id);
+            
+            if (error) {
+                console.error('Failed to save to Supabase:', error);
+            } else {
+                console.log('✅ Saved to Supabase: isCorporate =', newValue);
+            }
+        } catch (e) {
+            console.error('Supabase update error:', e);
+        }
+    }
     
-    
-    // TODO: Сохранить в Supabase/Redis
     console.log(`${newValue ? '✅' : '❌'} Card ${cardIndex} marked as corporate:`, newValue);
     
     // Перерисовываем
@@ -1342,4 +1382,4 @@ setTimeout(function() {
     }
 }, 200);
 
-console.log('📁 Archive Module v16 - compact buttons');
+console.log('📁 Archive Module v17 - templates save to Supabase');
