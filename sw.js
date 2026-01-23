@@ -5,7 +5,7 @@
    Обновлено: Январь 2026
    ===================================================== */
 
-const CACHE_VERSION = 'v2.1';
+const CACHE_VERSION = 'v2.2';
 const CACHE_NAME = `cardgift-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
