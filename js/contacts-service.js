@@ -423,13 +423,13 @@ const ContactsService = {
         }
         
         try {
+            // Только поля которые есть в таблице contacts
             const { error } = await SupabaseClient.client
                 .from('contacts')
                 .update({
                     name: updateData.name,
                     messenger: updateData.messenger || updateData.platform,
                     contact: updateData.contact,
-                    note: updateData.note,
                     push_consent: updateData.push_consent,
                     updated_at: new Date().toISOString()
                 })
