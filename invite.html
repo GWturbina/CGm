@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CardGift - Присоединиться</title>
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="CardGift - Приглашение">
+    <meta property="og:description" content="Присоединяйтесь к CardGift - инструменту нового поколения">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo img {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+        }
+        
+        .logo-icon {
+            font-size: 64px;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #FFD700;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #FFD700;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #FFD700;
+            background: rgba(255, 215, 0, 0.05);
+        }
+        
+        .form-input::placeholder {
+            color: #666;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 15px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 18px;
+        }
+        
+        .form-select:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        
+        .form-select option {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px;
+        }
+        
+        .form-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .checkbox-group:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: #FFD700;
+        }
+        
+        .checkbox-group span {
+            color: #ccc;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .checkbox-group span a {
+            color: #FFD700;
+            text-decoration: underline;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 14px;
+            color: #000;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 25px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .skip-link {
+            display: block;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .skip-link:hover {
+            color: #FFD700;
+        }
+        
+        .error-msg {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+        
+        .error-msg.show {
+            display: block;
+        }
+        
+        .success-container {
+            text-align: center;
+            display: none;
+        }
+        
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .success-title {
+            color: #4CAF50;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .success-text {
+            color: #888;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .toast.error {
+            background: #f44336;
+        }
+        
+        .toast.success {
+            background: #4CAF50;
+        }
+        
+        /* Таймер защиты от спама */
+        .timer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .timer-box {
+            text-align: center;
+            color: #fff;
+        }
+        
+        .timer-box .timer-count {
+            font-size: 64px;
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .timer-box p {
+            color: #888;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Форма -->
+        <div id="formContainer">
+            <div class="logo">
+                <div class="logo-icon">🎁</div>
+            </div>
+            
+            <h1>Присоединяйтесь!</h1>
+            <p class="subtitle">Оставьте контакт, чтобы получить доступ к инструментам</p>
+            
+            <form id="inviteForm" onsubmit="return submitInviteForm(event)">
+                <div class="form-group">
+                    <label>👤 Ваше имя:</label>
+                    <input type="text" id="inviteName" class="form-input" placeholder="Как к вам обращаться?" required>
+                    <div class="form-hint">Введите имя или никнейм</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>📱 Где вас найти:</label>
+                    <select id="inviteMessenger" class="form-select" required onchange="updateContactPlaceholder()">
+                        <option value="">Выберите мессенджер</option>
+                        <option value="telegram">📱 Telegram</option>
+                        <option value="whatsapp">💬 WhatsApp</option>
+                        <option value="viber">📞 Viber</option>
+                        <option value="instagram">📷 Instagram</option>
+                        <option value="facebook">📘 Facebook</option>
+                        <option value="tiktok">🎵 TikTok</option>
+                        <option value="email">📧 Email</option>
+                        <option value="phone">📞 Телефон</option>
+                    </select>
+                    <div class="form-hint">Выберите удобный способ связи</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>📝 Контакт:</label>
+                    <input type="text" id="inviteContact" class="form-input" placeholder="@username или +380..." required>
+                    <div id="contactError" class="error-msg"></div>
+                    <div id="contactHint" class="form-hint">Введите ваш username или номер телефона</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="invitePushConsent">
+                        <span>Я даю согласие на получение <a href="#" onclick="showPrivacyInfo(); return false;">уведомлений</a> и информационных сообщений.</span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    🎁 Присоединиться
+                </button>
+                
+                <a href="#" class="skip-link" onclick="skipForm(); return false;">Позже</a>
+            </form>
+        </div>
+        
+        <!-- Успешная отправка -->
+        <div id="successContainer" class="success-container">
+            <div class="success-icon">🎉</div>
+            <h2 class="success-title">Отлично!</h2>
+            <p class="success-text">
+                Ваш контакт сохранён.<br>
+                Скоро вы получите информацию о возможностях CardGift!
+            </p>
+            <button onclick="window.location.href='/'" class="submit-btn">
+                🏠 На главную
+            </button>
+        </div>
+    </div>
+    
+    <!-- Таймер защиты от спама -->
+    <div id="timerOverlay" class="timer-overlay">
+        <div class="timer-box">
+            <div class="timer-count" id="timerCount">60</div>
+            <p>Подождите перед повторной отправкой</p>
+        </div>
+    </div>
+    
+    <!-- Toast уведомления -->
+    <div id="toast" class="toast"></div>
+    
+    <script>
+        // Supabase config
+        const SUPABASE_URL = 'https://imgpysvdosdsqucoghqa.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ3B5c3Zkb3Nkc3F1Y29naHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc2NTQ0NTIsImV4cCI6MjA1MzIzMDQ1Mn0.yKNo0GfMffZCFf9AhgBJfMSBBNIBfkjWi6LMj7s_yzY';
+        
+        // Получаем ref из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const refId = urlParams.get('ref') || 'direct';
+        
+        console.log('📨 Invite page loaded, ref:', refId);
+        
+        // Проверка таймера (защита от спама)
+        const COOLDOWN_KEY = 'cardgift_invite_cooldown';
+        const COOLDOWN_SECONDS = 60;
+        
+        function checkCooldown() {
+            const lastSubmit = localStorage.getItem(COOLDOWN_KEY);
+            if (lastSubmit) {
+                const elapsed = (Date.now() - parseInt(lastSubmit)) / 1000;
+                if (elapsed < COOLDOWN_SECONDS) {
+                    return Math.ceil(COOLDOWN_SECONDS - elapsed);
+                }
+            }
+            return 0;
+        }
+        
+        function startCooldown() {
+            localStorage.setItem(COOLDOWN_KEY, Date.now().toString());
+        }
+        
+        function showTimer(seconds) {
+            const overlay = document.getElementById('timerOverlay');
+            const counter = document.getElementById('timerCount');
+            overlay.style.display = 'flex';
+            
+            let remaining = seconds;
+            counter.textContent = remaining;
+            
+            const interval = setInterval(() => {
+                remaining--;
+                counter.textContent = remaining;
+                
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    overlay.style.display = 'none';
+                }
+            }, 1000);
+        }
+        
+        // Обновление placeholder в зависимости от мессенджера
+        function updateContactPlaceholder() {
+            const messenger = document.getElementById('inviteMessenger').value;
+            const input = document.getElementById('inviteContact');
+            const hint = document.getElementById('contactHint');
+            
+            const placeholders = {
+                telegram: { ph: '@username', hint: 'Ваш Telegram username (например @myname)' },
+                whatsapp: { ph: '+380501234567', hint: 'Номер в международном формате (+XXX...)' },
+                viber: { ph: '+380501234567', hint: 'Номер в международном формате (+XXX...)' },
+                instagram: { ph: '@username', hint: 'Ваш Instagram username' },
+                facebook: { ph: 'username или ссылка', hint: 'Ваш Facebook username или ссылка на профиль' },
+                tiktok: { ph: '@username', hint: 'Ваш TikTok username' },
+                email: { ph: 'email@example.com', hint: 'Ваш email адрес' },
+                phone: { ph: '+380501234567', hint: 'Номер в международном формате (+XXX...)' }
+            };
+            
+            const config = placeholders[messenger] || { ph: '@username или +380...', hint: 'Введите контакт' };
+            input.placeholder = config.ph;
+            hint.textContent = config.hint;
+        }
+        
+        // Валидация контакта
+        function validateContact(platform, contact) {
+            const result = { valid: false, error: '', normalized: contact };
+            
+            if (!contact || contact.trim().length < 2) {
+                result.error = 'Контакт слишком короткий';
+                return result;
+            }
+            
+            switch (platform) {
+                case 'phone':
+                case 'whatsapp':
+                case 'viber':
+                    const phoneClean = contact.replace(/[\s\-\(\)]/g, '');
+                    if (!phoneClean.startsWith('+')) {
+                        result.error = 'Номер должен начинаться с + (например +380501234567)';
+                        return result;
+                    }
+                    const digits = phoneClean.replace(/\D/g, '');
+                    if (digits.length < 10 || digits.length > 15) {
+                        result.error = 'Неверный формат номера (10-15 цифр)';
+                        return result;
+                    }
+                    result.normalized = '+' + digits;
+                    result.valid = true;
+                    break;
+                    
+                case 'email':
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(contact)) {
+                        result.error = 'Неверный формат email';
+                        return result;
+                    }
+                    result.normalized = contact.toLowerCase();
+                    result.valid = true;
+                    break;
+                    
+                case 'telegram':
+                    let tg = contact.startsWith('@') ? contact : '@' + contact;
+                    if (tg.length < 6) {
+                        result.error = 'Username слишком короткий (минимум 5 символов)';
+                        return result;
+                    }
+                    if (!/^@[a-zA-Z0-9_]+$/.test(tg)) {
+                        result.error = 'Username может содержать только буквы, цифры и _';
+                        return result;
+                    }
+                    result.normalized = tg.toLowerCase();
+                    result.valid = true;
+                    break;
+                    
+                default:
+                    if (contact.length < 3) {
+                        result.error = 'Контакт слишком короткий';
+                        return result;
+                    }
+                    result.valid = true;
+            }
+            
+            return result;
+        }
+        
+        // Toast уведомления
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Модалка с информацией о приватности
+        function showPrivacyInfo() {
+            alert('Мы используем уведомления только для информирования о важных обновлениях и предложениях. Ваши данные защищены и не передаются третьим лицам.');
+        }
+        
+        // Пропустить форму
+        function skipForm() {
+            window.location.href = '/';
+        }
+        
+        // Отправка формы
+        async function submitInviteForm(event) {
+            event.preventDefault();
+            
+            // Проверка cooldown
+            const cooldown = checkCooldown();
+            if (cooldown > 0) {
+                showTimer(cooldown);
+                return false;
+            }
+            
+            const name = document.getElementById('inviteName').value.trim();
+            const messenger = document.getElementById('inviteMessenger').value;
+            const contact = document.getElementById('inviteContact').value.trim();
+            const pushConsent = document.getElementById('invitePushConsent').checked;
+            
+            // Валидация
+            if (!name) {
+                showToast('Введите ваше имя', 'error');
+                return false;
+            }
+            
+            if (!messenger) {
+                showToast('Выберите мессенджер', 'error');
+                return false;
+            }
+            
+            const validation = validateContact(messenger, contact);
+            if (!validation.valid) {
+                document.getElementById('contactError').textContent = validation.error;
+                document.getElementById('contactError').classList.add('show');
+                showToast(validation.error, 'error');
+                return false;
+            }
+            
+            document.getElementById('contactError').classList.remove('show');
+            
+            // Отключаем кнопку
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Отправка...';
+            
+            try {
+                // Отправляем в Supabase
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/contacts`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        messenger: messenger,
+                        contact: validation.normalized,
+                        push_consent: pushConsent,
+                        source: 'Invite',
+                        owner_gw_id: refId.startsWith('GW') ? refId : 'GW' + refId,
+                        status: 'new',
+                        created_at: new Date().toISOString()
+                    })
+                });
+                
+                if (response.ok || response.status === 201) {
+                    console.log('✅ Contact saved successfully');
+                    
+                    // Запускаем cooldown
+                    startCooldown();
+                    
+                    // Показываем успех
+                    document.getElementById('formContainer').style.display = 'none';
+                    document.getElementById('successContainer').style.display = 'block';
+                    
+                } else {
+                    const errorData = await response.json();
+                    
+                    // Проверяем на дубликат
+                    if (errorData.code === '23505' || errorData.message?.includes('duplicate')) {
+                        showToast('⚠️ Этот контакт уже зарегистрирован', 'error');
+                    } else {
+                        throw new Error(errorData.message || 'Ошибка сохранения');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                showToast('Ошибка: ' + error.message, 'error');
+            }
+            
+            // Возвращаем кнопку
+            btn.disabled = false;
+            btn.textContent = '🎁 Присоединиться';
+            
+            return false;
+        }
+        
+        // Проверка cooldown при загрузке
+        window.onload = function() {
+            const cooldown = checkCooldown();
+            if (cooldown > 0) {
+                // Можно показать сообщение или просто подождать
+                console.log('⏳ Cooldown active:', cooldown, 'seconds');
+            }
+        };
+    </script>
+</body>
+</html>
