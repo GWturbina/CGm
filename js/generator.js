@@ -3827,45 +3827,53 @@ async function useTemplateFromModal(code) {
             }
         }, 300);
         
-        notificationManager.show('✅ Шаблон загружен! Создаём вашу карточку...', 'success', 3000);
+        notificationManager.show('✅ Шаблон готов к использованию!', 'success', 3000);
         
-        // Подсвечиваем кнопку создания
-        const createBtn = document.getElementById('createCardBtn');
-        if (createBtn) {
-            createBtn.style.animation = 'pulse 1s infinite';
-            createBtn.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
+        // === НОВАЯ ЛОГИКА: НЕ создаём копию, используем оригинал с ref ===
+        // Получаем ID пользователя для реферальной ссылки
+        let userId = window.currentCgId || 
+                     localStorage.getItem('cardgift_cg_id') || 
+                     localStorage.getItem('cardgift_gw_id');
+        
+        if (!userId) {
+            // Новичок - нужно сначала получить ID
+            console.log('👤 New user - need to get ID first');
+            notificationManager.show('⏳ Получаем ваш ID...', 'info', 2000);
+            
+            // Генерируем временный ID если нет
+            userId = 'CG_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+            localStorage.setItem('cardgift_cg_id', userId);
         }
         
-        // === АВТОМАТИЧЕСКОЕ СОЗДАНИЕ КАРТОЧКИ ===
-        setTimeout(async () => {
-            console.log('🚀 Auto-creating card from template...');
-            console.log('🖼️ uploadedMedia:', uploadedMedia);
-            console.log('🖼️ uploadedMedia.data:', uploadedMedia?.data?.substring(0, 80));
-            
-            // Проверяем есть ли у пользователя ID
-            let userId = window.currentCgId || 
-                         localStorage.getItem('cardgift_cg_id') || 
-                         localStorage.getItem('cardgift_gw_id');
-            
-            if (!userId) {
-                console.log('👤 New user - will get ID after card creation');
-            } else {
-                console.log('👤 Existing user ID:', userId);
-            }
-            
-            // Убираем анимацию кнопки
-            if (createBtn) {
-                createBtn.style.animation = '';
-                createBtn.style.boxShadow = '';
-            }
-            
-            // Вызываем создание карточки
-            if (typeof createCard === 'function') {
-                await createCard();
-            } else {
-                console.error('createCard function not found');
-            }
-        }, 1500);
+        console.log('👤 User ID for ref:', userId);
+        
+        // Формируем ссылку с реферальным параметром
+        const originalCode = code;
+        const refLink = `${window.location.origin}/c/${originalCode}?ref=${userId}`;
+        const shortLink = `${window.location.origin}/c/${originalCode}`;
+        
+        console.log('🔗 Reference link:', refLink);
+        
+        // Сохраняем в localStorage как "используемый шаблон"
+        const usedTemplates = JSON.parse(localStorage.getItem('cardgift_used_templates') || '[]');
+        const templateEntry = {
+            originalCode: originalCode,
+            userId: userId,
+            refLink: refLink,
+            title: template.greetingText || template.title || 'Шаблон',
+            imageUrl: template.image_url || template.mediaUrl || template.preview,
+            usedAt: new Date().toISOString()
+        };
+        
+        // Проверяем не добавлен ли уже
+        if (!usedTemplates.find(t => t.originalCode === originalCode)) {
+            usedTemplates.push(templateEntry);
+            localStorage.setItem('cardgift_used_templates', JSON.stringify(usedTemplates));
+            console.log('💾 Template saved to used templates');
+        }
+        
+        // Показываем модалку с готовой ссылкой
+        showTemplateReadyModal(refLink, shortLink, template);
         
     } catch (error) {
         console.error('❌ Error using template:', error);
@@ -3874,6 +3882,118 @@ async function useTemplateFromModal(code) {
         }
     }
 }
+
+/**
+ * Показать модалку с готовой ссылкой на шаблон
+ */
+function showTemplateReadyModal(refLink, shortLink, template) {
+    const imageUrl = template.image_url || template.mediaUrl || template.preview || '';
+    const title = template.greetingText?.split('\\n')[0] || template.title || 'Ваша открытка готова!';
+    
+    const modal = document.createElement('div');
+    modal.id = 'templateReadyModal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;';
+    
+    modal.innerHTML = \`
+        <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:20px;max-width:500px;width:100%;padding:30px;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+            <button onclick="this.closest('.modal-overlay').remove()" 
+                    style="position:absolute;top:15px;right:15px;background:rgba(255,255,255,0.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:20px;">×</button>
+            
+            <div style="font-size:60px;margin-bottom:15px;">🎉</div>
+            <h2 style="color:#FFD700;margin-bottom:20px;font-size:24px;">Открытка готова!</h2>
+            
+            \${imageUrl ? \`<img src="\${imageUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:20px;">\` : ''}
+            
+            <p style="color:#ccc;margin-bottom:20px;font-size:14px;">
+                Эта ссылка содержит ваш реферальный ID.<br>
+                Все кто перейдут — станут вашими рефералами!
+            </p>
+            
+            <div style="background:rgba(255,215,0,0.1);border:2px solid #FFD700;border-radius:12px;padding:15px;margin-bottom:20px;">
+                <input type="text" value="\${refLink}" readonly 
+                       id="templateRefLinkInput"
+                       style="width:100%;background:transparent;border:none;color:#FFD700;font-size:14px;text-align:center;outline:none;">
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
+                <button onclick="copyTemplateLink()" 
+                        style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:16px;">
+                    📋 Копировать
+                </button>
+                <button onclick="shareTemplateLink('\${refLink}')" 
+                        style="background:linear-gradient(135deg,#4CAF50,#2E7D32);color:#fff;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:16px;">
+                    📤 Поделиться
+                </button>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+                <a href="https://t.me/share/url?url=\${encodeURIComponent(refLink)}" target="_blank"
+                   style="background:#0088cc;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
+                    📱
+                </a>
+                <a href="https://wa.me/?text=\${encodeURIComponent('Посмотри открытку! ' + refLink)}" target="_blank"
+                   style="background:#25D366;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
+                    💬
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=\${encodeURIComponent(refLink)}" target="_blank"
+                   style="background:#1877F2;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
+                    📘
+                </a>
+                <a href="viber://forward?text=\${encodeURIComponent('Посмотри открытку! ' + refLink)}" target="_blank"
+                   style="background:#7360F2;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
+                    📞
+                </a>
+            </div>
+            
+            <p style="color:#666;font-size:11px;margin-top:15px;">
+                💡 Карточка не копируется — вы используете оригинал со своей ссылкой
+            </p>
+        </div>
+    \`;
+    
+    document.body.appendChild(modal);
+    
+    // Закрытие по клику на оверлей
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+/**
+ * Копировать ссылку на шаблон
+ */
+function copyTemplateLink() {
+    const input = document.getElementById('templateRefLinkInput');
+    if (input) {
+        input.select();
+        document.execCommand('copy');
+        notificationManager.show('✅ Ссылка скопирована!', 'success', 2000);
+    }
+}
+
+/**
+ * Поделиться ссылкой на шаблон
+ */
+async function shareTemplateLink(url) {
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: '🎁 Открытка для тебя!',
+                text: 'Посмотри эту открытку!',
+                url: url
+            });
+        } catch (e) {
+            console.log('Share cancelled');
+        }
+    } else {
+        copyTemplateLink();
+    }
+}
+
+// Экспорт новых функций
+window.copyTemplateLink = copyTemplateLink;
+window.shareTemplateLink = shareTemplateLink;
 
 // Экспорт функций
 window.openLeaderTemplates = openLeaderTemplates;
