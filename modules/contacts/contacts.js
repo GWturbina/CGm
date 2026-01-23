@@ -1,5 +1,5 @@
 /* =====================================================
-   CARDGIFT - CONTACTS MODULE v7.0
+   CARDGIFT - CONTACTS MODULE v9.0
    - Шаблоны приглашений
    - Валидация контактов (международный формат)
    - Предупреждение при скачивании
@@ -9,13 +9,14 @@
    - Исправлено удаление контактов
    - Расширен чат для всех платформ
    - Модалки с !important для display
+   - Собственная функция closeContactsModal()
+   - Закрытие по клику на фон
    
    Зависимости:
    - window.ContactsService (contacts-service.js)
    - window.SupabaseClient (supabase.js)
    - window.escapeHtml (common.js)
    - window.showToast (common.js)
-   - window.closeModal (dashboard.js)
    
    Глобальные переменные (из dashboard.js):
    - contacts (массив)
@@ -23,7 +24,34 @@
    - walletConnected
    ===================================================== */
 
-console.log('📋 Contacts Module v8.0 - DEBUG logging enabled');
+console.log('📋 Contacts Module v9.0 - Fixed modals');
+
+// ═══════════════════════════════════════════════════════════
+// СОБСТВЕННАЯ ФУНКЦИЯ ЗАКРЫТИЯ МОДАЛОК
+// ═══════════════════════════════════════════════════════════
+function closeContactsModal() {
+    console.log('🔴 closeContactsModal() called');
+    // Удаляем все модалки с классом modal-overlay
+    const overlays = document.querySelectorAll('.modal-overlay');
+    overlays.forEach(overlay => {
+        console.log('🔴 Removing overlay:', overlay);
+        overlay.remove();
+    });
+}
+
+// Переопределяем глобальный closeModal для contacts
+window.closeContactsModal = closeContactsModal;
+
+// Функция для добавления закрытия по клику на фон
+function addOverlayClickClose(modal) {
+    modal.addEventListener('click', function(e) {
+        // Закрываем только если кликнули на сам overlay, а не на содержимое
+        if (e.target === modal) {
+            console.log('🔴 Clicked on overlay background');
+            closeContactsModal();
+        }
+    });
+}
 
 async function loadContacts() {
     // Получаем ID текущего пользователя (v4.0)
@@ -37,7 +65,7 @@ async function loadContacts() {
                 || localStorage.getItem('cardgift_cg_id');
     
     console.log('═══════════════════════════════════════');
-    console.log('📋 LOADING CONTACTS v8.0');
+    console.log('📋 LOADING CONTACTS v9.0');
     console.log('═══════════════════════════════════════');
     console.log('👤 User ID:', userId);
     console.log('📦 ContactsService:', !!window.ContactsService);
@@ -307,7 +335,7 @@ function showAddContactModal() {
         <div class="modal" style="display: block !important; max-width: 600px; max-height: 90vh; overflow-y: auto; background: #1a1a2e; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">➕ Добавить контакт</h3>
-                <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                <button class="modal-close" onclick="closeContactsModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
             </div>
             
             <!-- Вкладки -->
@@ -451,7 +479,7 @@ function showAddContactModal() {
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button class="btn btn-gray" onclick="closeModal()" style="flex: 1; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; cursor: pointer;">
+                    <button class="btn btn-gray" onclick="closeContactsModal()" style="flex: 1; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; cursor: pointer;">
                         Отмена
                     </button>
                     <button class="btn btn-green" onclick="addContact()" style="flex: 1; padding: 12px; background: linear-gradient(45deg, #4CAF50, #2E7D32); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
@@ -461,6 +489,7 @@ function showAddContactModal() {
             </div>
         </div>
     `;
+    addOverlayClickClose(modal);
     document.body.appendChild(modal);
     
     // Добавляем стили для выбранного мессенджера
@@ -854,7 +883,7 @@ function editContact(contactId) {
         <div class="modal" style="display: block !important; max-width: 450px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">✏️ Редактировать контакт</h3>
-                <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                <button class="modal-close" onclick="closeContactsModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
             </div>
             <div class="modal-body" style="padding: 25px;">
                 <div class="form-group" style="margin-bottom: 20px;">
@@ -894,7 +923,7 @@ function editContact(contactId) {
                 </div>
             </div>
             <div class="modal-footer" style="padding: 20px; display: flex; gap: 10px;">
-                <button class="btn btn-gray" onclick="closeModal()" 
+                <button class="btn btn-gray" onclick="closeContactsModal()" 
                         style="flex: 1; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; cursor: pointer;">
                     Отмена
                 </button>
@@ -905,6 +934,7 @@ function editContact(contactId) {
             </div>
         </div>
     `;
+    addOverlayClickClose(modal);
     document.body.appendChild(modal);
 }
 
@@ -1146,7 +1176,7 @@ function showImportExportModal() {
         <div class="modal" style="display: block !important; max-width: 400px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">📁 Импорт/Экспорт</h3>
-                <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                <button class="modal-close" onclick="closeContactsModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
             </div>
             <div class="modal-body" style="padding: 25px;">
                 <button onclick="exportContacts()" style="width: 100%; padding: 15px; margin-bottom: 15px; background: linear-gradient(45deg, #4CAF50, #2E7D32); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">
@@ -1159,6 +1189,7 @@ function showImportExportModal() {
             </div>
         </div>
     `;
+    addOverlayClickClose(modal);
     document.body.appendChild(modal);
 }
 
@@ -1183,7 +1214,7 @@ function showExportWarningModal() {
         <div class="modal" style="display: block !important; max-width: 550px; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #f44336, #c62828); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="color: #fff; margin: 0; font-size: 18px;">⚠️ ВНИМАНИЕ</h3>
-                <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                <button class="modal-close" onclick="closeContactsModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
             </div>
             <div class="modal-body" style="padding: 25px;">
                 <p style="color: #ccc; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
@@ -1214,7 +1245,7 @@ function showExportWarningModal() {
                 </label>
             </div>
             <div class="modal-footer" style="padding: 20px; display: flex; gap: 15px;">
-                <button onclick="closeModal()" 
+                <button onclick="closeContactsModal()" 
                         style="flex: 1; padding: 15px; background: #444; color: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 14px;">
                     Отмена
                 </button>
@@ -1225,6 +1256,7 @@ function showExportWarningModal() {
             </div>
         </div>
     `;
+    addOverlayClickClose(modal);
     document.body.appendChild(modal);
 }
 
@@ -1281,7 +1313,7 @@ function showTermsOfUseModal() {
         <div class="modal" style="display: block !important; max-width: 650px; max-height: 90vh; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">📜 Правила использования раздела «Контакты»</h3>
-                <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                <button class="modal-close" onclick="closeContactsModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
             </div>
             <div class="modal-body" style="padding: 25px; max-height: 60vh; overflow-y: auto;">
                 
@@ -1358,13 +1390,14 @@ function showTermsOfUseModal() {
                 <p style="color: #888; font-size: 12px; text-align: center; margin-bottom: 15px;">
                     📌 Продолжая использование раздела «Контакты», Пользователь подтверждает, что ознакомлен с настоящими условиями и принимает их в полном объёме.
                 </p>
-                <button onclick="closeModal()" 
+                <button onclick="closeContactsModal()" 
                         style="width: 100%; padding: 15px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">
                     ✅ Понятно
                 </button>
             </div>
         </div>
     `;
+    addOverlayClickClose(modal);
     document.body.appendChild(modal);
 }
 
@@ -1383,7 +1416,7 @@ function showContactsHelpModal() {
         <div class="modal" style="display: block !important; max-width: 700px; max-height: 90vh; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
             <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                 <h3 style="color: #FFD700; margin: 0; font-size: 18px;">📖 Инструкция по работе с контактами</h3>
-                <button class="modal-close" onclick="closeModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                <button class="modal-close" onclick="closeContactsModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
             </div>
             <div class="modal-body" style="padding: 25px; max-height: 65vh; overflow-y: auto;">
                 
@@ -1486,13 +1519,14 @@ function showContactsHelpModal() {
                 
             </div>
             <div class="modal-footer" style="padding: 20px;">
-                <button onclick="closeModal()" 
+                <button onclick="closeContactsModal()" 
                         style="width: 100%; padding: 15px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">
                     ✅ Понятно
                 </button>
             </div>
         </div>
     `;
+    addOverlayClickClose(modal);
     document.body.appendChild(modal);
 }
 
@@ -1542,4 +1576,4 @@ window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
 
-console.log('📋 Contacts Module v8.0 loaded - DEBUG mode');
+console.log('📋 Contacts Module v9.0 loaded - closeContactsModal ready');
