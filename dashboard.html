@@ -1229,7 +1229,7 @@
                 <div class="stat-card">
                     <div class="stat-icon">👥</div>
                     <div class="stat-value" id="totalReferralsCount">0</div>
-                    <div class="stat-label" data-i18n="referrals.stats.total">Всего рефералов</div>
+                    <div class="stat-label" data-i18n="referrals.stats.total">Всего контактов</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">🔥</div>
@@ -1237,9 +1237,9 @@
                     <div class="stat-label" data-i18n="referrals.stats.viral">Вирусный маркетинг</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">✅</div>
+                    <div class="stat-icon">⛓️</div>
                     <div class="stat-value" id="activeReferralsCount">0</div>
-                    <div class="stat-label" data-i18n="referrals.stats.active">Активные (в GW)</div>
+                    <div class="stat-label">С GW ID</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📅</div>
@@ -1248,9 +1248,9 @@
                 </div>
             </div>
             
-            <!-- Реферальная ссылка -->
+            <!-- Реферальная ссылка CardGift -->
             <div class="content-card">
-                <div class="card-header"><span class="header-icon">🔗</span> <span data-i18n="referrals.yourLink">Ваша реферальная ссылка</span></div>
+                <div class="card-header"><span class="header-icon">🔗</span> <span data-i18n="referrals.yourLink">Ваша реферальная ссылка CardGift</span></div>
                 <div class="referral-link-row" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <input type="text" class="form-input" id="referralLinkInput" readonly 
                            style="flex: 1; min-width: 200px; background: #2a2a4a; border: 1px solid #FFD700; color: #FFD700;">
@@ -1262,12 +1262,30 @@
                 </div>
             </div>
             
-            <!-- Блок ограничения -->
+            <!-- Внешние проекты (External Referral Links) -->
+            <div class="content-card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><span class="header-icon">🌐</span> Внешние проекты</span>
+                    <button class="btn btn-green" onclick="showAddExternalProjectModal()" style="padding: 6px 12px; font-size: 12px;">➕ Добавить</button>
+                </div>
+                <div style="color: #888; font-size: 12px; margin-bottom: 15px; padding: 0 5px;">
+                    Добавьте реферальные ссылки ваших проектов. Ваша команда будет видеть эти ссылки со своим ID.
+                </div>
+                <div id="externalProjectsList">
+                    <div style="text-align: center; color: #888; padding: 20px;">
+                        <div style="font-size: 32px; margin-bottom: 10px;">🔗</div>
+                        <div>Нет добавленных проектов</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Добавьте реферальную ссылку вашего проекта</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Блок ограничения (скрыт - рефералы доступны всем) -->
             <div class="content-card" id="referralRestricted" style="display: none;">
                 <div class="restricted-block">
                     <div class="restricted-icon">🔒</div>
                     <div class="restricted-title" data-i18n="referrals.restricted.title">Доступ ограничен</div>
-                    <div class="restricted-text" data-i18n="referrals.restricted.text">Реферальная система доступна с уровня Партнёр (пакет 3)</div>
+                    <div class="restricted-text" data-i18n="referrals.restricted.text">Расширенные функции доступны с уровня Партнёр (пакет 3)</div>
                     <button class="btn btn-yellow" onclick="showSection('wallet')">⚡ <span data-i18n="referrals.restricted.upgradeBtn">Повысить уровень</span></button>
                 </div>
             </div>
@@ -1275,7 +1293,7 @@
             <!-- Таблица рефералов -->
             <div class="content-card" id="referralsTableCard">
                 <div class="card-header">
-                    <span class="header-icon">👥</span> <span data-i18n="referrals.myReferrals">Мои рефералы</span>
+                    <span class="header-icon">👥</span> <span data-i18n="referrals.myReferrals">Моя команда контактов</span>
                     <div style="margin-left: auto; display: flex; gap: 10px;">
                         <select id="referralSourceFilter" class="form-select" onchange="filterReferrals()" style="padding: 8px; background: #2a2a4a; border: 1px solid #444; color: #fff; border-radius: 8px;">
                             <option value="all" data-i18n="referrals.filters.allSources">Все источники</option>
@@ -1296,12 +1314,12 @@
                     <table class="contacts-table" style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #1a1a2e; color: #FFD700;">
-                                <th style="padding: 12px; text-align: left;">ID</th>
+                                <th style="padding: 12px; text-align: left;">CG ID</th>
                                 <th style="padding: 12px; text-align: left;">Имя</th>
                                 <th style="padding: 12px; text-align: left;">Контакт</th>
                                 <th style="padding: 12px; text-align: center;">Линия</th>
                                 <th style="padding: 12px; text-align: center;">Источник</th>
-                                <th style="padding: 12px; text-align: center;">Статус GW</th>
+                                <th style="padding: 12px; text-align: center;">GW ID</th>
                                 <th style="padding: 12px; text-align: left;">Дата</th>
                             </tr>
                         </thead>
@@ -1326,21 +1344,21 @@
             
             <!-- Визуализация структуры -->
             <div class="content-card">
-                <div class="card-header"><span class="header-icon">🌳</span> Структура команды</div>
+                <div class="card-header"><span class="header-icon">🌳</span> Структура команды (9 линий)</div>
                 <div class="levels-row" style="display: flex; justify-content: center; gap: 10px; padding: 20px; flex-wrap: wrap;">
-                    <div class="level-circle active" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; display: flex; align-items: center; justify-content: center; font-weight: bold;" title="1 линия">1</div>
-                    <div class="level-circle" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center;" title="2 линия">2</div>
-                    <div class="level-circle" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center;" title="3 линия">3</div>
-                    <div class="level-circle" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center;" title="4 линия">4</div>
-                    <div class="level-circle" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center;" title="5 линия">5</div>
-                    <div class="level-circle" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center;" title="6 линия">6</div>
-                    <div class="level-circle" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center;" title="7 линия">7</div>
-                    <div class="level-circle" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center;" title="8 линия">8</div>
-                    <div class="level-circle" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center;" title="9 линия">9</div>
+                    <div class="level-circle" data-line="1" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;" title="1 линия" onclick="filterByLine(1)">1</div>
+                    <div class="level-circle" data-line="2" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="2 линия" onclick="filterByLine(2)">2</div>
+                    <div class="level-circle" data-line="3" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="3 линия" onclick="filterByLine(3)">3</div>
+                    <div class="level-circle" data-line="4" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="4 линия" onclick="filterByLine(4)">4</div>
+                    <div class="level-circle" data-line="5" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="5 линия" onclick="filterByLine(5)">5</div>
+                    <div class="level-circle" data-line="6" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="6 линия" onclick="filterByLine(6)">6</div>
+                    <div class="level-circle" data-line="7" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="7 линия" onclick="filterByLine(7)">7</div>
+                    <div class="level-circle" data-line="8" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="8 линия" onclick="filterByLine(8)">8</div>
+                    <div class="level-circle" data-line="9" style="width: 40px; height: 40px; border-radius: 50%; background: #2a2a4a; border: 2px solid #444; color: #888; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="9 линия" onclick="filterByLine(9)">9</div>
                 </div>
-                <div style="text-align: center; color: #888; font-size: 13px;">
+                <div id="levelLegend" style="text-align: center; color: #888; font-size: 13px;">
                     <span style="color: #FFD700;">●</span> Активный уровень &nbsp;&nbsp;
-                    <span style="color: #4CAF50;">●</span> С рефералами &nbsp;&nbsp;
+                    <span style="color: #4CAF50;">●</span> С контактами &nbsp;&nbsp;
                     <span style="color: #666;">●</span> Пустой уровень
                 </div>
             </div>
@@ -2855,12 +2873,12 @@ CENTRAL_CG_ID: <span id="centralIdDisplay">7346221</span>
     <script src="js/ai-studio.js"></script>
     <script src="js/news-modal-fix.js"></script>
     <script src="js/blog-launcher.js"></script>
-    <script src="modules/core/modules-fix.js?v=10"></script>
+    <script src="modules/core/modules-fix.js?v=11"></script>
     <!-- Полные модули с Supabase логикой (перезаписывают урезанные функции) -->
     <script src="modules/contacts/contacts.js?v=55"></script>
     <script src="modules/analytics/analytics.js?v=1"></script>
+    <script src="modules/referrals/referrals.js?v=2"></script>
     <script src="modules/archive/archive.js?v=21"></script>
-    <script src="modules/referrals/referrals.js?v=1"></script>
     <script src="modules/panel/panel.js?v=1"></script>
 </body>
 </html>
