@@ -901,9 +901,10 @@ function goToGenerator() {
     var cgId = window.currentCgId || window.currentDisplayId || localStorage.getItem('cardgift_cg_id');
     console.log('👤 CG_ID:', cgId);
     
-    var url = 'generator.html';
+    // Добавляем timestamp чтобы обойти кэш Service Worker
+    var url = 'generator.html?t=' + Date.now();
     if (cgId) {
-        url += '?userId=' + cgId;
+        url += '&userId=' + cgId;
     }
     
     console.log('🚀 Navigating to:', url);
