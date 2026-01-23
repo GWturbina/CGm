@@ -24,7 +24,7 @@
    - walletConnected
    ===================================================== */
 
-console.log('📋 Contacts Module v9.0 - Fixed modals');
+console.log('📋 Contacts Module v10.0 - addContact fixed');
 
 // ═══════════════════════════════════════════════════════════
 // СОБСТВЕННАЯ ФУНКЦИЯ ЗАКРЫТИЯ МОДАЛОК
@@ -65,7 +65,7 @@ async function loadContacts() {
                 || localStorage.getItem('cardgift_cg_id');
     
     console.log('═══════════════════════════════════════');
-    console.log('📋 LOADING CONTACTS v9.0');
+    console.log('📋 LOADING CONTACTS v10.0');
     console.log('═══════════════════════════════════════');
     console.log('👤 User ID:', userId);
     console.log('📦 ContactsService:', !!window.ContactsService);
@@ -789,10 +789,18 @@ async function addContact() {
         return;
     }
     
-    const cgId = window.currentCgId || localStorage.getItem('cardgift_cg_id');
-    console.log('👤 Owner CG_ID:', cgId);
+    // Получаем ID пользователя (как в loadContacts)
+    const userId = window.currentDisplayId 
+                || window.currentGwId 
+                || window.currentTempId 
+                || window.currentCgId
+                || localStorage.getItem('cardgift_display_id')
+                || localStorage.getItem('cardgift_gw_id')
+                || localStorage.getItem('cardgift_temp_id')
+                || localStorage.getItem('cardgift_cg_id');
+    console.log('👤 Owner ID:', userId);
     
-    if (!cgId) {
+    if (!userId) {
         showToast('Ошибка: не найден ID пользователя', 'error');
         return;
     }
@@ -802,7 +810,7 @@ async function addContact() {
     // ═══════════════════════════════════════════════════════════
     const isDuplicate = contacts.some(c => 
         c.contact?.toLowerCase() === contact.toLowerCase() && 
-        c.platform === platform
+        (c.platform === platform || c.messenger === platform)
     );
     
     if (isDuplicate) {
@@ -816,13 +824,12 @@ async function addContact() {
     
     if (window.ContactsService) {
         console.log('📤 Calling ContactsService.addContact...');
-        const result = await ContactsService.addContact(cgId, {
+        const result = await ContactsService.addContact(userId, {
             name,
-            platform,
+            messenger: platform,
             contact: validationResult.normalized || contact,
-            pushConsent,
-            note,
-            source: 'Manual'
+            push_consent: pushConsent,
+            source: 'manual'
         });
         
         console.log('📥 ContactsService result:', result);
@@ -830,8 +837,8 @@ async function addContact() {
         if (result.success) {
             // Перезагружаем контакты
             await loadContacts();
-            closeModal();
-            showToast('Контакт добавлен!', 'success');
+            closeContactsModal();
+            showToast('✅ Контакт добавлен!', 'success');
         } else {
             showToast(result.error || 'Ошибка добавления', 'error');
         }
@@ -841,16 +848,17 @@ async function addContact() {
         contacts.push({ 
             name, 
             platform, 
+            messenger: platform,
             contact, 
-            pushConsent, 
-            source: 'Manual', 
+            push_consent: pushConsent, 
+            source: 'manual', 
             status: 'new', 
             created_at: new Date().toISOString() 
         });
         saveContacts();
         renderContacts();
         updateContactsCounts();
-        closeModal();
+        closeContactsModal();
         showToast('Контакт добавлен!', 'success');
     }
 }
@@ -988,7 +996,7 @@ async function saveEditContact(contactId) {
     
     saveContacts();
     renderContacts();
-    closeModal();
+    closeContactsModal();
     showToast('✅ Контакт обновлён!', 'success');
 }
 
@@ -1204,7 +1212,7 @@ function exportContacts() {
 function showExportWarningModal() {
     console.log('🟡 showExportWarningModal() CALLED');
     // Закрываем предыдущую модалку
-    closeModal();
+    closeContactsModal();
     
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
@@ -1291,7 +1299,7 @@ function doExportContacts() {
     a.download = 'cardgift_contacts_' + new Date().toISOString().split('T')[0] + '.json';
     a.click();
     
-    closeModal();
+    closeContactsModal();
     showToast('✅ База контактов скачана!', 'success');
 }
 
@@ -1545,7 +1553,7 @@ function importContacts(event) {
                 saveContacts();
                 renderContacts();
                 updateContactsCounts();
-                closeModal();
+                closeContactsModal();
                 showToast(`Импортировано ${imported.length}!`, 'success');
             }
         } catch (err) {
@@ -1576,4 +1584,4 @@ window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
 
-console.log('📋 Contacts Module v9.0 loaded - closeContactsModal ready');
+console.log('📋 Contacts Module v10.0 loaded - addContact + closeContactsModal');
