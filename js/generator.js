@@ -3888,14 +3888,14 @@ async function useTemplateFromModal(code) {
  */
 function showTemplateReadyModal(refLink, shortLink, template) {
     const imageUrl = template.image_url || template.mediaUrl || template.preview || '';
-    const title = template.greetingText?.split('\\n')[0] || template.title || 'Ваша открытка готова!';
+    const title = template.greetingText?.split('\n')[0] || template.title || 'Ваша открытка готова!';
     
     const modal = document.createElement('div');
     modal.id = 'templateReadyModal';
     modal.className = 'modal-overlay';
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;';
     
-    modal.innerHTML = \`
+    modal.innerHTML = `
         <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:20px;max-width:500px;width:100%;padding:30px;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
             <button onclick="this.closest('.modal-overlay').remove()" 
                     style="position:absolute;top:15px;right:15px;background:rgba(255,255,255,0.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:20px;">×</button>
@@ -3903,7 +3903,7 @@ function showTemplateReadyModal(refLink, shortLink, template) {
             <div style="font-size:60px;margin-bottom:15px;">🎉</div>
             <h2 style="color:#FFD700;margin-bottom:20px;font-size:24px;">Открытка готова!</h2>
             
-            \${imageUrl ? \`<img src="\${imageUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:20px;">\` : ''}
+            ${imageUrl ? `<img src="${imageUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:20px;">` : ''}
             
             <p style="color:#ccc;margin-bottom:20px;font-size:14px;">
                 Эта ссылка содержит ваш реферальный ID.<br>
@@ -3911,7 +3911,7 @@ function showTemplateReadyModal(refLink, shortLink, template) {
             </p>
             
             <div style="background:rgba(255,215,0,0.1);border:2px solid #FFD700;border-radius:12px;padding:15px;margin-bottom:20px;">
-                <input type="text" value="\${refLink}" readonly 
+                <input type="text" value="${refLink}" readonly 
                        id="templateRefLinkInput"
                        style="width:100%;background:transparent;border:none;color:#FFD700;font-size:14px;text-align:center;outline:none;">
             </div>
@@ -3921,26 +3921,26 @@ function showTemplateReadyModal(refLink, shortLink, template) {
                         style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:16px;">
                     📋 Копировать
                 </button>
-                <button onclick="shareTemplateLink('\${refLink}')" 
+                <button onclick="shareTemplateLink('${refLink}')" 
                         style="background:linear-gradient(135deg,#4CAF50,#2E7D32);color:#fff;border:none;padding:15px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:16px;">
                     📤 Поделиться
                 </button>
             </div>
             
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-                <a href="https://t.me/share/url?url=\${encodeURIComponent(refLink)}" target="_blank"
+                <a href="https://t.me/share/url?url=${encodeURIComponent(refLink)}" target="_blank"
                    style="background:#0088cc;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
                     📱
                 </a>
-                <a href="https://wa.me/?text=\${encodeURIComponent('Посмотри открытку! ' + refLink)}" target="_blank"
+                <a href="https://wa.me/?text=${encodeURIComponent('Посмотри открытку! ' + refLink)}" target="_blank"
                    style="background:#25D366;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
                     💬
                 </a>
-                <a href="https://www.facebook.com/sharer/sharer.php?u=\${encodeURIComponent(refLink)}" target="_blank"
+                <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(refLink)}" target="_blank"
                    style="background:#1877F2;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
                     📘
                 </a>
-                <a href="viber://forward?text=\${encodeURIComponent('Посмотри открытку! ' + refLink)}" target="_blank"
+                <a href="viber://forward?text=${encodeURIComponent('Посмотри открытку! ' + refLink)}" target="_blank"
                    style="background:#7360F2;color:#fff;padding:12px;border-radius:8px;text-decoration:none;font-size:20px;">
                     📞
                 </a>
@@ -3950,7 +3950,7 @@ function showTemplateReadyModal(refLink, shortLink, template) {
                 💡 Карточка не копируется — вы используете оригинал со своей ссылкой
             </p>
         </div>
-    \`;
+    `;
     
     document.body.appendChild(modal);
     
