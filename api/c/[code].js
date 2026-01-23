@@ -1,6 +1,6 @@
 // api/c/[code].js
 // Короткие ссылки CardGift
-// v3.0 - ИСПРАВЛЕНО: Supabase PRIMARY, правильное поле short_code
+// v4.0 - ДОБАВЛЕНО: thumbnailUrl для видео-превью
 
 module.exports = async function handler(req, res) {
     const { code } = req.query;
@@ -62,15 +62,33 @@ module.exports = async function handler(req, res) {
                     title = cardData.title.substring(0, 60);
                 }
                 
-                // Картинка - из card_data
-                const imageUrl = cardData.image_url || card.image_url || card.cloudinary_url;
-                if (imageUrl && imageUrl.startsWith('http')) {
-                    if (imageUrl.includes('cloudinary')) {
-                        ogImageUrl = imageUrl.replace('/upload/', '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/');
+                // === ПРИОРИТЕТ ИЗОБРАЖЕНИЙ ===
+                // 1. Пользовательская обложка для видео (thumbnailUrl)
+                // 2. Обычная картинка (image_url)
+                // 3. YouTube thumbnail (автоматически)
+                
+                // Сначала проверяем пользовательскую обложку для видео
+                const thumbnailUrl = cardData.thumbnailUrl || cardData.thumbnail_url;
+                if (thumbnailUrl && thumbnailUrl.startsWith('http')) {
+                    if (thumbnailUrl.includes('cloudinary')) {
+                        ogImageUrl = thumbnailUrl.replace('/upload/', '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/');
                     } else {
-                        ogImageUrl = imageUrl;
+                        ogImageUrl = thumbnailUrl;
                     }
-                    console.log('🖼️ Using Supabase image');
+                    console.log('🖼️ Using custom thumbnail for video');
+                }
+                
+                // Если нет thumbnail, используем обычную картинку
+                if (!ogImageUrl) {
+                    const imageUrl = cardData.image_url || card.image_url || card.cloudinary_url;
+                    if (imageUrl && imageUrl.startsWith('http')) {
+                        if (imageUrl.includes('cloudinary')) {
+                            ogImageUrl = imageUrl.replace('/upload/', '/upload/w_1200,h_630,c_pad,b_auto:predominant,q_auto,f_jpg/');
+                        } else {
+                            ogImageUrl = imageUrl;
+                        }
+                        console.log('🖼️ Using Supabase image');
+                    }
                 }
                 
                 // YouTube thumbnail
