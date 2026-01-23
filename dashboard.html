@@ -1055,7 +1055,7 @@
                 <div class="section-actions">
                     <button class="btn btn-yellow" onclick="showAddContactModal()">➕ <span data-i18n="contacts.addContact">Добавить контакт</span></button>
                     <button class="btn btn-gray" onclick="showImportExportModal()">📁 <span data-i18n="contacts.importExport">Импорт/Экспорт</span></button>
-                    <button class="btn btn-gray" onclick="showTermsOfUseModal()" title="Правила использования">📜</button>
+                    <button class="btn btn-gray" onclick="showTermsOfUseModal()" style="background: rgba(255, 215, 0, 0.1); border: 1px solid #FFD700;">📜 Правила</button>
                 </div>
             </div>
             <div class="content-card">
@@ -2834,7 +2834,7 @@ CENTRAL_CG_ID: <span id="centralIdDisplay">7346221</span>
     <script src="js/supabase-api.js"></script>
     <script src="js/globalway-bridge.js"></script>
     <script src="js/id-linking-service.js?v=4"></script>
-    <script src="js/contacts-service.js?v=3"></script>
+    <script src="js/contacts-service.js?v=5"></script>
     <script src="js/bidirectional-sync.js"></script>
     <script src="js/auth.js"></script>
     
@@ -2856,7 +2856,7 @@ CENTRAL_CG_ID: <span id="centralIdDisplay">7346221</span>
     <script src="js/blog-launcher.js"></script>
     <script src="modules/core/modules-fix.js?v=10"></script>
     <!-- Полные модули с Supabase логикой (перезаписывают урезанные функции) -->
-    <script src="modules/contacts/contacts.js?v=5"></script>
+    <script src="modules/contacts/contacts.js?v=6"></script>
     <script src="modules/archive/archive.js?v=21"></script>
     <script src="modules/referrals/referrals.js?v=1"></script>
     <script src="modules/panel/panel.js?v=1"></script>
