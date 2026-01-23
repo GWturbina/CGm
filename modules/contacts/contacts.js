@@ -1344,6 +1344,131 @@ function showTermsOfUseModal() {
 
 window.showTermsOfUseModal = showTermsOfUseModal;
 
+// ═══════════════════════════════════════════════════════════
+// ИНСТРУКЦИЯ ПО РАБОТЕ С КОНТАКТАМИ
+// ═══════════════════════════════════════════════════════════
+function showContactsHelpModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal" style="max-width: 700px; max-height: 90vh;">
+            <div class="modal-header" style="background: linear-gradient(45deg, #1a1a2e, #16213e); padding: 20px;">
+                <h3 style="color: #FFD700; margin: 0;">📖 Инструкция по работе с контактами</h3>
+                <button class="modal-close" onclick="closeModal()" style="color: #fff;">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 25px; max-height: 65vh; overflow-y: auto;">
+                
+                <!-- Добавление контакта -->
+                <div style="margin-bottom: 25px; background: rgba(255, 215, 0, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 215, 0, 0.2);">
+                    <h4 style="color: #FFD700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">➕</span> Добавить контакт
+                    </h4>
+                    <p style="color: #ccc; font-size: 14px; line-height: 1.7; margin-bottom: 10px;">
+                        <strong>Вкладка "Пригласить":</strong><br>
+                        1. Выберите мессенджер (Telegram, WhatsApp и др.)<br>
+                        2. Выберите готовый шаблон или напишите свой текст<br>
+                        3. Нажмите "Копировать текст"<br>
+                        4. Вставьте в выбранный мессенджер и отправьте
+                    </p>
+                    <p style="color: #ccc; font-size: 14px; line-height: 1.7;">
+                        <strong>Вкладка "Добавить вручную":</strong><br>
+                        Введите имя, выберите платформу, укажите контакт и заметку
+                    </p>
+                </div>
+                
+                <!-- Редактирование -->
+                <div style="margin-bottom: 25px; background: rgba(76, 175, 80, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(76, 175, 80, 0.2);">
+                    <h4 style="color: #4CAF50; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">✏️</span> Редактирование (Карандаш)
+                    </h4>
+                    <p style="color: #ccc; font-size: 14px; line-height: 1.7;">
+                        Нажмите на карандаш рядом с контактом чтобы:<br>
+                        • Изменить имя или контакт<br>
+                        • Сменить платформу<br>
+                        • Добавить личную <strong>заметку</strong> (видна только вам)<br>
+                        • Изменить согласие на уведомления
+                    </p>
+                </div>
+                
+                <!-- Написать -->
+                <div style="margin-bottom: 25px; background: rgba(33, 150, 243, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(33, 150, 243, 0.2);">
+                    <h4 style="color: #2196F3; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">💬</span> Написать (Чат)
+                    </h4>
+                    <p style="color: #ccc; font-size: 14px; line-height: 1.7;">
+                        Нажмите на иконку чата чтобы открыть переписку:<br>
+                        • <strong>Telegram</strong> — откроется t.me<br>
+                        • <strong>WhatsApp</strong> — откроется wa.me<br>
+                        • <strong>Viber</strong> — откроется приложение Viber<br>
+                        • <strong>Instagram</strong> — откроется профиль<br>
+                        • <strong>Email</strong> — откроется почтовый клиент<br>
+                        • <strong>Телефон</strong> — начнётся звонок
+                    </p>
+                </div>
+                
+                <!-- Удаление -->
+                <div style="margin-bottom: 25px; background: rgba(244, 67, 54, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(244, 67, 54, 0.2);">
+                    <h4 style="color: #f44336; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">🗑️</span> Удаление
+                    </h4>
+                    <p style="color: #ccc; font-size: 14px; line-height: 1.7;">
+                        Нажмите на корзину и подтвердите удаление.<br>
+                        ⚠️ Удалённый контакт нельзя восстановить!
+                    </p>
+                </div>
+                
+                <!-- Фильтры -->
+                <div style="margin-bottom: 25px; background: rgba(156, 39, 176, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(156, 39, 176, 0.2);">
+                    <h4 style="color: #9C27B0; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">🔍</span> Поиск и фильтры
+                    </h4>
+                    <p style="color: #ccc; font-size: 14px; line-height: 1.7;">
+                        • Нажмите на карточку платформы (Telegram, WhatsApp и др.) чтобы отфильтровать<br>
+                        • Используйте поле поиска для поиска по имени или контакту<br>
+                        • "Все" — показать всех без фильтра
+                    </p>
+                </div>
+                
+                <!-- Экспорт/Импорт -->
+                <div style="margin-bottom: 25px; background: rgba(255, 152, 0, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 152, 0, 0.2);">
+                    <h4 style="color: #FF9800; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">📁</span> Импорт/Экспорт
+                    </h4>
+                    <p style="color: #ccc; font-size: 14px; line-height: 1.7;">
+                        • <strong>Экспорт</strong> — скачать базу контактов в JSON файл<br>
+                        • <strong>Импорт</strong> — загрузить контакты из JSON файла<br>
+                        <br>
+                        ⚠️ При скачивании необходимо подтвердить согласие с правилами использования
+                    </p>
+                </div>
+                
+                <!-- Формат контактов -->
+                <div style="background: rgba(0, 188, 212, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(0, 188, 212, 0.2);">
+                    <h4 style="color: #00BCD4; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">📱</span> Формат контактов
+                    </h4>
+                    <p style="color: #ccc; font-size: 14px; line-height: 1.7;">
+                        • <strong>Телефон</strong> — международный формат: <code style="background: #333; padding: 2px 6px; border-radius: 4px;">+380501234567</code><br>
+                        • <strong>Telegram</strong> — username: <code style="background: #333; padding: 2px 6px; border-radius: 4px;">@username</code><br>
+                        • <strong>Email</strong> — полный адрес: <code style="background: #333; padding: 2px 6px; border-radius: 4px;">name@mail.com</code><br>
+                        • <strong>Instagram</strong> — username: <code style="background: #333; padding: 2px 6px; border-radius: 4px;">@username</code>
+                    </p>
+                </div>
+                
+            </div>
+            <div class="modal-footer" style="padding: 20px;">
+                <button onclick="closeModal()" 
+                        style="width: 100%; padding: 15px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                    ✅ Понятно
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+window.showContactsHelpModal = showContactsHelpModal;
+
 function importContacts(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1388,4 +1513,4 @@ window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
 
-console.log('📋 Contacts Module loaded');
+console.log('📋 Contacts Module v6.0 loaded');
