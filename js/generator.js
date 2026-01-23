@@ -78,7 +78,7 @@ async function loadTemplateFromUrl() {
                     
                     // Позиция текста
                     if (cardData.textPosition) {
-                        selectTextPosition(cardData.textPosition);
+                        setTextPosition(cardData.textPosition);
                     }
                     
                     // CTA кнопка
