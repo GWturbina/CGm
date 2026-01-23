@@ -743,40 +743,7 @@ function importContacts(event) {
 }
 
 // ============ REFERRALS ============
-function copyReferralLink() {
-    var displayId = window.currentDisplayId || window.currentGwId || window.currentTempId;
-    if (!displayId) {
-        showToast('Сначала подключите кошелёк', 'error');
-        return;
-    }
-    
-    var link = window.location.origin + '/registration.html?ref=' + displayId;
-    
-    navigator.clipboard.writeText(link).then(function() {
-        showToast('Реферальная ссылка скопирована!', 'success');
-    }).catch(function() {
-        var input = document.createElement('input');
-        input.value = link;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        showToast('Реферальная ссылка скопирована!', 'success');
-    });
-}
-
-function shareReferralLink() {
-    var displayId = window.currentDisplayId || window.currentGwId || window.currentTempId;
-    var link = window.location.origin + '/registration.html?ref=' + displayId;
-    
-    if (navigator.share) {
-        navigator.share({ title: 'CardGift', text: 'Присоединяйся!', url: link }).catch(function() {
-            copyReferralLink();
-        });
-    } else {
-        copyReferralLink();
-    }
-}
+// Функции copyReferralLink и shareReferralLink перенесены в modules/referrals/referrals.js
 
 // ============ DEBUG ============
 function showDebugPanel() {
@@ -882,8 +849,7 @@ window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
 
-window.copyReferralLink = copyReferralLink;
-window.shareReferralLink = shareReferralLink;
+// copyReferralLink и shareReferralLink экспортируются в modules/referrals/referrals.js
 
 window.showDebugPanel = showDebugPanel;
 window.toggleDebugPanel = toggleDebugPanel;
@@ -1261,160 +1227,9 @@ function updateReferralLink() {
     loadReferrals();
 }
 
+
 // ============ REFERRALS - ПОЛНАЯ ВЕРСИЯ ============
-var allReferrals = [];
-
-async function loadReferrals() {
-    var userId = window.currentDisplayId 
-                || window.currentGwId 
-                || window.currentTempId
-                || localStorage.getItem('cardgift_display_id')
-                || localStorage.getItem('cardgift_gw_id');
-    
-    console.log('📋 Loading referrals for:', userId);
-    
-    if (!userId || userId === '—') {
-        renderEmptyReferrals('Подключите кошелек для просмотра рефералов');
-        return;
-    }
-    
-    var tbody = document.getElementById('referralsTableBody');
-    if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="7" style="padding: 40px; text-align: center; color: #888;">' +
-            '<div style="font-size: 32px; margin-bottom: 10px;">⏳</div>' +
-            '<div>Загрузка...</div></td></tr>';
-    }
-    
-    try {
-        // Нормализуем ID
-        var searchId = userId;
-        if (!searchId.toString().startsWith('GW') && /^\d+$/.test(searchId)) {
-            searchId = 'GW' + searchId;
-        }
-        
-        // 1. Загружаем из users (кто пришёл по реф ссылке)
-        var referralsFromUsers = [];
-        if (window.SupabaseClient && SupabaseClient.client) {
-            var gwNum = searchId.toString().replace('GW', '');
-            
-            var result = await SupabaseClient.client
-                .from('users')
-                .select('temp_id, gw_id, name, messenger, contact, gw_level, source, created_at, referrer_gw_id, referrer_temp_id')
-                .or('referrer_gw_id.eq.' + searchId + ',referrer_gw_id.eq.' + gwNum)
-                .order('created_at', { ascending: false });
-            
-            referralsFromUsers = result.data || [];
-            console.log('📊 Referrals from users:', referralsFromUsers.length);
-        }
-        
-        // 2. Загружаем из contacts с source='viral'
-        var viralContacts = [];
-        if (window.SupabaseClient && SupabaseClient.client) {
-            var gwNum = searchId.toString().replace('GW', '');
-            
-            var result2 = await SupabaseClient.client
-                .from('contacts')
-                .select('cg_id, name, messenger, contact, source, created_at, owner_gw_id, referral_temp_id')
-                .eq('source', 'viral')
-                .or('owner_gw_id.eq.' + searchId + ',owner_gw_id.eq.' + gwNum)
-                .order('created_at', { ascending: false });
-            
-            viralContacts = result2.data || [];
-            console.log('📊 Viral contacts:', viralContacts.length);
-        }
-        
-        // 3. Объединяем
-        var seen = {};
-        allReferrals = [];
-        
-        referralsFromUsers.forEach(function(r) {
-            var key = (r.contact || r.temp_id || '').toLowerCase();
-            if (!seen[key]) {
-                seen[key] = true;
-                allReferrals.push({
-                    id: r.gw_id || r.temp_id,
-                    name: r.name || 'Без имени',
-                    messenger: r.messenger,
-                    contact: r.contact,
-                    source: r.source || 'registration',
-                    gwLevel: r.gw_level || 0,
-                    line: 1,
-                    createdAt: r.created_at
-                });
-            }
-        });
-        
-        viralContacts.forEach(function(c) {
-            var key = (c.contact || c.cg_id || '').toLowerCase();
-            if (!seen[key]) {
-                seen[key] = true;
-                allReferrals.push({
-                    id: c.cg_id || c.referral_temp_id,
-                    name: c.name || 'Без имени',
-                    messenger: c.messenger,
-                    contact: c.contact,
-                    source: c.source || 'viral',
-                    gwLevel: 0,
-                    line: 1,
-                    createdAt: c.created_at
-                });
-            }
-        });
-        
-        console.log('📊 Total referrals:', allReferrals.length);
-        renderReferrals();
-        
-    } catch (error) {
-        console.error('❌ Error loading referrals:', error);
-        renderEmptyReferrals('Ошибка загрузки: ' + error.message);
-    }
-}
-
-function renderReferrals() {
-    var tbody = document.getElementById('referralsTableBody');
-    if (!tbody) return;
-    
-    if (allReferrals.length === 0) {
-        renderEmptyReferrals('У вас пока нет рефералов. Поделитесь своей ссылкой!');
-        return;
-    }
-    
-    tbody.innerHTML = allReferrals.map(function(r) {
-        var gwStatus = r.gwLevel > 0 
-            ? '<span class="status-badge active">GW Lvl ' + r.gwLevel + '</span>'
-            : '<span class="status-badge inactive">Не в GW</span>';
-        
-        var date = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '-';
-        
-        return '<tr>' +
-            '<td>' + (r.id || '-') + '</td>' +
-            '<td>' + escapeHtml(r.name) + '</td>' +
-            '<td>' + escapeHtml(r.contact || '-') + '</td>' +
-            '<td>' + (r.line || 1) + '</td>' +
-            '<td>' + escapeHtml(r.source || '-') + '</td>' +
-            '<td>' + gwStatus + '</td>' +
-            '<td>' + date + '</td>' +
-        '</tr>';
-    }).join('');
-    
-    // Обновляем счётчики
-    var totalEl = document.getElementById('totalReferrals');
-    var activeEl = document.getElementById('activeReferrals');
-    if (totalEl) totalEl.textContent = allReferrals.length;
-    if (activeEl) activeEl.textContent = allReferrals.filter(function(r) { return r.gwLevel > 0; }).length;
-}
-
-function renderEmptyReferrals(message) {
-    var tbody = document.getElementById('referralsTableBody');
-    if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="7" style="padding: 40px; text-align: center; color: #888;">' +
-            '<div style="font-size: 48px; margin-bottom: 15px;">👥</div>' +
-            '<div>' + message + '</div></td></tr>';
-    }
-}
-
-window.loadReferrals = loadReferrals;
-window.renderReferrals = renderReferrals;
+// Функции loadReferrals, renderReferrals, renderEmptyReferrals перенесены в modules/referrals/referrals.js
 
 // ============ PANEL STATISTICS ============
 async function updatePanelStats() {
