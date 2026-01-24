@@ -86,8 +86,10 @@ const ContactsService = {
             
             // Фильтр по типу ID
             if (idType === 'gw') {
-                const normalizedId = this.normalizeGwId(ownerId);
-                query = query.eq('owner_gw_id', normalizedId);
+                // Ищем как с префиксом GW так и без него
+                const rawId = ownerId.replace(/^GW/i, '');
+                const gwId = 'GW' + rawId;
+                query = query.or(`owner_gw_id.eq.${rawId},owner_gw_id.eq.${gwId}`);
             } else if (idType === 'temp') {
                 query = query.eq('owner_temp_id', ownerId);
             } else {
@@ -223,15 +225,15 @@ const ContactsService = {
         
         try {
             // Определяем поле для фильтра
-            const ownerField = idType === 'gw' ? 'owner_gw_id' : 'owner_temp_id';
-            const referrerField = idType === 'gw' ? 'referrer_gw_id' : 'referrer_temp_id';
-            const normalizedId = idType === 'gw' ? this.normalizeGwId(userId) : userId;
+            const ownerField = 'owner_gw_id';
+            const rawId = userId.replace(/^GW/i, '');
+            const gwId = 'GW' + rawId;
             
-            // Всего контактов
+            // Всего контактов (ищем по обоим вариантам ID)
             const { count: contactsCount } = await SupabaseClient.client
                 .from('contacts')
                 .select('*', { count: 'exact', head: true })
-                .eq(ownerField, normalizedId)
+                .or(`owner_gw_id.eq.${rawId},owner_gw_id.eq.${gwId}`)
                 .neq('status', 'archived');
             
             stats.totalContacts = contactsCount || 0;
@@ -240,7 +242,7 @@ const ContactsService = {
             const { data: contacts } = await SupabaseClient.client
                 .from('contacts')
                 .select('messenger')
-                .eq(ownerField, normalizedId)
+                .or(`owner_gw_id.eq.${rawId},owner_gw_id.eq.${gwId}`)
                 .neq('status', 'archived');
             
             if (contacts) {
