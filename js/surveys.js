@@ -1,18 +1,25 @@
 // =============================================
-// SURVEYS MODULE - Вирусные опросы
+// SURVEYS MODULE - Вирусные опросы v2.0
 // =============================================
 
 let surveysData = [];
+let surveyTemplatesData = [];
 let currentQuestionId = 0;
 
-// Шаблоны опросов (локальные, пока нет таблицы)
-const SURVEY_TEMPLATES = {
+// ID владельца системы
+const OWNER_GW_ID = 'GW9729645';
+
+// Встроенные шаблоны (fallback если нет в базе)
+const BUILT_IN_TEMPLATES = {
     work: {
+        id: 'work',
         title: 'Работа в интернете',
         description: 'Узнайте свой потенциал для онлайн-заработка',
         icon: '💼',
+        category: 'business',
         reward_text: 'Бесплатный мини-курс',
         referral_reward: 'Бонус за каждого друга',
+        is_global: true,
         questions: [
             { text: 'Сколько времени вы готовы уделять дополнительному заработку?', options: ['1-2 часа в день', '3-4 часа в день', 'Полный рабочий день', 'Пока не определился'] },
             { text: 'Какой опыт работы в интернете у вас есть?', options: ['Никакого', 'Пробовал фриланс', 'Есть небольшой опыт', 'Работаю онлайн давно'] },
@@ -22,11 +29,14 @@ const SURVEY_TEMPLATES = {
         ]
     },
     feedback: {
+        id: 'feedback',
         title: 'Оценка продукта',
         description: 'Ваше мнение очень важно для нас',
         icon: '⭐',
+        category: 'feedback',
         reward_text: 'Скидка 10% на следующую покупку',
         referral_reward: 'Дополнительная скидка за друга',
+        is_global: true,
         questions: [
             { text: 'Как вы узнали о нашем продукте?', options: ['Реклама', 'Рекомендация друга', 'Социальные сети', 'Поиск в интернете'] },
             { text: 'Насколько вы довольны качеством?', options: ['Очень доволен', 'Доволен', 'Нейтрально', 'Не доволен'] },
@@ -35,11 +45,14 @@ const SURVEY_TEMPLATES = {
         ]
     },
     hello: {
+        id: 'hello',
         title: 'Давайте познакомимся!',
         description: 'Расскажите немного о себе',
         icon: '👋',
+        category: 'general',
         reward_text: 'Полезные материалы',
         referral_reward: 'Эксклюзивный контент за друзей',
+        is_global: true,
         questions: [
             { text: 'Как у вас дела?', options: ['Отлично!', 'Хорошо', 'Нормально', 'Бывало лучше'] },
             { text: 'Чем вы занимаетесь?', options: ['Работаю по найму', 'Свой бизнес', 'Фриланс', 'Учусь', 'В поиске'] },
@@ -47,19 +60,25 @@ const SURVEY_TEMPLATES = {
         ]
     },
     finance: {
+        id: 'finance',
         title: 'Тест: Финансовая грамотность',
-        description: 'Проверьте свои знания и получите рекомендации',
+        description: 'Узнайте свой уровень финансовых знаний',
         icon: '💰',
-        reward_text: 'Персональные рекомендации',
-        referral_reward: 'Бонусный урок за друга',
+        category: 'education',
+        reward_text: 'PDF-гайд по инвестициям',
+        referral_reward: 'Видео-урок за каждого друга',
+        is_global: true,
         questions: [
-            { text: 'Ведёте ли вы учёт доходов и расходов?', options: ['Да, регулярно', 'Иногда', 'Нет'] },
-            { text: 'Есть ли у вас финансовая подушка?', options: ['Да, на 6+ месяцев', 'Да, на 1-3 месяца', 'Нет'] },
-            { text: 'Инвестируете ли вы?', options: ['Да, активно', 'Немного', 'Нет, но хочу', 'Нет, не интересует'] },
-            { text: 'Какая ваша главная финансовая цель?', options: ['Накопить на покупку', 'Создать пассивный доход', 'Выйти из долгов', 'Обеспечить будущее'] }
+            { text: 'Есть ли у вас финансовая подушка?', options: ['Да, на 6+ месяцев', 'Да, на 1-3 месяца', 'Небольшая', 'Нет'] },
+            { text: 'Как вы относитесь к инвестициям?', options: ['Активно инвестирую', 'Хочу начать', 'Боюсь рисков', 'Не интересуюсь'] },
+            { text: 'Ведёте ли вы учёт расходов?', options: ['Да, регулярно', 'Иногда', 'Редко', 'Нет'] },
+            { text: 'Какова ваша главная финансовая цель?', options: ['Накопить на крупную покупку', 'Пассивный доход', 'Погасить долги', 'Увеличить доход'] }
         ]
     }
 };
+
+// Для совместимости со старым кодом
+const SURVEY_TEMPLATES = BUILT_IN_TEMPLATES;
 
 // =============================================
 // ИСПРАВЛЕННЫЕ ФУНКЦИИ МОДАЛЬНЫХ ОКОН
@@ -77,21 +96,140 @@ function closeCreateSurveyModal() {
     document.getElementById('create-survey-modal').style.cssText = 'display: none !important;';
 }
 
-function showTemplatesModal() {
-    document.getElementById('templates-modal').style.cssText = 'display: flex !important;';
+// =============================================
+// СИСТЕМА ШАБЛОНОВ v2.0
+// =============================================
+
+async function showTemplatesModal() {
+    const modal = document.getElementById('templates-modal');
+    modal.style.cssText = 'display: flex !important;';
+    
+    // Показываем загрузку
+    const container = document.getElementById('templates-list');
+    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);"><div class="spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>Загрузка шаблонов...</div>';
+    
+    await loadSurveyTemplates();
+    renderTemplatesList();
 }
 
 function closeTemplatesModal() {
     document.getElementById('templates-modal').style.cssText = 'display: none !important;';
 }
 
+// Загрузка шаблонов из базы
+async function loadSurveyTemplates() {
+    const currentGwId = window.currentGwId || window.currentDisplayId || '';
+    
+    try {
+        // Загружаем шаблоны из survey_templates
+        const { data, error } = await SupabaseClient.client
+            .from('survey_templates')
+            .select('*')
+            .or(`is_global.eq.true,created_by_gw_id.eq.${currentGwId},visibility.eq.public`)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+        
+        if (data && data.length > 0) {
+            surveyTemplatesData = data;
+            console.log('📋 Loaded templates from DB:', data.length);
+        } else {
+            // Fallback на встроенные шаблоны
+            surveyTemplatesData = Object.values(BUILT_IN_TEMPLATES);
+            console.log('📋 Using built-in templates');
+        }
+    } catch (e) {
+        console.log('📋 Templates table not ready, using built-in:', e.message);
+        surveyTemplatesData = Object.values(BUILT_IN_TEMPLATES);
+    }
+}
+
+// Рендер списка шаблонов с фильтрами
+function renderTemplatesList(filter = 'all') {
+    const container = document.getElementById('templates-list');
+    const currentGwId = window.currentGwId || window.currentDisplayId || '';
+    const isOwner = currentGwId === OWNER_GW_ID;
+    
+    // Фильтруем шаблоны
+    let filtered = surveyTemplatesData;
+    if (filter === 'global') {
+        filtered = surveyTemplatesData.filter(t => t.is_global);
+    } else if (filter === 'my') {
+        filtered = surveyTemplatesData.filter(t => t.created_by_gw_id === currentGwId);
+    } else if (filter !== 'all') {
+        filtered = surveyTemplatesData.filter(t => t.category === filter);
+    }
+    
+    // Категории для фильтра
+    const categories = {
+        all: '📁 Все',
+        global: '🌐 Глобальные',
+        business: '💼 Бизнес',
+        feedback: '⭐ Отзывы',
+        education: '🎓 Образование',
+        general: '👋 Общее',
+        my: '👤 Мои'
+    };
+    
+    let html = `
+        <!-- Фильтры -->
+        <div style="grid-column: 1 / -1; margin-bottom: 15px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+                ${Object.entries(categories).map(([key, label]) => `
+                    <button onclick="renderTemplatesList('${key}')" 
+                            class="btn btn-sm ${filter === key ? 'btn-yellow' : 'btn-gray'}"
+                            style="padding: 6px 12px; font-size: 12px;">
+                        ${label}
+                    </button>
+                `).join('')}
+            </div>
+            ${isOwner ? `
+                <button onclick="showCreateTemplateModal()" class="btn btn-green" style="width: 100%;">
+                    ➕ Создать новый шаблон (OWNER)
+                </button>
+            ` : ''}
+        </div>
+    `;
+    
+    if (filtered.length === 0) {
+        html += `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+                <div style="font-size: 50px; margin-bottom: 15px;">📋</div>
+                <p>Нет шаблонов в этой категории</p>
+            </div>
+        `;
+    } else {
+        html += filtered.map(t => `
+            <div class="template-card" style="background: var(--bg-card); border: 1px solid ${t.is_global ? 'var(--gold)' : 'var(--border)'}; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; position: relative;"
+                 onclick="useSurveyTemplate('${t.id}')">
+                ${t.is_global ? '<div style="position: absolute; top: 8px; right: 8px; background: var(--gold); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;">🌐 GLOBAL</div>' : ''}
+                <div style="font-size: 40px; margin-bottom: 10px;">${t.icon || '📋'}</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">${t.title}</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">${t.description || ''}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">
+                    ${t.questions?.length || 0} вопросов
+                    ${t.uses_count ? ` • ${t.uses_count} использований` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    container.innerHTML = html;
+}
+
 // =============================================
 // ОСТАЛЬНОЙ КОД
 // =============================================
 
-// Использовать шаблон
+// Использовать шаблон (из БД или встроенный)
 function useSurveyTemplate(templateId) {
-    const template = SURVEY_TEMPLATES[templateId];
+    // Сначала ищем в загруженных из БД
+    let template = surveyTemplatesData.find(t => t.id === templateId);
+    
+    // Если нет - ищем во встроенных
+    if (!template) {
+        template = BUILT_IN_TEMPLATES[templateId];
+    }
+    
     if (!template) {
         console.warn('Survey template not found:', templateId);
         showToast && showToast('Шаблон не найден', 'error');
@@ -105,7 +243,7 @@ function useSurveyTemplate(templateId) {
     form.title.value = template.title || '';
     form.description.value = template.description || '';
     form.reward_text.value = template.reward_text || '';
-    form.referral_reward.value = template.referral_reward || '';
+    form.referral_reward.value = template.referral_reward || template.referral_reward_text || '';
     
     // Выбрать иконку
     const iconSelect = form.icon;
@@ -113,6 +251,16 @@ function useSurveyTemplate(templateId) {
         if (iconSelect.options[i].value === template.icon) {
             iconSelect.selectedIndex = i;
             break;
+        }
+    }
+    
+    // Выбрать категорию
+    if (template.category && form.category) {
+        for (let i = 0; i < form.category.options.length; i++) {
+            if (form.category.options[i].value === template.category) {
+                form.category.selectedIndex = i;
+                break;
+            }
         }
     }
     
@@ -126,7 +274,243 @@ function useSurveyTemplate(templateId) {
         });
     }
     
+    // Увеличиваем счётчик использований (если это из БД)
+    if (template.id && !BUILT_IN_TEMPLATES[template.id]) {
+        incrementTemplateUsage(template.id);
+    }
+    
     console.log('✨ Survey template loaded:', templateId);
+    showToast('Шаблон загружен! Отредактируйте и сохраните.', 'info');
+}
+
+// Увеличить счётчик использований шаблона
+async function incrementTemplateUsage(templateId) {
+    try {
+        await SupabaseClient.client.rpc('increment_template_usage', { template_id: templateId });
+    } catch (e) {
+        // Если RPC нет - обновляем напрямую
+        try {
+            const { data } = await SupabaseClient.client
+                .from('survey_templates')
+                .select('uses_count')
+                .eq('id', templateId)
+                .single();
+            
+            await SupabaseClient.client
+                .from('survey_templates')
+                .update({ uses_count: (data?.uses_count || 0) + 1 })
+                .eq('id', templateId);
+        } catch (e2) {
+            console.log('Could not update template usage');
+        }
+    }
+}
+
+// =============================================
+// СОЗДАНИЕ ШАБЛОНА (OWNER)
+// =============================================
+
+function showCreateTemplateModal() {
+    const currentGwId = window.currentGwId || window.currentDisplayId || '';
+    if (currentGwId !== OWNER_GW_ID) {
+        showToast('Только OWNER может создавать глобальные шаблоны', 'error');
+        return;
+    }
+    
+    // Создаём модалку если её нет
+    let modal = document.getElementById('create-template-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'create-template-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>➕ Создать шаблон опроса</h2>
+                    <button class="modal-close" onclick="closeCreateTemplateModal()">✕</button>
+                </div>
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                    <form id="create-template-form">
+                        <div class="form-group">
+                            <label>Название шаблона *</label>
+                            <input type="text" class="form-input" name="title" required placeholder="Например: Опрос про здоровье">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание</label>
+                            <textarea class="form-input" name="description" rows="2" placeholder="Краткое описание шаблона"></textarea>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>Иконка</label>
+                                <select class="form-select" name="icon">
+                                    <option value="📋">📋 Опрос</option>
+                                    <option value="💼">💼 Бизнес</option>
+                                    <option value="💰">💰 Финансы</option>
+                                    <option value="🎓">🎓 Образование</option>
+                                    <option value="⭐">⭐ Отзыв</option>
+                                    <option value="🎁">🎁 Подарок</option>
+                                    <option value="❤️">❤️ Здоровье</option>
+                                    <option value="🏠">🏠 Недвижимость</option>
+                                    <option value="🚗">🚗 Авто</option>
+                                    <option value="✈️">✈️ Путешествия</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Категория</label>
+                                <select class="form-select" name="category">
+                                    <option value="business">💼 Бизнес</option>
+                                    <option value="feedback">⭐ Отзывы</option>
+                                    <option value="education">🎓 Образование</option>
+                                    <option value="general">👋 Общее</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Награда за прохождение</label>
+                            <input type="text" class="form-input" name="reward_text" placeholder="Что получит участник">
+                        </div>
+                        <div class="form-group">
+                            <label>Награда за рефералов</label>
+                            <input type="text" class="form-input" name="referral_reward" placeholder="Бонус за приглашение друзей">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="is_global" checked> 
+                                🌐 Глобальный шаблон (виден всем)
+                            </label>
+                        </div>
+                        
+                        <h3 style="margin: 20px 0 15px; color: var(--gold);">❓ Вопросы шаблона</h3>
+                        <div id="template-questions-container"></div>
+                        <button type="button" class="btn btn-gray" onclick="addTemplateQuestion()" style="margin-top: 10px;">➕ Добавить вопрос</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-gray" onclick="closeCreateTemplateModal()">Отмена</button>
+                    <button class="btn btn-green" onclick="saveTemplate()">💾 Сохранить шаблон</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Очищаем форму
+    document.getElementById('create-template-form').reset();
+    document.getElementById('template-questions-container').innerHTML = '';
+    templateQuestionId = 0;
+    addTemplateQuestion();
+    
+    modal.style.display = 'flex';
+}
+
+function closeCreateTemplateModal() {
+    const modal = document.getElementById('create-template-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+let templateQuestionId = 0;
+
+function addTemplateQuestion(text = '', options = ['', '', '', '']) {
+    templateQuestionId++;
+    const container = document.getElementById('template-questions-container');
+    
+    const div = document.createElement('div');
+    div.className = 'template-question-block';
+    div.id = `template-question-${templateQuestionId}`;
+    div.style.cssText = 'background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 15px;';
+    
+    div.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-weight: 600; color: var(--gold);">Вопрос ${templateQuestionId}</span>
+            <button type="button" class="btn btn-sm btn-red" onclick="this.parentElement.parentElement.remove()">🗑️</button>
+        </div>
+        <input type="text" class="form-input template-question-text" value="${text}" placeholder="Текст вопроса" style="margin-bottom: 10px;">
+        <div class="template-options-container">
+            ${options.map((opt, i) => `
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" class="form-input template-option-text" value="${opt}" placeholder="Вариант ${i + 1}" style="flex: 1;">
+                    <button type="button" class="btn btn-sm btn-gray" onclick="this.parentElement.remove()">✕</button>
+                </div>
+            `).join('')}
+        </div>
+        <button type="button" class="btn btn-sm btn-gray" onclick="addTemplateOption(${templateQuestionId})" style="margin-top: 5px;">➕ Вариант</button>
+    `;
+    
+    container.appendChild(div);
+}
+
+function addTemplateOption(questionId) {
+    const container = document.querySelector(`#template-question-${questionId} .template-options-container`);
+    const optionCount = container.querySelectorAll('.template-option-text').length + 1;
+    
+    const div = document.createElement('div');
+    div.style.cssText = 'display: flex; gap: 8px; margin-bottom: 8px;';
+    div.innerHTML = `
+        <input type="text" class="form-input template-option-text" placeholder="Вариант ${optionCount}" style="flex: 1;">
+        <button type="button" class="btn btn-sm btn-gray" onclick="this.parentElement.remove()">✕</button>
+    `;
+    container.appendChild(div);
+}
+
+async function saveTemplate() {
+    const form = document.getElementById('create-template-form');
+    const title = form.title.value.trim();
+    
+    if (!title) {
+        showToast('Введите название шаблона', 'error');
+        return;
+    }
+    
+    // Собираем вопросы
+    const questions = [];
+    document.querySelectorAll('.template-question-block').forEach((block, i) => {
+        const text = block.querySelector('.template-question-text')?.value?.trim();
+        const options = Array.from(block.querySelectorAll('.template-option-text'))
+            .map(input => input.value.trim())
+            .filter(v => v);
+        
+        if (text && options.length >= 2) {
+            questions.push({ id: i + 1, text, type: 'single', options });
+        }
+    });
+    
+    if (questions.length === 0) {
+        showToast('Добавьте хотя бы один вопрос с 2+ вариантами', 'error');
+        return;
+    }
+    
+    const templateData = {
+        title: title,
+        description: form.description.value.trim(),
+        icon: form.icon.value,
+        category: form.category.value,
+        reward_text: form.reward_text.value.trim(),
+        referral_reward_text: form.referral_reward.value.trim(),
+        questions: questions,
+        is_global: form.is_global.checked,
+        is_active: true,
+        created_by_gw_id: window.currentGwId || window.currentDisplayId || OWNER_GW_ID,
+        uses_count: 0
+    };
+    
+    try {
+        const { data, error } = await SupabaseClient.client
+            .from('survey_templates')
+            .insert(templateData)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        
+        surveyTemplatesData.unshift(data);
+        closeCreateTemplateModal();
+        renderTemplatesList();
+        showToast('Шаблон создан! 🎉', 'success');
+        
+    } catch (e) {
+        console.error('Error saving template:', e);
+        showToast('Ошибка сохранения шаблона', 'error');
+    }
 }
 
 // Добавить вопрос
@@ -469,6 +853,15 @@ window.showSurveyCreatedModal = showSurveyCreatedModal;
 window.closeSurveyCreatedModal = closeSurveyCreatedModal;
 window.shareSurveyTo = shareSurveyTo;
 window.copySurveyLinkFromModal = copySurveyLinkFromModal;
+
+// Новые функции для шаблонов v2.0
+window.renderTemplatesList = renderTemplatesList;
+window.loadSurveyTemplates = loadSurveyTemplates;
+window.showCreateTemplateModal = showCreateTemplateModal;
+window.closeCreateTemplateModal = closeCreateTemplateModal;
+window.addTemplateQuestion = addTemplateQuestion;
+window.addTemplateOption = addTemplateOption;
+window.saveTemplate = saveTemplate;
 
 // ═══════════════════════════════════════════════════════════
 // МОДАЛКА "ОПРОС СОЗДАН" С КНОПКАМИ ШАРИНГА
