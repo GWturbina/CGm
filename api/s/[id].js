@@ -21,7 +21,9 @@ module.exports = async function handler(req, res) {
     let theme = 'dark';
     let questions = '';
     let author = '';
+    let customOgImage = null; // Пользовательская картинка
     let surveyFound = false;
+    let surveyId = id;
     let debugInfo = [];
     
     // === SUPABASE ===
@@ -52,14 +54,21 @@ module.exports = async function handler(req, res) {
             
             if (survey) {
                 surveyFound = true;
+                surveyId = survey.id;
                 console.log('✅ Survey found:', id);
                 
                 // Заполняем данные
                 title = survey.title || title;
                 description = survey.description || description;
-                emoji = survey.emoji || emoji;
+                emoji = survey.icon || survey.emoji || emoji; // Поддержка icon
                 theme = survey.theme || survey.style || theme;
                 author = survey.author_name || survey.owner_name || '';
+                
+                // Пользовательская картинка (приоритет!)
+                if (survey.og_image_url) {
+                    customOgImage = survey.og_image_url;
+                    console.log('🖼️ Using custom OG image:', customOgImage);
+                }
                 
                 // Считаем вопросы
                 if (survey.questions) {
@@ -74,9 +83,10 @@ module.exports = async function handler(req, res) {
                 }
                 
                 // Обновляем счётчик просмотров
+                const viewsField = survey.views_count !== undefined ? 'views_count' : 'views';
                 await supabase
                     .from('surveys')
-                    .update({ views: (survey.views || 0) + 1 })
+                    .update({ [viewsField]: (survey[viewsField] || 0) + 1 })
                     .eq('id', survey.id);
                 
                 debugInfo.push('Source: Supabase');
@@ -115,9 +125,10 @@ module.exports = async function handler(req, res) {
                 
                 title = survey.title || title;
                 description = survey.description || description;
-                emoji = survey.emoji || emoji;
+                emoji = survey.icon || survey.emoji || emoji;
                 theme = survey.theme || theme;
                 author = survey.author_name || '';
+                customOgImage = survey.og_image_url || null;
                 
                 if (survey.questions && Array.isArray(survey.questions)) {
                     questions = String(survey.questions.length);
@@ -132,21 +143,29 @@ module.exports = async function handler(req, res) {
     }
     
     // === ГЕНЕРАЦИЯ OG IMAGE URL ===
-    const ogParams = new URLSearchParams({
-        type: 'survey',
-        title: title,
-        text: description.substring(0, 100),
-        emoji: emoji,
-        theme: theme
-    });
+    let ogImageUrl;
     
-    if (questions) ogParams.append('q', questions);
-    if (author) ogParams.append('author', author);
-    
-    const ogImageUrl = `${baseUrl}/api/og-image?${ogParams.toString()}`;
+    if (customOgImage) {
+        // Используем пользовательскую картинку
+        ogImageUrl = customOgImage;
+    } else {
+        // Генерируем динамическую SVG
+        const ogParams = new URLSearchParams({
+            type: 'survey',
+            title: title,
+            text: description.substring(0, 100),
+            emoji: emoji,
+            theme: theme
+        });
+        
+        if (questions) ogParams.append('q', questions);
+        if (author) ogParams.append('author', author);
+        
+        ogImageUrl = `${baseUrl}/api/og-image?${ogParams.toString()}`;
+    }
     
     // URL для редиректа
-    const viewerUrl = `${baseUrl}/survey.html?id=${id}`;
+    const viewerUrl = `${baseUrl}/survey.html?s=${surveyId}`;
     const shortUrl = `${baseUrl}/s/${id}`;
     
     console.log('📋 Final OG data:');
@@ -154,6 +173,11 @@ module.exports = async function handler(req, res) {
     console.log('   Emoji:', emoji);
     console.log('   Theme:', theme);
     console.log('   Questions:', questions || 'N/A');
+    console.log('   Custom OG:', customOgImage ? 'Yes' : 'No');
+    
+    // Определяем тип картинки
+    const isCustomImage = !!customOgImage;
+    const imageType = isCustomImage ? 'image/jpeg' : 'image/svg+xml';
     
     // HTML с Open Graph тегами
     const html = `<!DOCTYPE html>
@@ -172,7 +196,7 @@ module.exports = async function handler(req, res) {
     <meta property="og:image:secure_url" content="${ogImageUrl}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:type" content="image/svg+xml">
+    <meta property="og:image:type" content="${imageType}">
     <meta property="og:image:alt" content="${esc(title)}">
     <meta property="og:site_name" content="CardGift">
     <meta property="og:locale" content="ru_RU">
