@@ -561,6 +561,16 @@ function addSurveyOption(questionId) {
     `);
 }
 
+// Генерация короткого кода для опроса (6 символов)
+function generateShortCode() {
+    const chars = 'abcdefghijkmnpqrstuvwxyz23456789'; // без путающих символов (0,o,1,l)
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
 // Сохранить опрос
 async function saveSurvey() {
     const form = document.getElementById('create-survey-form');
@@ -598,7 +608,11 @@ async function saveSurvey() {
     const wallet = window.currentWallet || window.connectedWallet || '';
     const gwId = window.currentGwId || window.currentDisplayId || window.userGwId || window.displayId || '';
     
+    // Генерируем короткий код (6 символов)
+    const shortCode = generateShortCode();
+    
     const surveyData = {
+        short_code: shortCode,
         owner_wallet: wallet?.toLowerCase() || '',
         owner_gw_id: gwId,
         title: title,
@@ -626,7 +640,7 @@ async function saveSurvey() {
         if (error) {
             console.error('Survey save error:', error);
             // Если таблицы нет, сохраним локально
-            const localId = 'local_' + Date.now();
+            const localId = shortCode;
             surveyData.id = localId;
             surveysData.unshift(surveyData);
             localStorage.setItem('cardgift_surveys', JSON.stringify(surveysData));
@@ -634,7 +648,7 @@ async function saveSurvey() {
             closeCreateSurveyModal();
             renderSurveysList();
             
-            // Показать ссылку
+            // Показать ссылку с коротким кодом
             const link = `${window.location.origin}/s/${localId}`;
             showSurveyCreatedModal(link, surveyData.title);
             return;
@@ -645,8 +659,8 @@ async function saveSurvey() {
         updateSurveyStats();
         closeCreateSurveyModal();
         
-        // Показать ссылку
-        const link = `${window.location.origin}/s/${data.id}`;
+        // Показать ссылку с коротким кодом
+        const link = `${window.location.origin}/s/${data.short_code || data.id}`;
         showSurveyCreatedModal(link, data.title);
         
     } catch (e) {
@@ -767,7 +781,10 @@ function updateSurveyStats() {
 
 // Копировать ссылку
 function copySurveyLink(surveyId) {
-    const link = `${window.location.origin}/s/${surveyId}`;
+    // Находим опрос и берём short_code если есть
+    const survey = surveysData.find(s => s.id === surveyId);
+    const code = survey?.short_code || surveyId;
+    const link = `${window.location.origin}/s/${code}`;
     navigator.clipboard.writeText(link).then(() => {
         showToast('Ссылка скопирована! 📋', 'success');
     });
