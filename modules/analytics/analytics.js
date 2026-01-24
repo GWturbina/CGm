@@ -167,7 +167,7 @@ async function fetchAnalyticsData(userId, period) {
             const { count: cardsCount } = await SupabaseClient.client
                 .from('cards')
                 .select('*', { count: 'exact', head: true })
-                .eq('owner_id', normalizedId)
+                .eq(ownerField, normalizedId)
                 .gte('created_at', startDate.toISOString());
             
             data.cardsCreated = cardsCount || 0;
@@ -180,7 +180,7 @@ async function fetchAnalyticsData(userId, period) {
             const { data: cards } = await SupabaseClient.client
                 .from('cards')
                 .select('views')
-                .eq('owner_id', normalizedId);
+                .eq(ownerField, normalizedId);
             
             if (cards) {
                 data.cardViews = cards.reduce((sum, c) => sum + (c.views || 0), 0);
