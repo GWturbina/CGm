@@ -79,6 +79,7 @@
     .loading{text-align:center;padding:60px}
     .spinner{width:50px;height:50px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px}
     @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
     .error-msg{background:rgba(244,67,54,.2);border:1px solid var(--red);border-radius:10px;padding:12px;color:var(--red);font-size:13px;margin-bottom:15px;text-align:center}
     .success-animation{font-size:80px;animation:bounce .5s}
     @keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
@@ -325,6 +326,24 @@ class SurveyApp {
     const survey = this.state.survey;
     
     try {
+      // === ДЕДУПЛИКАЦИЯ ===
+      // Проверяем не проходил ли уже этот контакт этот опрос
+      const { data: existing } = await supabaseClient
+        .from('survey_respondents')
+        .select('id')
+        .eq('survey_id', surveyId)
+        .eq('contact', contactData.contact)
+        .maybeSingle();
+      
+      if (existing) {
+        console.log('⚠️ Дубликат контакта:', contactData.contact);
+        // Просто показываем результат, не сохраняем дубликат
+        this.state.respondent = existing;
+        localStorage.setItem('survey_respondent_' + surveyId, JSON.stringify(existing));
+        this.showNotification('Вы уже проходили этот опрос!', 'warning');
+        return existing;
+      }
+      
       // Создать респондента
       const respondentData = {
         survey_id: surveyId,
@@ -361,23 +380,40 @@ class SurveyApp {
       
       // Сохраняем контакт в таблицу contacts для владельца опроса
       if (ownerGwId) {
-        const contactToSave = {
-          owner_gw_id: ownerGwId,
-          name: contactData.name,
-          messenger: contactData.type,
-          contact: contactData.contact,
-          source: 'survey',
-          source_details: JSON.stringify({
-            survey_id: surveyId,
-            survey_title: survey.title,
-            respondent_id: data.id,
-            answers_count: this.state.answers.length
-          }),
-          status: 'new'
-        };
+        // Проверяем дубликат в contacts
+        const { data: existingContact } = await supabaseClient
+          .from('contacts')
+          .select('id')
+          .eq('owner_gw_id', ownerGwId)
+          .eq('contact', contactData.contact)
+          .maybeSingle();
         
-        await supabaseClient.from('contacts').insert(contactToSave);
-        console.log('✅ Contact saved to owner:', ownerGwId);
+        if (!existingContact) {
+          // Только если контакта нет - добавляем
+          const contactToSave = {
+            owner_gw_id: ownerGwId,
+            name: contactData.name,
+            messenger: contactData.type,
+            contact: contactData.contact,
+            source: 'survey',
+            source_details: JSON.stringify({
+              survey_id: surveyId,
+              survey_title: survey.title,
+              respondent_id: data.id,
+              answers_count: this.state.answers.length
+            }),
+            status: 'new'
+          };
+          
+          try {
+            await supabaseClient.from('contacts').insert(contactToSave);
+            console.log('✅ Contact saved to owner:', ownerGwId);
+          } catch (contactError) {
+            console.warn('⚠️ Could not save contact:', contactError.message);
+          }
+        } else {
+          console.log('⚠️ Contact already exists for owner, skipping');
+        }
       }
       
       // Увеличиваем счётчик завершений опроса
@@ -429,6 +465,28 @@ class SurveyApp {
     const code = this.state.survey.short_code || this.state.survey.id;
     const base = CONFIG.BASE_URL + '/s/' + code;
     return `${base}?ref=${this.state.respondent.id}`;
+  }
+
+  showNotification(message, type = 'info') {
+    // Создаём уведомление
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      padding: 12px 24px; border-radius: 10px; z-index: 10000;
+      font-size: 14px; font-weight: 500; animation: slideDown 0.3s ease;
+      ${type === 'warning' ? 'background: #ff9800; color: #000;' : 
+        type === 'error' ? 'background: #f44336; color: #fff;' :
+        type === 'success' ? 'background: #4CAF50; color: #fff;' :
+        'background: #2196F3; color: #fff;'}
+    `;
+    notif.textContent = message;
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+      notif.style.opacity = '0';
+      notif.style.transition = 'opacity 0.3s';
+      setTimeout(() => notif.remove(), 300);
+    }, 3000);
   }
 
   copyLink() {
