@@ -117,29 +117,31 @@ async function fetchAnalyticsData(userId, period) {
     
     // Определяем тип ID и поля
     const isGwId = userId.toString().match(/^(GW)?\d{5,10}$/i);
-    const ownerField = isGwId ? 'owner_gw_id' : 'owner_temp_id';
-    const referrerField = isGwId ? 'referrer_gw_id' : 'referrer_temp_id';
-    const normalizedId = isGwId ? (userId.toString().toUpperCase().startsWith('GW') ? userId.toUpperCase() : `GW${userId}`) : userId;
+    const rawId = userId.toString().replace(/^GW/i, '');
+    const gwId = 'GW' + rawId;
+    // Условие для поиска по обоим вариантам ID
+    const ownerFilter = `owner_gw_id.eq.${rawId},owner_gw_id.eq.${gwId}`;
+    const referrerFilter = `referrer_gw_id.eq.${rawId},referrer_gw_id.eq.${gwId}`;
     
-    console.log('📊 Query params:', { ownerField, normalizedId, startDate: startDate.toISOString() });
+    console.log('📊 Query params:', { rawId, gwId, startDate: startDate.toISOString() });
     
     try {
         // 1. Всего контактов за период
         const { count: totalCount } = await SupabaseClient.client
             .from('contacts')
             .select('*', { count: 'exact', head: true })
-            .eq(ownerField, normalizedId)
+            .or(ownerFilter)
             .neq('status', 'archived')
             .gte('created_at', startDate.toISOString());
         
         data.totalContacts = totalCount || 0;
         
-        // 2. Вирусные контакты (source = 'card' или 'viral')
+        // 2. Вирусные контакты (source = 'card' или 'viral' или 'survey')
         const { count: viralCount } = await SupabaseClient.client
             .from('contacts')
             .select('*', { count: 'exact', head: true })
-            .eq(ownerField, normalizedId)
-            .in('source', ['card', 'viral', 'shared'])
+            .or(ownerFilter)
+            .in('source', ['card', 'viral', 'shared', 'survey'])
             .gte('created_at', startDate.toISOString());
         
         data.viralContacts = viralCount || 0;
@@ -148,7 +150,7 @@ async function fetchAnalyticsData(userId, period) {
         const { count: regCount } = await SupabaseClient.client
             .from('users')
             .select('*', { count: 'exact', head: true })
-            .eq(referrerField, normalizedId)
+            .or(referrerFilter)
             .gte('created_at', startDate.toISOString());
         
         data.registrations = regCount || 0;
@@ -157,7 +159,7 @@ async function fetchAnalyticsData(userId, period) {
         const { count: activeCount } = await SupabaseClient.client
             .from('users')
             .select('*', { count: 'exact', head: true })
-            .eq(referrerField, normalizedId)
+            .or(referrerFilter)
             .gt('gw_level', 0);
         
         data.activeReferrals = activeCount || 0;
@@ -167,7 +169,7 @@ async function fetchAnalyticsData(userId, period) {
             const { count: cardsCount } = await SupabaseClient.client
                 .from('cards')
                 .select('*', { count: 'exact', head: true })
-                .eq(ownerField, normalizedId)
+                .or(ownerFilter)
                 .gte('created_at', startDate.toISOString());
             
             data.cardsCreated = cardsCount || 0;
@@ -180,7 +182,7 @@ async function fetchAnalyticsData(userId, period) {
             const { data: cards } = await SupabaseClient.client
                 .from('cards')
                 .select('views')
-                .eq(ownerField, normalizedId);
+                .or(ownerFilter);
             
             if (cards) {
                 data.cardViews = cards.reduce((sum, c) => sum + (c.views || 0), 0);
@@ -193,7 +195,7 @@ async function fetchAnalyticsData(userId, period) {
         const { data: contactsBySource } = await SupabaseClient.client
             .from('contacts')
             .select('source')
-            .eq(ownerField, normalizedId)
+            .or(ownerFilter)
             .neq('status', 'archived')
             .gte('created_at', startDate.toISOString());
         
@@ -208,7 +210,7 @@ async function fetchAnalyticsData(userId, period) {
         const { data: contactsByMessenger } = await SupabaseClient.client
             .from('contacts')
             .select('messenger')
-            .eq(ownerField, normalizedId)
+            .or(ownerFilter)
             .neq('status', 'archived')
             .gte('created_at', startDate.toISOString());
         
@@ -223,7 +225,7 @@ async function fetchAnalyticsData(userId, period) {
         const { data: recent } = await SupabaseClient.client
             .from('contacts')
             .select('name, messenger, contact, source, created_at')
-            .eq(ownerField, normalizedId)
+            .or(ownerFilter)
             .neq('status', 'archived')
             .order('created_at', { ascending: false })
             .limit(10);
@@ -234,7 +236,7 @@ async function fetchAnalyticsData(userId, period) {
         const { data: chartContacts } = await SupabaseClient.client
             .from('contacts')
             .select('created_at')
-            .eq(ownerField, normalizedId)
+            .or(ownerFilter)
             .neq('status', 'archived')
             .gte('created_at', startDate.toISOString())
             .order('created_at', { ascending: true });
@@ -248,7 +250,7 @@ async function fetchAnalyticsData(userId, period) {
             : 0;
         
         // 12. Тренды (сравнение с предыдущим периодом)
-        data.trends = await calculateTrends(ownerField, normalizedId, startDate, daysInPeriod);
+        data.trends = await calculateTrends(ownerFilter, startDate, daysInPeriod);
         
     } catch (e) {
         console.error('📊 fetchAnalyticsData error:', e);
@@ -292,7 +294,7 @@ function buildChartData(contacts, period, startDate) {
 // ═══════════════════════════════════════════════════════════
 // РАСЧЁТ ТРЕНДОВ
 // ═══════════════════════════════════════════════════════════
-async function calculateTrends(ownerField, normalizedId, currentStart, days) {
+async function calculateTrends(ownerFilter, currentStart, days) {
     const trends = { contacts: 0, viral: 0, registrations: 0, cards: 0 };
     
     try {
@@ -305,7 +307,7 @@ async function calculateTrends(ownerField, normalizedId, currentStart, days) {
         const { count: prevContacts } = await SupabaseClient.client
             .from('contacts')
             .select('*', { count: 'exact', head: true })
-            .eq(ownerField, normalizedId)
+            .or(ownerFilter)
             .gte('created_at', prevStart.toISOString())
             .lt('created_at', currentStart.toISOString());
         
@@ -313,7 +315,7 @@ async function calculateTrends(ownerField, normalizedId, currentStart, days) {
         const { count: currContacts } = await SupabaseClient.client
             .from('contacts')
             .select('*', { count: 'exact', head: true })
-            .eq(ownerField, normalizedId)
+            .or(ownerFilter)
             .gte('created_at', currentStart.toISOString());
         
         // Рассчитываем тренд
