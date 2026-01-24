@@ -1497,12 +1497,28 @@
                         <!-- Картинка превью -->
                         <div style="margin-bottom: 25px;">
                             <h3 style="margin-bottom: 15px; color: var(--gold);">🖼️ Картинка превью (для мессенджеров)</h3>
-                            <div class="form-group">
-                                <label>URL картинки (рекомендуемый размер: 1200x630)</label>
-                                <input type="url" class="form-input" name="og_image_url" placeholder="https://example.com/image.jpg">
+                            
+                            <!-- Превью картинки -->
+                            <div id="survey-og-preview" style="display: none; margin-bottom: 15px; text-align: center;">
+                                <img id="survey-og-image" style="max-width: 100%; max-height: 200px; border-radius: 10px; border: 2px solid var(--gold);">
+                                <button type="button" onclick="clearSurveyOgImage()" style="position: relative; top: -30px; right: -45%; background: #ff4444; border: none; border-radius: 50%; width: 24px; height: 24px; color: white; cursor: pointer; font-size: 12px;">✕</button>
                             </div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">
-                                💡 Загрузите картинку на <a href="https://imgbb.com/" target="_blank" style="color: var(--gold);">imgbb.com</a> и вставьте ссылку
+                            
+                            <!-- Кнопки действий -->
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <label class="btn btn-gray" style="cursor: pointer; flex: 1; min-width: 140px; text-align: center;">
+                                    📁 Загрузить файл
+                                    <input type="file" accept="image/*" onchange="uploadSurveyOgImage(this)" style="display: none;">
+                                </label>
+                                <button type="button" class="btn btn-gold" onclick="openAiImageGenerator()" style="flex: 1; min-width: 140px;">
+                                    🎨 Сгенерировать AI
+                                </button>
+                            </div>
+                            
+                            <input type="hidden" name="og_image_url" id="survey-og-url">
+                            
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">
+                                💡 Рекомендуемый размер: 1200×630 px. Картинка будет показана при шаринге в мессенджерах.
                             </div>
                         </div>
                         <!-- Вопросы -->
