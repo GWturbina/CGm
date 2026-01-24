@@ -594,9 +594,13 @@ async function saveSurvey() {
         return;
     }
     
+    // Получаем данные пользователя
+    const wallet = window.currentWallet || window.connectedWallet || '';
+    const gwId = window.currentGwId || window.currentDisplayId || window.userGwId || window.displayId || '';
+    
     const surveyData = {
-        owner_wallet: currentWallet?.toLowerCase() || '',
-        owner_gw_id: window.userGwId || window.displayId || '',
+        owner_wallet: wallet?.toLowerCase() || '',
+        owner_gw_id: gwId,
         title: title,
         description: form.description?.value?.trim() || '',
         icon: form.icon?.value || '📋',
@@ -659,16 +663,28 @@ async function loadSurveys() {
     }
     
     try {
-        const gwId = window.userGwId || window.displayId || '';
-        if (!gwId) {
+        const gwId = window.currentGwId || window.currentDisplayId || window.userGwId || window.displayId || '';
+        const wallet = window.currentWallet || window.connectedWallet || '';
+        
+        if (!gwId && !wallet) {
             renderSurveysList();
             return;
+        }
+        
+        // Формируем условие фильтрации
+        let filterCondition = '';
+        if (gwId && wallet) {
+            filterCondition = `owner_gw_id.eq.${gwId},owner_wallet.eq.${wallet.toLowerCase()}`;
+        } else if (gwId) {
+            filterCondition = `owner_gw_id.eq.${gwId}`;
+        } else if (wallet) {
+            filterCondition = `owner_wallet.eq.${wallet.toLowerCase()}`;
         }
         
         const { data, error } = await SupabaseClient.client
             .from('surveys')
             .select('*')
-            .or(`owner_gw_id.eq.${gwId},owner_wallet.eq.${currentWallet?.toLowerCase()}`)
+            .or(filterCondition)
             .order('created_at', { ascending: false });
         
         if (data && data.length > 0) {
