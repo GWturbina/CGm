@@ -383,13 +383,12 @@ async function fetchReferralStructure(userId) {
         return referrals;
     }
     
-    // Нормализуем ID
+    // Нормализуем ID - ищем по обоим вариантам
     const isGwId = userId.startsWith('GW') || /^\d{7,9}$/.test(userId);
-    const ownerField = isGwId ? 'owner_gw_id' : 'owner_temp_id';
-    const normalizedId = isGwId ? 
-        (userId.startsWith('GW') ? userId : 'GW' + userId) : userId;
+    const rawId = userId.replace(/^GW/i, '');
+    const gwId = 'GW' + rawId;
     
-    console.log('🔍 Fetching referrals for:', normalizedId, 'field:', ownerField);
+    console.log('🔍 Fetching referrals for:', rawId, 'or', gwId);
     
     try {
         // Загружаем контакты с source_level (уровень в структуре)
@@ -408,7 +407,7 @@ async function fetchReferralStructure(userId) {
                 referral_gw_id,
                 created_at
             `)
-            .eq(ownerField, normalizedId)
+            .or(`owner_gw_id.eq.${rawId},owner_gw_id.eq.${gwId}`)
             .neq('status', 'archived')
             .order('created_at', { ascending: false });
         
