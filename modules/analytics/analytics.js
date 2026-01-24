@@ -709,35 +709,48 @@ function escapeHtml(text) {
 window.loadAnalytics = loadAnalytics;
 window.exportAnalytics = exportAnalytics;
 
+// ═══════════════════════════════════════════════════════════
+// ЗАЩИТА ОТ ПОВТОРНЫХ ВЫЗОВОВ (debounce)
+// ═══════════════════════════════════════════════════════════
+let analyticsLoadTimeout = null;
+let analyticsLoading = false;
+
+function loadAnalyticsDebounced() {
+    // Если уже загружается - пропускаем
+    if (analyticsLoading) {
+        console.log('📊 Analytics already loading, skipping...');
+        return;
+    }
+    
+    // Отменяем предыдущий таймаут
+    if (analyticsLoadTimeout) {
+        clearTimeout(analyticsLoadTimeout);
+    }
+    
+    // Запускаем с задержкой 150ms (debounce)
+    analyticsLoadTimeout = setTimeout(async () => {
+        analyticsLoading = true;
+        try {
+            await loadAnalytics();
+        } finally {
+            analyticsLoading = false;
+        }
+    }, 150);
+}
+
 // Перехватываем showSection для автозагрузки аналитики
 const originalShowSectionAnalytics = window.showSection;
 window.showSection = function(section) {
     if (originalShowSectionAnalytics) originalShowSectionAnalytics(section);
     if (section === 'analytics') {
-        console.log('📊 Analytics section opened - loading data...');
-        setTimeout(loadAnalytics, 100);
+        console.log('📊 Analytics section opened');
+        loadAnalyticsDebounced();
     }
 };
 
-// Автозагрузка при переключении на секцию
+// Готовность модуля
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📊 Analytics Module ready');
-    
-    // Слушаем переключение секций
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach(mutation => {
-            if (mutation.target.id === 'section-analytics' && 
-                mutation.target.classList.contains('active')) {
-                console.log('📊 Analytics section activated');
-                setTimeout(loadAnalytics, 100);
-            }
-        });
-    });
-    
-    const analyticsSection = document.getElementById('section-analytics');
-    if (analyticsSection) {
-        observer.observe(analyticsSection, { attributes: true, attributeFilter: ['class'] });
-    }
 });
 
-console.log('📊 Analytics Module v1.0 loaded');
+console.log('📊 Analytics Module v1.1 loaded');
