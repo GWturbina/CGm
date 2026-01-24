@@ -128,11 +128,14 @@ module.exports = async function handler(req, res) {
         ogImageUrl = `${baseUrl}/api/og-image?${ogParams.toString()}`;
     }
     
-    // URL для редиректа
-    const viewerUrl = `${baseUrl}/survey.html?s=${surveyId}`;
+    // Получаем ref из query параметров
+    const refParam = req.query.ref ? `&ref=${req.query.ref}` : '';
+    
+    // URL для редиректа (передаём ref если есть)
+    const viewerUrl = `${baseUrl}/survey.html?s=${surveyId}${refParam}`;
     const shortUrl = `${baseUrl}/s/${id}`;
     
-    console.log('📋 OG:', { title, emoji, questions, customOg: !!customOgImage });
+    console.log('📋 OG:', { title, emoji, questions, customOg: !!customOgImage, ref: req.query.ref || 'none' });
     
     const imageType = customOgImage ? 'image/jpeg' : 'image/svg+xml';
     
