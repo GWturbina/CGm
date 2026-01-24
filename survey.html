@@ -110,13 +110,13 @@ const CONFIG = {
   BASE_URL: window.location.origin // Автоматически определяет домен
 };
 
-const supabase = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY) : null;
+const supabaseClient = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY) : null;
 
-if (!supabase) {
+if (!supabaseClient) {
   console.error('❌ Supabase not loaded!');
 }
 
-console.log('✅ Supabase client:', supabase ? 'ready' : 'NOT READY');
+console.log('✅ Supabase client:', supabaseClient ? 'ready' : 'NOT READY');
 
 // Демо-опрос (потом будет из базы)
 const DEMO_SURVEY = {
@@ -217,11 +217,11 @@ class SurveyApp {
         // Загрузка из Supabase - сначала по id, потом по short_code
         console.log('📋 Fetching from Supabase...');
         
-        if (!supabase) {
+        if (!supabaseClient) {
           throw new Error('Supabase не инициализирован');
         }
         
-        let { data, error } = await supabase
+        let { data, error } = await supabaseClient
           .from('surveys')
           .select('*')
           .eq('id', surveyId)
@@ -231,7 +231,7 @@ class SurveyApp {
         
         // Если не нашли по id, пробуем по short_code
         if (!data) {
-          const result = await supabase
+          const result = await supabaseClient
             .from('surveys')
             .select('*')
             .eq('short_code', surveyId)
@@ -243,7 +243,7 @@ class SurveyApp {
         if (data) {
           survey = data;
           // Увеличиваем счётчик просмотров
-          await supabase
+          await supabaseClient
             .from('surveys')
             .update({ views_count: (data.views_count || 0) + 1 })
             .eq('id', data.id);
@@ -307,7 +307,7 @@ class SurveyApp {
     if (!this.state.respondent) return;
     
     try {
-      const { data } = await supabase
+      const { data } = await supabaseClient
         .from('survey_respondents')
         .select('id, name, created_at')
         .eq('referrer_id', this.state.respondent.id)
@@ -336,7 +336,7 @@ class SurveyApp {
         user_agent: navigator.userAgent.substring(0, 255)
       };
       
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('survey_respondents')
         .insert(respondentData)
         .select()
@@ -350,7 +350,7 @@ class SurveyApp {
       // Получаем owner_gw_id опроса для сохранения контакта
       let ownerGwId = survey.owner_gw_id;
       if (!ownerGwId && !surveyId.startsWith('local_') && surveyId !== 'demo-1') {
-        const { data: surveyData } = await supabase
+        const { data: surveyData } = await supabaseClient
           .from('surveys')
           .select('owner_gw_id')
           .eq('id', surveyId)
@@ -375,13 +375,13 @@ class SurveyApp {
           status: 'new'
         };
         
-        await supabase.from('contacts').insert(contactToSave);
+        await supabaseClient.from('contacts').insert(contactToSave);
         console.log('✅ Contact saved to owner:', ownerGwId);
       }
       
       // Увеличиваем счётчик завершений опроса
       if (!surveyId.startsWith('local_') && surveyId !== 'demo-1') {
-        await supabase
+        await supabaseClient
           .from('surveys')
           .update({ completions_count: (survey.completions_count || 0) + 1 })
           .eq('id', surveyId);
@@ -390,7 +390,7 @@ class SurveyApp {
       // Обновить счётчик рефералов у пригласившего
       if (this.state.referrer) {
         try {
-          await supabase.rpc('increment_referral_count', { respondent_id: this.state.referrer });
+          await supabaseClient.rpc('increment_referral_count', { respondent_id: this.state.referrer });
         } catch (rpcError) {
           console.log('RPC not available, skipping referral count update');
         }
