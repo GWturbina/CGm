@@ -844,6 +844,32 @@ window.copyExternalLink = copyExternalLink;
 window.findGwSponsorInStructure = findGwSponsorInStructure;
 window.initReferralSystem = initReferralSystem;
 
+// ═══════════════════════════════════════════════════════════
+// ЗАЩИТА ОТ ПОВТОРНЫХ ВЫЗОВОВ (debounce)
+// ═══════════════════════════════════════════════════════════
+let referralsLoadTimeout = null;
+let referralsLoading = false;
+
+function loadReferralsDebounced() {
+    if (referralsLoading) {
+        console.log('🌐 Referrals already loading, skipping...');
+        return;
+    }
+    
+    if (referralsLoadTimeout) {
+        clearTimeout(referralsLoadTimeout);
+    }
+    
+    referralsLoadTimeout = setTimeout(async () => {
+        referralsLoading = true;
+        try {
+            await loadReferrals();
+        } finally {
+            referralsLoading = false;
+        }
+    }, 150);
+}
+
 // Перехват showSection для автозагрузки
 const originalShowSectionReferrals = window.showSection;
 window.showSection = function(section) {
@@ -851,7 +877,7 @@ window.showSection = function(section) {
     if (section === 'referrals') {
         console.log('🌐 Referrals section opened');
         initReferralSystem();
-        setTimeout(loadReferrals, 100);
+        loadReferralsDebounced();
     }
 };
 
