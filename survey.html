@@ -152,6 +152,9 @@ class SurveyApp {
       referrals: [],
       error: null
     };
+    // Сначала показываем loading
+    this.render();
+    // Потом загружаем данные
     this.init();
   }
 
@@ -160,6 +163,8 @@ class SurveyApp {
     const params = new URLSearchParams(window.location.search);
     const surveyId = params.get('s') || 'demo-1';
     const referrerId = params.get('ref');
+    
+    console.log('📋 Loading survey:', surveyId);
     
     // Проверить, есть ли сохранённый респондент
     const savedRespondent = localStorage.getItem('survey_respondent_' + surveyId);
@@ -172,17 +177,23 @@ class SurveyApp {
       if (surveyId.startsWith('local_')) {
         // Локальный опрос из localStorage
         const localSurveys = JSON.parse(localStorage.getItem('cardgift_surveys') || '[]');
-        survey = localSurveys.find(s => s.id === surveyId);
+        survey = localSurveys.find(s => s.id === surveyId || s.short_code === surveyId);
+        console.log('📋 Local survey:', survey ? 'found' : 'not found');
       } else if (surveyId === 'demo-1') {
         // Демо опрос
         survey = DEMO_SURVEY;
+        console.log('📋 Demo survey loaded');
       } else {
         // Загрузка из Supabase - сначала по id, потом по short_code
+        console.log('📋 Fetching from Supabase...');
+        
         let { data, error } = await supabase
           .from('surveys')
           .select('*')
           .eq('id', surveyId)
           .maybeSingle();
+        
+        console.log('📋 By ID result:', data ? 'found' : 'not found', error?.message || '');
         
         // Если не нашли по id, пробуем по short_code
         if (!data) {
@@ -192,6 +203,7 @@ class SurveyApp {
             .eq('short_code', surveyId)
             .maybeSingle();
           data = result.data;
+          console.log('📋 By short_code result:', data ? 'found' : 'not found');
         }
         
         if (data) {
@@ -208,6 +220,17 @@ class SurveyApp {
         throw new Error('Опрос не найден');
       }
       
+      // Парсим questions если это строка
+      let questions = survey.questions || [];
+      if (typeof questions === 'string') {
+        try {
+          questions = JSON.parse(questions);
+        } catch (e) {
+          console.error('Error parsing questions:', e);
+          questions = [];
+        }
+      }
+      
       // Нормализуем данные опроса
       this.state.survey = {
         id: survey.id,
@@ -216,8 +239,10 @@ class SurveyApp {
         icon: survey.icon || '📋',
         reward_text: survey.reward_text || 'Подарок за прохождение',
         referral_reward: survey.referral_reward_text || survey.referral_reward || 'Бонус за друга',
-        questions: survey.questions || []
+        questions: questions
       };
+      
+      console.log('📋 Survey loaded:', this.state.survey.title, 'Questions:', questions.length);
       
       if (referrerId) {
         this.state.referrer = referrerId;
@@ -474,6 +499,18 @@ class SurveyApp {
     const { screen, survey, currentQuestion, answers, respondent, referrals, error } = this.state;
     
     let html = '';
+    
+    // Защита от null survey для экранов которые требуют данные
+    if (!survey && ['intro', 'questions', 'contact', 'result', 'share'].includes(screen)) {
+      html = `
+        <div class="card loading">
+          <div class="spinner"></div>
+          <p>Загрузка опроса...</p>
+        </div>
+      `;
+      this.container.innerHTML = html;
+      return;
+    }
     
     switch (screen) {
       case 'loading':
@@ -735,6 +772,18 @@ class SurveyApp {
           </div>
         `;
         break;
+        
+      default:
+        console.error('Unknown screen:', screen);
+        html = `
+          <div class="card">
+            <div class="header">
+              <span class="header-icon">⚠️</span>
+              <h1>Загрузка...</h1>
+              <p>Подождите немного</p>
+            </div>
+          </div>
+        `;
     }
     
     this.container.innerHTML = html;
