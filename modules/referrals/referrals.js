@@ -419,10 +419,28 @@ async function fetchReferralStructure(userId) {
         
         console.log('📊 Raw contacts:', contacts?.length);
         
+        // ═══════════════════════════════════════════════════════════
+        // ДЕДУПЛИКАЦИЯ: один контакт показываем только один раз
+        // Ключ: messenger + contact (нормализованный)
+        // ═══════════════════════════════════════════════════════════
+        const seen = new Set();
+        
         // Преобразуем в структуру рефералов
         for (const c of contacts || []) {
+            // Создаём уникальный ключ для дедупликации
+            const contactKey = `${(c.messenger || '').toLowerCase()}_${(c.contact || '').toLowerCase().trim()}`;
+            
+            // Пропускаем дубликаты
+            if (seen.has(contactKey)) {
+                console.log(`  ⏭️ Duplicate skipped: ${contactKey}`);
+                continue;
+            }
+            seen.add(contactKey);
+            
             // Определяем линию (source_level 0 = линия 1, source_level 1 = линия 2, и т.д.)
-            const line = (c.source_level || 0) + 1;
+            // source_level 99 = контакт от OWNER (показываем как 9+)
+            let line = (c.source_level || 0) + 1;
+            if (c.source_level === 99) line = 9; // OWNER контакты показываем на 9 линии
             
             // Проверяем есть ли GW ID у этого контакта
             let gwId = c.referral_gw_id || null;
@@ -445,6 +463,8 @@ async function fetchReferralStructure(userId) {
                 createdAt: c.created_at
             });
         }
+        
+        console.log('📊 After dedup:', referrals.length);
         
     } catch (e) {
         console.error('fetchReferralStructure error:', e);
@@ -518,37 +538,48 @@ function updateLevelCircles() {
         
         const count = referralStats.byLine[i] || 0;
         
+        // В круге ВСЕГДА номер линии
+        circle.textContent = i;
+        
         if (count > 0) {
+            // Есть контакты - зелёный
             circle.style.background = 'linear-gradient(135deg, #4CAF50, #2E7D32)';
             circle.style.border = '2px solid #4CAF50';
             circle.style.color = '#fff';
-            circle.title = `${i} линия: ${count} контактов`;
-            circle.textContent = count > 99 ? '99+' : count;
+            circle.title = `${i} линия: ${count} контактов (клик для фильтра)`;
         } else if (i === 1) {
+            // 1 линия пустая - золотой
             circle.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
             circle.style.border = 'none';
             circle.style.color = '#000';
             circle.title = '1 линия: 0 контактов';
-            circle.textContent = '1';
         } else {
+            // Пустая линия - серый
             circle.style.background = '#2a2a4a';
             circle.style.border = '2px solid #444';
             circle.style.color = '#888';
             circle.title = `${i} линия: 0 контактов`;
-            circle.textContent = i;
         }
     }
     
-    // Обновляем легенду
+    // Обновляем легенду с количеством по линиям
     const legendContainer = document.getElementById('levelLegend');
-    if (legendContainer && referralStats.total > 0) {
-        let totalByLines = '';
-        for (let i = 1; i <= 9; i++) {
-            if (referralStats.byLine[i] > 0) {
-                totalByLines += `<span style="color: #4CAF50; margin-right: 10px;">L${i}: ${referralStats.byLine[i]}</span>`;
+    if (legendContainer) {
+        if (referralStats.total > 0) {
+            let totalByLines = '';
+            for (let i = 1; i <= 9; i++) {
+                if (referralStats.byLine[i] > 0) {
+                    totalByLines += `<span style="color: #4CAF50; margin-right: 12px;">L${i}: <b>${referralStats.byLine[i]}</b></span>`;
+                }
             }
+            legendContainer.innerHTML = totalByLines + `<span style="color: #FFD700; margin-left: 5px;">| Всего: <b>${referralStats.total}</b></span>`;
+        } else {
+            legendContainer.innerHTML = `
+                <span style="color: #FFD700;">●</span> 1 линия (прямые) &nbsp;&nbsp;
+                <span style="color: #4CAF50;">●</span> С контактами &nbsp;&nbsp;
+                <span style="color: #666;">●</span> Пустая линия
+            `;
         }
-        legendContainer.innerHTML = totalByLines + `<span style="color: #FFD700;">| Всего: ${referralStats.total}</span>`;
     }
 }
 
