@@ -975,6 +975,266 @@ function shareSurveyTo(platform) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════
+// OG КАРТИНКА - ЗАГРУЗКА И AI ГЕНЕРАЦИЯ
+// ═══════════════════════════════════════════════════════════
+
+// Загрузка файла картинки
+async function uploadSurveyOgImage(input) {
+    const file = input.files?.[0];
+    if (!file) return;
+    
+    // Проверка типа
+    if (!file.type.startsWith('image/')) {
+        showToast && showToast('Выберите изображение', 'error');
+        return;
+    }
+    
+    // Проверка размера (макс 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast && showToast('Файл слишком большой (макс 5MB)', 'error');
+        return;
+    }
+    
+    showToast && showToast('⏳ Загружаем картинку...', 'info');
+    
+    try {
+        // Конвертируем в base64
+        const base64 = await fileToBase64(file);
+        
+        // Загружаем на Cloudinary
+        const response = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image: base64,
+                folder: 'survey-og',
+                cardId: 'survey_' + Date.now()
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.url) {
+            setSurveyOgImage(data.url);
+            showToast && showToast('✅ Картинка загружена!', 'success');
+        } else {
+            throw new Error(data.error || 'Ошибка загрузки');
+        }
+    } catch (e) {
+        console.error('Upload error:', e);
+        showToast && showToast('❌ Ошибка загрузки: ' + e.message, 'error');
+    }
+    
+    // Сбрасываем input
+    input.value = '';
+}
+
+// Конвертация файла в base64
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// Установить картинку превью
+function setSurveyOgImage(url) {
+    document.getElementById('survey-og-url').value = url;
+    document.getElementById('survey-og-image').src = url;
+    document.getElementById('survey-og-preview').style.display = 'block';
+}
+
+// Очистить картинку превью
+function clearSurveyOgImage() {
+    document.getElementById('survey-og-url').value = '';
+    document.getElementById('survey-og-image').src = '';
+    document.getElementById('survey-og-preview').style.display = 'none';
+}
+
+// Открыть AI генератор картинок
+function openAiImageGenerator() {
+    // Получаем данные опроса для промпта
+    const form = document.getElementById('create-survey-form');
+    const title = form?.title?.value?.trim() || 'Опрос';
+    const description = form?.description?.value?.trim() || '';
+    const icon = form?.icon?.value || '📋';
+    
+    // Создаём модалку AI генератора
+    let modal = document.getElementById('ai-image-modal');
+    if (modal) modal.remove();
+    
+    modal = document.createElement('div');
+    modal.id = 'ai-image-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+    
+    // Генерируем промпт на основе данных опроса
+    const defaultPrompt = `Professional survey banner for "${title}". ${description ? 'Topic: ' + description + '.' : ''} Modern design, vibrant colors, clean composition, 1200x630 aspect ratio, suitable for social media sharing.`;
+    
+    modal.innerHTML = `
+        <div style="background: linear-gradient(145deg, #1a1a2e, #16213e); border-radius: 20px; border: 2px solid #FFD700; max-width: 600px; width: 90%; padding: 30px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #FFD700; margin: 0;">🎨 AI Генератор картинки</h2>
+                <button onclick="this.closest('#ai-image-modal').remove()" style="background: none; border: none; color: #888; font-size: 24px; cursor: pointer;">✕</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #9CA3AF; margin-bottom: 8px; font-size: 14px;">Описание картинки (prompt)</label>
+                <textarea id="ai-image-prompt" style="width: 100%; height: 100px; background: #0f1419; border: 1px solid rgba(255,215,0,0.2); border-radius: 10px; padding: 12px; color: #E8E8E8; font-size: 14px; resize: none;">${defaultPrompt}</textarea>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div>
+                    <label style="display: block; color: #9CA3AF; margin-bottom: 8px; font-size: 14px;">Стиль</label>
+                    <select id="ai-image-style" style="width: 100%; padding: 10px; background: #0f1419; border: 1px solid rgba(255,215,0,0.2); border-radius: 8px; color: #E8E8E8;">
+                        <option value="realistic">📷 Реалистичный</option>
+                        <option value="artistic">🎨 Художественный</option>
+                        <option value="digital">💻 Цифровой арт</option>
+                        <option value="minimalist">⚪ Минимализм</option>
+                        <option value="vibrant">🌈 Яркий</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; color: #9CA3AF; margin-bottom: 8px; font-size: 14px;">Формат</label>
+                    <select id="ai-image-format" style="width: 100%; padding: 10px; background: #0f1419; border: 1px solid rgba(255,215,0,0.2); border-radius: 8px; color: #E8E8E8;">
+                        <option value="16:9" selected>📐 16:9 (рекомендуемый)</option>
+                        <option value="1:1">⬜ 1:1 (квадрат)</option>
+                        <option value="4:3">📺 4:3</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Превью результата -->
+            <div id="ai-gen-preview" style="display: none; margin-bottom: 20px; text-align: center;">
+                <img id="ai-gen-image" style="max-width: 100%; max-height: 250px; border-radius: 10px; border: 2px solid #FFD700;">
+            </div>
+            
+            <!-- Прогресс -->
+            <div id="ai-gen-progress" style="display: none; margin-bottom: 20px; text-align: center;">
+                <div style="width: 40px; height: 40px; border: 3px solid rgba(255,215,0,0.2); border-top-color: #FFD700; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+                <p style="color: #9CA3AF;">Генерируем картинку... ⏳</p>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="this.closest('#ai-image-modal').remove()" style="flex: 1; padding: 14px; background: #242b3d; border: 1px solid rgba(255,215,0,0.2); border-radius: 10px; color: #E8E8E8; cursor: pointer; font-size: 14px;">Отмена</button>
+                <button id="ai-gen-btn" onclick="generateSurveyAiImage()" style="flex: 2; padding: 14px; background: linear-gradient(135deg, #FFD700, #FFA500); border: none; border-radius: 10px; color: #000; cursor: pointer; font-size: 14px; font-weight: 600;">✨ Сгенерировать</button>
+                <button id="ai-use-btn" onclick="useSurveyAiImage()" style="display: none; flex: 1; padding: 14px; background: #4CAF50; border: none; border-radius: 10px; color: #fff; cursor: pointer; font-size: 14px; font-weight: 600;">✓ Использовать</button>
+            </div>
+        </div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Сгенерированная картинка (временно)
+let generatedAiImageUrl = null;
+
+// Генерация AI картинки
+async function generateSurveyAiImage() {
+    const prompt = document.getElementById('ai-image-prompt')?.value?.trim();
+    const style = document.getElementById('ai-image-style')?.value || 'realistic';
+    const format = document.getElementById('ai-image-format')?.value || '16:9';
+    
+    if (!prompt) {
+        showToast && showToast('Введите описание картинки', 'error');
+        return;
+    }
+    
+    // Показываем прогресс
+    document.getElementById('ai-gen-progress').style.display = 'block';
+    document.getElementById('ai-gen-preview').style.display = 'none';
+    document.getElementById('ai-gen-btn').disabled = true;
+    document.getElementById('ai-use-btn').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/ai/image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt: prompt + ' Style: ' + style,
+                format: format,
+                style: style
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok || !data.imageUrl) {
+            throw new Error(data.error || 'Ошибка генерации');
+        }
+        
+        // Показываем результат
+        generatedAiImageUrl = data.imageUrl;
+        document.getElementById('ai-gen-image').src = data.imageUrl;
+        document.getElementById('ai-gen-preview').style.display = 'block';
+        document.getElementById('ai-use-btn').style.display = 'block';
+        
+        showToast && showToast('✅ Картинка сгенерирована!', 'success');
+        
+    } catch (e) {
+        console.error('AI generation error:', e);
+        showToast && showToast('❌ ' + e.message, 'error');
+    } finally {
+        document.getElementById('ai-gen-progress').style.display = 'none';
+        document.getElementById('ai-gen-btn').disabled = false;
+    }
+}
+
+// Использовать сгенерированную картинку
+async function useSurveyAiImage() {
+    if (!generatedAiImageUrl) return;
+    
+    showToast && showToast('⏳ Сохраняем картинку...', 'info');
+    
+    try {
+        // Загружаем картинку на Cloudinary для постоянного хранения
+        const response = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image: generatedAiImageUrl,
+                folder: 'survey-og',
+                cardId: 'survey_ai_' + Date.now()
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.url) {
+            setSurveyOgImage(data.url);
+            showToast && showToast('✅ Картинка сохранена!', 'success');
+            
+            // Закрываем модалку
+            document.getElementById('ai-image-modal')?.remove();
+        } else {
+            // Если Cloudinary не сработал, используем оригинальный URL
+            setSurveyOgImage(generatedAiImageUrl);
+            showToast && showToast('✅ Картинка добавлена!', 'success');
+            document.getElementById('ai-image-modal')?.remove();
+        }
+    } catch (e) {
+        // Fallback - используем оригинальный URL
+        setSurveyOgImage(generatedAiImageUrl);
+        showToast && showToast('✅ Картинка добавлена!', 'success');
+        document.getElementById('ai-image-modal')?.remove();
+    }
+}
+
+// Экспорт функций
+window.uploadSurveyOgImage = uploadSurveyOgImage;
+window.clearSurveyOgImage = clearSurveyOgImage;
+window.openAiImageGenerator = openAiImageGenerator;
+window.generateSurveyAiImage = generateSurveyAiImage;
+window.useSurveyAiImage = useSurveyAiImage;
+window.setSurveyOgImage = setSurveyOgImage;
+
 console.log('📋 Surveys Module loaded');
 
 console.log('✅ Surveys module loaded');
