@@ -97,7 +97,7 @@
 const CONFIG = {
   SUPABASE_URL: 'https://imgpysvdosdsqucoghqa.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ3B5c3Zkb3Nkc3F1Y29naHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1NTU0ODYsImV4cCI6MjA4MjEzMTQ4Nn0.HTRDARe0DkeyI4et9I5xcElToiHzrfJTr2kFpwoik0Y',
-  BASE_URL: 'https://cardgift.vercel.app'
+  BASE_URL: window.location.origin // Автоматически определяет домен
 };
 
 const supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
@@ -165,9 +165,49 @@ class SurveyApp {
     const savedRespondent = localStorage.getItem('survey_respondent_' + surveyId);
     
     try {
-      // Загрузить опрос
-      // TODO: Загрузка из Supabase
-      this.state.survey = DEMO_SURVEY;
+      // Загрузить опрос из Supabase
+      let survey = null;
+      
+      // Проверяем - это локальный опрос или из базы?
+      if (surveyId.startsWith('local_')) {
+        // Локальный опрос из localStorage
+        const localSurveys = JSON.parse(localStorage.getItem('cardgift_surveys') || '[]');
+        survey = localSurveys.find(s => s.id === surveyId);
+      } else if (surveyId === 'demo-1') {
+        // Демо опрос
+        survey = DEMO_SURVEY;
+      } else {
+        // Загрузка из Supabase
+        const { data, error } = await supabase
+          .from('surveys')
+          .select('*')
+          .eq('id', surveyId)
+          .single();
+        
+        if (!error && data) {
+          survey = data;
+          // Увеличиваем счётчик просмотров
+          await supabase
+            .from('surveys')
+            .update({ views_count: (data.views_count || 0) + 1 })
+            .eq('id', surveyId);
+        }
+      }
+      
+      if (!survey) {
+        throw new Error('Опрос не найден');
+      }
+      
+      // Нормализуем данные опроса
+      this.state.survey = {
+        id: survey.id,
+        title: survey.title || 'Опрос',
+        description: survey.description || '',
+        icon: survey.icon || '📋',
+        reward_text: survey.reward_text || 'Подарок за прохождение',
+        referral_reward: survey.referral_reward_text || survey.referral_reward || 'Бонус за друга',
+        questions: survey.questions || []
+      };
       
       if (referrerId) {
         this.state.referrer = referrerId;
@@ -182,7 +222,8 @@ class SurveyApp {
         this.state.screen = 'intro';
       }
     } catch (e) {
-      this.state.error = 'Ошибка загрузки опроса';
+      console.error('Survey load error:', e);
+      this.state.error = e.message || 'Ошибка загрузки опроса';
       this.state.screen = 'error';
     }
     
@@ -207,6 +248,7 @@ class SurveyApp {
 
   async saveRespondent(contactData) {
     const surveyId = this.state.survey.id;
+    const survey = this.state.survey;
     
     try {
       // Создать респондента
@@ -232,9 +274,53 @@ class SurveyApp {
       this.state.respondent = data;
       localStorage.setItem('survey_respondent_' + surveyId, JSON.stringify(data));
       
+      // Получаем owner_gw_id опроса для сохранения контакта
+      let ownerGwId = survey.owner_gw_id;
+      if (!ownerGwId && !surveyId.startsWith('local_') && surveyId !== 'demo-1') {
+        const { data: surveyData } = await supabase
+          .from('surveys')
+          .select('owner_gw_id')
+          .eq('id', surveyId)
+          .single();
+        ownerGwId = surveyData?.owner_gw_id;
+      }
+      
+      // Сохраняем контакт в таблицу contacts для владельца опроса
+      if (ownerGwId) {
+        const contactToSave = {
+          owner_gw_id: ownerGwId,
+          name: contactData.name,
+          messenger: contactData.type,
+          contact: contactData.contact,
+          source: 'survey',
+          source_details: JSON.stringify({
+            survey_id: surveyId,
+            survey_title: survey.title,
+            respondent_id: data.id,
+            answers_count: this.state.answers.length
+          }),
+          status: 'new'
+        };
+        
+        await supabase.from('contacts').insert(contactToSave);
+        console.log('✅ Contact saved to owner:', ownerGwId);
+      }
+      
+      // Увеличиваем счётчик завершений опроса
+      if (!surveyId.startsWith('local_') && surveyId !== 'demo-1') {
+        await supabase
+          .from('surveys')
+          .update({ completions_count: (survey.completions_count || 0) + 1 })
+          .eq('id', surveyId);
+      }
+      
       // Обновить счётчик рефералов у пригласившего
       if (this.state.referrer) {
-        await supabase.rpc('increment_referral_count', { respondent_id: this.state.referrer });
+        try {
+          await supabase.rpc('increment_referral_count', { respondent_id: this.state.referrer });
+        } catch (rpcError) {
+          console.log('RPC not available, skipping referral count update');
+        }
       }
       
       return data;
