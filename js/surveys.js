@@ -777,6 +777,93 @@ function updateSurveyStats() {
     if (el1) el1.textContent = total;
     if (el2) el2.textContent = responses;
     if (el3) el3.textContent = conversion + '%';
+    
+    // Загружаем последние ответы
+    loadSurveyResponses();
+}
+
+// Загрузка последних ответов (респондентов)
+async function loadSurveyResponses() {
+    const container = document.getElementById('surveys-responses-list');
+    if (!container) return;
+    
+    const gwId = window.currentGwId || window.currentDisplayId || window.userGwId || '';
+    if (!gwId) {
+        container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Подключите кошелёк</div>';
+        return;
+    }
+    
+    try {
+        // Получаем ID наших опросов
+        const surveyIds = surveysData.map(s => s.id).filter(id => id && !id.startsWith('local_'));
+        
+        if (surveyIds.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Нет опросов</div>';
+            return;
+        }
+        
+        // Загружаем респондентов по нашим опросам
+        const { data, error } = await SupabaseClient.client
+            .from('survey_respondents')
+            .select('*')
+            .in('survey_id', surveyIds)
+            .order('created_at', { ascending: false })
+            .limit(20);
+        
+        if (error) {
+            console.error('Error loading respondents:', error);
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Ошибка загрузки</div>';
+            return;
+        }
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Пока нет ответов</div>';
+            return;
+        }
+        
+        // Рендерим ответы
+        container.innerHTML = data.map(r => {
+            const survey = surveysData.find(s => s.id === r.survey_id);
+            const surveyTitle = survey?.title || 'Опрос';
+            const date = new Date(r.created_at).toLocaleDateString('ru-RU');
+            const time = new Date(r.created_at).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+            
+            // Парсим ответы если есть
+            let answersHtml = '';
+            if (r.answers) {
+                try {
+                    const answers = typeof r.answers === 'string' ? JSON.parse(r.answers) : r.answers;
+                    if (Array.isArray(answers) && answers.length > 0) {
+                        answersHtml = `<div style="font-size:11px;color:var(--text-muted);margin-top:5px;">
+                            ${answers.slice(0, 2).map(a => `${a.question?.substring(0,20) || '?'}... → ${a.answer || '?'}`).join(' | ')}
+                            ${answers.length > 2 ? ` +${answers.length - 2} ещё` : ''}
+                        </div>`;
+                    }
+                } catch (e) {}
+            }
+            
+            return `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid var(--border);">
+                    <div style="flex:1;">
+                        <div style="font-weight:500;color:var(--text);">${r.name || 'Аноним'}</div>
+                        <div style="font-size:12px;color:var(--gold);">${surveyTitle}</div>
+                        ${answersHtml}
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px;color:var(--text-muted);">${date}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">${time}</div>
+                        ${r.contact ? `<div style="font-size:11px;color:var(--gold);">📱 ${r.contact.substring(0,15)}...</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        console.log('✅ Loaded', data.length, 'survey responses');
+        
+    } catch (e) {
+        console.error('Error loading responses:', e);
+        container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Ошибка</div>';
+    }
 }
 
 // Копировать ссылку
@@ -1251,6 +1338,7 @@ window.openAiImageGenerator = openAiImageGenerator;
 window.generateSurveyAiImage = generateSurveyAiImage;
 window.useSurveyAiImage = useSurveyAiImage;
 window.setSurveyOgImage = setSurveyOgImage;
+window.loadSurveyResponses = loadSurveyResponses;
 
 console.log('📋 Surveys Module loaded');
 
