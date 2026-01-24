@@ -635,7 +635,7 @@ async function saveSurvey() {
             renderSurveysList();
             
             // Показать ссылку
-            const link = `${window.location.origin}/survey.html?s=${localId}`;
+            const link = `${window.location.origin}/s/${localId}`;
             showSurveyCreatedModal(link, surveyData.title);
             return;
         }
@@ -646,7 +646,7 @@ async function saveSurvey() {
         closeCreateSurveyModal();
         
         // Показать ссылку
-        const link = `${window.location.origin}/survey.html?s=${data.id}`;
+        const link = `${window.location.origin}/s/${data.id}`;
         showSurveyCreatedModal(link, data.title);
         
     } catch (e) {
@@ -767,7 +767,7 @@ function updateSurveyStats() {
 
 // Копировать ссылку
 function copySurveyLink(surveyId) {
-    const link = `${window.location.origin}/survey.html?s=${surveyId}`;
+    const link = `${window.location.origin}/s/${surveyId}`;
     navigator.clipboard.writeText(link).then(() => {
         showToast('Ссылка скопирована! 📋', 'success');
     });
@@ -775,6 +775,7 @@ function copySurveyLink(surveyId) {
 
 // Просмотр опроса
 function previewSurvey(surveyId) {
+    // Для preview открываем напрямую (без OG редиректа)
     const link = `${window.location.origin}/survey.html?s=${surveyId}`;
     window.open(link, '_blank');
 }
