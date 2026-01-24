@@ -269,16 +269,18 @@ class SurveyApp {
       // Нормализуем данные опроса
       this.state.survey = {
         id: survey.id,
-        short_code: survey.short_code || null, // Для коротких ссылок
+        short_code: survey.short_code || null,
+        owner_gw_id: survey.owner_gw_id || null, // ДЛЯ СОХРАНЕНИЯ КОНТАКТОВ!
         title: survey.title || 'Опрос',
         description: survey.description || '',
         icon: survey.icon || '📋',
         reward_text: survey.reward_text || 'Подарок за прохождение',
         referral_reward: survey.referral_reward_text || survey.referral_reward || 'Бонус за друга',
-        questions: questions
+        questions: questions,
+        completions_count: survey.completions_count || 0
       };
       
-      console.log('📋 Survey loaded:', this.state.survey.title, 'Questions:', questions.length);
+      console.log('📋 Survey loaded:', this.state.survey.title, 'Owner:', this.state.survey.owner_gw_id);
       
       if (!questions || questions.length === 0) {
         throw new Error('Опрос не содержит вопросов');
@@ -379,6 +381,8 @@ class SurveyApp {
       }
       
       // Сохраняем контакт в таблицу contacts для владельца опроса
+      console.log('📧 Saving contact. Owner GW ID:', ownerGwId);
+      
       if (ownerGwId) {
         // Проверяем дубликат в contacts
         const { data: existingContact } = await supabaseClient
