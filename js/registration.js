@@ -744,8 +744,19 @@ async function distributeContactToUpline(startId, contactData) {
     
     let currentId = startId;
     let level = 0;
+    const visitedIds = new Set(); // Защита от циклов
     
-    while (currentId && level < MAX_UPLINE_LEVELS) {
+    // ═══════════════════════════════════════════════════════════
+    // 1. Распределяем по 9 уровням вверх
+    // ═══════════════════════════════════════════════════════════
+    while (currentId && level < 9) {
+        // Защита от циклов
+        if (visitedIds.has(currentId)) {
+            console.log(`🔄 Cycle detected at ${currentId}, stopping`);
+            break;
+        }
+        visitedIds.add(currentId);
+        
         console.log(`Level ${level}: Adding to ${currentId}`);
         
         // Сохраняем контакт владельцу
@@ -755,7 +766,7 @@ async function distributeContactToUpline(startId, contactData) {
         const referrer = await getReferrerId(currentId);
         
         if (!referrer || referrer === currentId) {
-            console.log(`🛑 No referrer for ${currentId}, stopping`);
+            console.log(`🛑 No referrer for ${currentId}, stopping at level ${level}`);
             break;
         }
         
@@ -763,7 +774,18 @@ async function distributeContactToUpline(startId, contactData) {
         level++;
     }
     
-    console.log(`✅ Contact distributed to ${level + 1} levels`);
+    // ═══════════════════════════════════════════════════════════
+    // 2. ВСЕГДА отправляем к OWNER (ROOT) из любой глубины
+    // ═══════════════════════════════════════════════════════════
+    const OWNER_ID = ROOT_GW_ID || 'GW9729645';
+    
+    // Проверяем что OWNER ещё не получил этот контакт
+    if (!visitedIds.has(OWNER_ID) && startId !== OWNER_ID) {
+        console.log(`📤 Always sending to OWNER: ${OWNER_ID}`);
+        await saveContactToOwner(OWNER_ID, contactData, 99); // source_level 99 = от OWNER
+    }
+    
+    console.log(`✅ Contact distributed to ${level + 1} levels + OWNER`);
 }
 
 async function getReferrerId(userId) {
