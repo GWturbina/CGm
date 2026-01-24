@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
     let theme = 'dark';
     let questions = '';
     let author = '';
-    let customOgImage = null; // Пользовательская картинка
+    let customOgImage = null;
     let surveyFound = false;
     let surveyId = id;
     let debugInfo = [];
@@ -35,39 +35,49 @@ module.exports = async function handler(req, res) {
             console.log('📡 Loading survey from Supabase...');
             const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
             
-            // Ищем по short_code или по id
-            let { data: survey, error } = await supabase
+            let survey = null;
+            
+            // Сначала пробуем по short_code
+            const { data: byCode } = await supabase
                 .from('surveys')
                 .select('*')
                 .eq('short_code', id)
-                .single();
+                .maybeSingle();
             
-            // Если не нашли по short_code, пробуем по id
-            if (!survey && !error) {
-                const result = await supabase
+            if (byCode) {
+                survey = byCode;
+                console.log('✅ Found by short_code:', id);
+            }
+            
+            // Если не нашли, пробуем по id (UUID)
+            if (!survey) {
+                const { data: byId } = await supabase
                     .from('surveys')
                     .select('*')
                     .eq('id', id)
-                    .single();
-                survey = result.data;
+                    .maybeSingle();
+                
+                if (byId) {
+                    survey = byId;
+                    console.log('✅ Found by UUID:', id);
+                }
             }
             
             if (survey) {
                 surveyFound = true;
                 surveyId = survey.id;
-                console.log('✅ Survey found:', id);
                 
                 // Заполняем данные
                 title = survey.title || title;
                 description = survey.description || description;
-                emoji = survey.icon || survey.emoji || emoji; // Поддержка icon
+                emoji = survey.icon || survey.emoji || emoji;
                 theme = survey.theme || survey.style || theme;
                 author = survey.author_name || survey.owner_name || '';
                 
-                // Пользовательская картинка (приоритет!)
+                // Пользовательская картинка
                 if (survey.og_image_url) {
                     customOgImage = survey.og_image_url;
-                    console.log('🖼️ Using custom OG image:', customOgImage);
+                    console.log('🖼️ Using custom OG image');
                 }
                 
                 // Считаем вопросы
@@ -77,9 +87,7 @@ module.exports = async function handler(req, res) {
                             ? JSON.parse(survey.questions) 
                             : survey.questions;
                         questions = Array.isArray(q) ? String(q.length) : '';
-                    } catch (e) {
-                        console.log('Could not parse questions');
-                    }
+                    } catch (e) {}
                 }
                 
                 // Обновляем счётчик просмотров
@@ -92,53 +100,11 @@ module.exports = async function handler(req, res) {
                 debugInfo.push('Source: Supabase');
             } else {
                 console.log('❌ Survey not found:', id);
-                debugInfo.push('Survey not found in Supabase');
+                debugInfo.push('Not found');
             }
         } catch (err) {
             console.error('❌ Supabase error:', err.message);
-            debugInfo.push(`Supabase error: ${err.message}`);
-        }
-    }
-    
-    // === REDIS FALLBACK ===
-    const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-    const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-    
-    if (!surveyFound && REDIS_URL && REDIS_TOKEN) {
-        try {
-            console.log('📡 Trying Redis...');
-            const response = await fetch(REDIS_URL, {
-                method: 'POST',
-                headers: { 
-                    Authorization: `Bearer ${REDIS_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(['GET', `survey:${id}`])
-            });
-            
-            const data = await response.json();
-            
-            if (data.result) {
-                const survey = JSON.parse(data.result);
-                surveyFound = true;
-                console.log('✅ Survey found in Redis:', id);
-                
-                title = survey.title || title;
-                description = survey.description || description;
-                emoji = survey.icon || survey.emoji || emoji;
-                theme = survey.theme || theme;
-                author = survey.author_name || '';
-                customOgImage = survey.og_image_url || null;
-                
-                if (survey.questions && Array.isArray(survey.questions)) {
-                    questions = String(survey.questions.length);
-                }
-                
-                debugInfo.push('Source: Redis');
-            }
-        } catch (err) {
-            console.error('❌ Redis error:', err.message);
-            debugInfo.push(`Redis error: ${err.message}`);
+            debugInfo.push(`Error: ${err.message}`);
         }
     }
     
@@ -146,10 +112,8 @@ module.exports = async function handler(req, res) {
     let ogImageUrl;
     
     if (customOgImage) {
-        // Используем пользовательскую картинку
         ogImageUrl = customOgImage;
     } else {
-        // Генерируем динамическую SVG
         const ogParams = new URLSearchParams({
             type: 'survey',
             title: title,
@@ -168,16 +132,9 @@ module.exports = async function handler(req, res) {
     const viewerUrl = `${baseUrl}/survey.html?s=${surveyId}`;
     const shortUrl = `${baseUrl}/s/${id}`;
     
-    console.log('📋 Final OG data:');
-    console.log('   Title:', title);
-    console.log('   Emoji:', emoji);
-    console.log('   Theme:', theme);
-    console.log('   Questions:', questions || 'N/A');
-    console.log('   Custom OG:', customOgImage ? 'Yes' : 'No');
+    console.log('📋 OG:', { title, emoji, questions, customOg: !!customOgImage });
     
-    // Определяем тип картинки
-    const isCustomImage = !!customOgImage;
-    const imageType = isCustomImage ? 'image/jpeg' : 'image/svg+xml';
+    const imageType = customOgImage ? 'image/jpeg' : 'image/svg+xml';
     
     // HTML с Open Graph тегами
     const html = `<!DOCTYPE html>
@@ -187,7 +144,7 @@ module.exports = async function handler(req, res) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${esc(title)}</title>
     
-    <!-- Open Graph (Facebook, Telegram, WhatsApp, Viber) -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="${shortUrl}">
     <meta property="og:title" content="${esc(title)}">
@@ -197,53 +154,56 @@ module.exports = async function handler(req, res) {
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="${imageType}">
-    <meta property="og:image:alt" content="${esc(title)}">
     <meta property="og:site_name" content="CardGift">
     <meta property="og:locale" content="ru_RU">
     
-    <!-- Twitter Card -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${esc(title)}">
     <meta name="twitter:description" content="${esc(description)}">
     <meta name="twitter:image" content="${ogImageUrl}">
     
-    <!-- Instant redirect via JS (bots don't execute JS) -->
     <script>window.location.replace('${viewerUrl}');</script>
     
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;text-align:center;padding:20px}
-        .container{background:rgba(0,0,0,0.3);padding:40px;border-radius:24px;backdrop-filter:blur(10px);max-width:400px;width:100%}
-        .icon{font-size:72px;margin-bottom:20px;animation:bounce 1s ease infinite}
-        @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-        h1{color:#FFD700;margin:15px 0;font-size:22px;line-height:1.3}
-        p{color:rgba(255,255,255,0.8);margin:10px 0;font-size:14px}
-        .meta{color:#FFD700;font-size:13px;opacity:0.8;margin:15px 0}
-        .spinner{width:40px;height:40px;border:3px solid rgba(255,215,0,.2);border-top-color:#FFD700;border-radius:50%;animation:spin 1s linear infinite;margin:25px auto}
+        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;text-align:center;padding:20px}
+        .c{background:rgba(0,0,0,0.3);padding:40px;border-radius:24px;backdrop-filter:blur(10px);max-width:400px}
+        .i{font-size:72px;margin-bottom:20px;animation:b 1s ease infinite}
+        @keyframes b{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        h1{color:#FFD700;margin:15px 0;font-size:22px}
+        p{color:rgba(255,255,255,0.8);font-size:14px}
+        .s{width:40px;height:40px;border:3px solid rgba(255,215,0,.2);border-top-color:#FFD700;border-radius:50%;animation:spin 1s linear infinite;margin:25px auto}
         @keyframes spin{to{transform:rotate(360deg)}}
-        a{color:#FFD700;text-decoration:none;background:rgba(255,215,0,0.15);padding:12px 24px;border-radius:25px;display:inline-block;margin-top:15px;font-weight:600;transition:all 0.3s}
-        a:hover{background:rgba(255,215,0,0.3);transform:scale(1.05)}
+        a{color:#FFD700;background:rgba(255,215,0,0.15);padding:12px 24px;border-radius:25px;display:inline-block;margin-top:15px;font-weight:600;text-decoration:none}
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="icon">${emoji}</div>
+    <div class="c">
+        <div class="i">${emoji}</div>
         <h1>${esc(title)}</h1>
         <p>${esc(description)}</p>
-        ${questions ? `<div class="meta">📝 ${questions} вопросов</div>` : ''}
-        <div class="spinner"></div>
-        <p style="font-size:12px;opacity:0.6">Загружаем опрос...</p>
+        ${questions ? `<p style="color:#FFD700;margin-top:10px">📝 ${questions} вопросов</p>` : ''}
+        <div class="s"></div>
         <a href="${viewerUrl}">Пройти опрос →</a>
     </div>
-    <!-- Debug: ${debugInfo.join(' | ')} -->
+    <!-- ${debugInfo.join(' | ')} -->
 </body>
 </html>`;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
-    res.setHeader('X-Survey-Found', surveyFound ? 'true' : 'false');
     res.status(200).send(html);
 };
+
+function esc(s) {
+    return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 function esc(s) {
     return String(s || '')
