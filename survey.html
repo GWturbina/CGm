@@ -268,6 +268,7 @@ class SurveyApp {
       // Нормализуем данные опроса
       this.state.survey = {
         id: survey.id,
+        short_code: survey.short_code || null, // Для коротких ссылок
         title: survey.title || 'Опрос',
         description: survey.description || '',
         icon: survey.icon || '📋',
@@ -424,8 +425,10 @@ class SurveyApp {
 
   generateShareLink() {
     if (!this.state.respondent) return '';
-    const base = CONFIG.BASE_URL + '/survey.html';
-    return `${base}?s=${this.state.survey.id}&ref=${this.state.respondent.id}`;
+    // Используем короткую ссылку /s/{short_code или id}
+    const code = this.state.survey.short_code || this.state.survey.id;
+    const base = CONFIG.BASE_URL + '/s/' + code;
+    return `${base}?ref=${this.state.respondent.id}`;
   }
 
   copyLink() {
