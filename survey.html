@@ -352,6 +352,7 @@ class SurveyApp {
         name: contactData.name,
         contact: contactData.contact,
         contact_type: contactData.type,
+        push_consent: contactData.pushConsent || false,
         answers: this.state.answers,
         referrer_id: this.state.referrer,
         ip_hash: await this.getIpHash(),
@@ -399,6 +400,7 @@ class SurveyApp {
             name: contactData.name,
             messenger: contactData.type,
             contact: contactData.contact,
+            push_consent: contactData.pushConsent || false,
             source: 'survey',
             source_details: JSON.stringify({
               survey_id: surveyId,
@@ -576,6 +578,7 @@ class SurveyApp {
     const name = form.name.value.trim();
     const contact = form.contact.value.trim();
     const type = form.contact_type.value;
+    const pushConsent = form.push_consent?.checked || false;
     
     if (!name || !contact) {
       this.state.error = 'Заполните все поля';
@@ -586,7 +589,7 @@ class SurveyApp {
     this.state.screen = 'saving';
     this.render();
     
-    await this.saveRespondent({ name, contact, type });
+    await this.saveRespondent({ name, contact, type, pushConsent });
     
     this.showConfetti();
     this.state.screen = 'result';
@@ -731,6 +734,13 @@ class SurveyApp {
                   <option value="whatsapp">WhatsApp</option>
                 </select>
                 <input type="text" name="contact" class="input" placeholder="@username, email или номер" required>
+              </div>
+              
+              <div class="input-group" style="margin-top:15px">
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--text-muted)">
+                  <input type="checkbox" name="push_consent" style="width:18px;height:18px;margin-top:2px;accent-color:var(--gold)">
+                  <span>🔔 Согласен получать уведомления о новых предложениях и бонусах</span>
+                </label>
               </div>
               
               <button type="submit" class="btn btn-green">
