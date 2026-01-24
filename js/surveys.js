@@ -90,9 +90,13 @@ function closeTemplatesModal() {
 // =============================================
 
 // Использовать шаблон
-function useTemplate(templateId) {
+function useSurveyTemplate(templateId) {
     const template = SURVEY_TEMPLATES[templateId];
-    if (!template) return;
+    if (!template) {
+        console.warn('Survey template not found:', templateId);
+        showToast && showToast('Шаблон не найден', 'error');
+        return;
+    }
     
     closeTemplatesModal();
     showCreateSurveyModal();
@@ -121,6 +125,8 @@ function useTemplate(templateId) {
             addSurveyQuestion(q.text, q.options);
         });
     }
+    
+    console.log('✨ Survey template loaded:', templateId);
 }
 
 // Добавить вопрос
@@ -194,13 +200,13 @@ async function saveSurvey() {
     });
     
     if (questions.length === 0) {
-        showNotification('Добавьте хотя бы один вопрос с 2+ вариантами', 'error');
+        showToast('Добавьте хотя бы один вопрос с 2+ вариантами', 'error');
         return;
     }
     
     const title = form.title?.value?.trim();
     if (!title) {
-        showNotification('Введите название опроса', 'error');
+        showToast('Введите название опроса', 'error');
         return;
     }
     
@@ -222,7 +228,7 @@ async function saveSurvey() {
     };
     
     try {
-        const { data, error } = await supabase
+        const { data, error } = await SupabaseClient.client
             .from('surveys')
             .insert(surveyData)
             .select()
@@ -241,7 +247,7 @@ async function saveSurvey() {
             
             // Показать ссылку
             const link = `${window.location.origin}/survey?s=${localId}`;
-            showNotification('Опрос создан! Ссылка скопирована', 'success');
+            showToast('Опрос создан! Ссылка скопирована', 'success');
             navigator.clipboard.writeText(link);
             return;
         }
@@ -254,11 +260,11 @@ async function saveSurvey() {
         // Показать ссылку
         const link = `${window.location.origin}/survey?s=${data.id}`;
         navigator.clipboard.writeText(link);
-        showNotification('Опрос создан! Ссылка скопирована 📋', 'success');
+        showToast('Опрос создан! Ссылка скопирована 📋', 'success');
         
     } catch (e) {
         console.error('Error saving survey:', e);
-        showNotification('Ошибка сохранения', 'error');
+        showToast('Ошибка сохранения', 'error');
     }
 }
 
@@ -277,7 +283,7 @@ async function loadSurveys() {
             return;
         }
         
-        const { data, error } = await supabase
+        const { data, error } = await SupabaseClient.client
             .from('surveys')
             .select('*')
             .or(`owner_gw_id.eq.${gwId},owner_wallet.eq.${currentWallet?.toLowerCase()}`)
@@ -364,7 +370,7 @@ function updateSurveyStats() {
 function copySurveyLink(surveyId) {
     const link = `${window.location.origin}/survey?s=${surveyId}`;
     navigator.clipboard.writeText(link).then(() => {
-        showNotification('Ссылка скопирована! 📋', 'success');
+        showToast('Ссылка скопирована! 📋', 'success');
     });
 }
 
@@ -385,7 +391,7 @@ async function toggleSurvey(surveyId, isActive) {
         
         // Попробовать обновить в БД
         try {
-            await supabase
+            await SupabaseClient.client
                 .from('surveys')
                 .update({ is_active: isActive })
                 .eq('id', surveyId);
@@ -394,7 +400,7 @@ async function toggleSurvey(surveyId, isActive) {
         }
         
         renderSurveysList();
-        showNotification(isActive ? 'Опрос активирован' : 'Опрос приостановлен', 'info');
+        showToast(isActive ? 'Опрос активирован' : 'Опрос приостановлен', 'info');
     }
 }
 
@@ -406,14 +412,14 @@ async function deleteSurvey(surveyId) {
     localStorage.setItem('cardgift_surveys', JSON.stringify(surveysData));
     
     try {
-        await supabase.from('surveys').delete().eq('id', surveyId);
+        await SupabaseClient.client.from('surveys').delete().eq('id', surveyId);
     } catch (e) {
         console.log('DB delete skipped');
     }
     
     renderSurveysList();
     updateSurveyStats();
-    showNotification('Опрос удалён', 'info');
+    showToast('Опрос удалён', 'info');
 }
 
 // Инициализация при показе секции
@@ -442,5 +448,26 @@ window.addEventListener('hashchange', () => {
         initSurveysSection();
     }
 });
+
+// ═══════════════════════════════════════════════════════════
+// ЭКСПОРТ ФУНКЦИЙ
+// ═══════════════════════════════════════════════════════════
+window.showCreateSurveyModal = showCreateSurveyModal;
+window.closeCreateSurveyModal = closeCreateSurveyModal;
+window.showTemplatesModal = showTemplatesModal;
+window.closeTemplatesModal = closeTemplatesModal;
+window.useSurveyTemplate = useSurveyTemplate;
+window.addSurveyQuestion = addSurveyQuestion;
+window.removeSurveyQuestion = removeSurveyQuestion;
+window.addSurveyOption = addSurveyOption;
+window.saveSurvey = saveSurvey;
+window.loadSurveys = loadSurveys;
+window.copySurveyLink = copySurveyLink;
+window.previewSurvey = previewSurvey;
+window.toggleSurvey = toggleSurvey;
+window.deleteSurvey = deleteSurvey;
+window.initSurveysSection = initSurveysSection;
+
+console.log('📋 Surveys Module loaded');
 
 console.log('✅ Surveys module loaded');
