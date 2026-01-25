@@ -518,8 +518,8 @@ function updateReferralLink() {
             if (refId.startsWith('GW')) refId = refId.substring(2);
             if (refId.startsWith('CG_TEMP_')) refId = refId.substring(8);
             
-            // ✅ Используем основной домен cardgift.site
-            const domain = 'https://cardgift.site';
+            // ✅ Используем текущий домен + корень с ref
+            const domain = window.location.origin;
             
             // Полная ссылка (на корень сайта)
             input.value = `${domain}/?ref=${refId}`;
