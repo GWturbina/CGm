@@ -409,7 +409,7 @@
         </div>
     </div>
 
-    <!-- ====== МОДАЛЬНОЕ ОКНО НАСТРОЕК API - НОВОЕ ====== -->
+    <!-- ====== МОДАЛЬНОЕ ОКНО НАСТРОЕК API ====== -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
             <div class="modal-header">
@@ -417,11 +417,30 @@
                 <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
             </div>
             <div class="modal-body">
+                <!-- Groq (для текста - БЕСПЛАТНО!) -->
+                <div class="api-setting">
+                    <div class="api-setting-header">
+                        <div class="api-setting-title">
+                            <span>📝</span> Groq (Текст)
+                            <span style="background:#10b981;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:8px;">БЕСПЛАТНО</span>
+                        </div>
+                        <span class="api-status not-connected" id="groqStatus">Не подключен</span>
+                    </div>
+                    <div class="api-input-row">
+                        <input type="password" id="groqKey" placeholder="Введите API ключ Groq (gsk_...)">
+                        <button class="btn-clear-key" id="clearGroq" onclick="clearApiKey('groq')" title="Очистить">🗑️</button>
+                    </div>
+                    <div class="api-hint">
+                        Получите ключ на <a href="https://console.groq.com/keys" target="_blank">console.groq.com</a>
+                        <br><small style="color:#10b981;">14,400 бесплатных запросов в день! Llama 3.1 70B</small>
+                    </div>
+                </div>
+                
                 <!-- ElevenLabs -->
                 <div class="api-setting">
                     <div class="api-setting-header">
                         <div class="api-setting-title">
-                            <span>🎤</span> ElevenLabs
+                            <span>🎤</span> ElevenLabs (Голос)
                         </div>
                         <span class="api-status not-connected" id="elevenlabsStatus">Не подключен</span>
                     </div>
@@ -438,7 +457,7 @@
                 <div class="api-setting">
                     <div class="api-setting-header">
                         <div class="api-setting-title">
-                            <span>🎨</span> OpenAI (DALL-E)
+                            <span>🎨</span> OpenAI (DALL-E для картинок)
                         </div>
                         <span class="api-status not-connected" id="openaiStatus">Не подключен</span>
                     </div>
@@ -501,7 +520,7 @@
             });
         });
         
-        // ====== API КЛЮЧИ (v1.6 - SUPABASE) ======
+        // ====== API КЛЮЧИ (v2.0 - С GROQ) ======
         
         // Получить wallet адрес
         function getWalletAddress() {
@@ -511,6 +530,7 @@
         }
         
         async function saveApiSettings() {
+            const groqKey = document.getElementById('groqKey').value.trim();
             const elevenlabsKey = document.getElementById('elevenlabsKey').value.trim();
             const openaiKey = document.getElementById('openaiKey').value.trim();
             const wallet = getWalletAddress();
@@ -523,6 +543,12 @@
             // Определяем какие ключи сохранять
             const currentKeys = await loadApiKeysFromSupabase(wallet);
             const keysToSave = {};
+            
+            if (groqKey && !groqKey.includes('•')) {
+                keysToSave.groq_api_key = groqKey;
+            } else if (currentKeys.groq) {
+                keysToSave.groq_api_key = currentKeys.groq;
+            }
             
             if (elevenlabsKey && !elevenlabsKey.includes('•')) {
                 keysToSave.elevenlabs_api_key = elevenlabsKey;
@@ -542,6 +568,7 @@
                     const { error } = await SupabaseClient.client
                         .from('ai_credits')
                         .update({
+                            groq_api_key: keysToSave.groq_api_key || null,
                             openai_api_key: keysToSave.openai_api_key || null,
                             elevenlabs_api_key: keysToSave.elevenlabs_api_key || null,
                             updated_at: new Date().toISOString()
@@ -555,6 +582,7 @@
                                 .from('ai_credits')
                                 .insert({
                                     wallet_address: wallet.toLowerCase(),
+                                    groq_api_key: keysToSave.groq_api_key || null,
                                     openai_api_key: keysToSave.openai_api_key || null,
                                     elevenlabs_api_key: keysToSave.elevenlabs_api_key || null,
                                     balance: 0,
@@ -568,11 +596,16 @@
                 
                 // Также сохраняем в localStorage как кеш
                 localStorage.setItem('ai_studio_api_keys', JSON.stringify({
+                    groq: keysToSave.groq_api_key,
                     openai: keysToSave.openai_api_key,
                     elevenlabs: keysToSave.elevenlabs_api_key
                 }));
                 
                 // Обновляем UI
+                if (keysToSave.groq_api_key) {
+                    document.getElementById('groqStatus').textContent = '✅ Подключен';
+                    document.getElementById('groqStatus').className = 'api-status connected';
+                }
                 if (keysToSave.elevenlabs_api_key) {
                     document.getElementById('elevenlabsStatus').textContent = '✅ Подключен';
                     document.getElementById('elevenlabsStatus').className = 'api-status connected';
@@ -593,18 +626,19 @@
         
         async function loadApiKeysFromSupabase(wallet) {
             if (!wallet || !window.SupabaseClient || !SupabaseClient.client) {
-                return { openai: null, elevenlabs: null };
+                return { groq: null, openai: null, elevenlabs: null };
             }
             
             try {
                 const { data, error } = await SupabaseClient.client
                     .from('ai_credits')
-                    .select('openai_api_key, elevenlabs_api_key')
+                    .select('groq_api_key, openai_api_key, elevenlabs_api_key')
                     .eq('wallet_address', wallet.toLowerCase())
                     .single();
                 
                 if (!error && data) {
                     return {
+                        groq: data.groq_api_key,
                         openai: data.openai_api_key,
                         elevenlabs: data.elevenlabs_api_key
                     };
@@ -613,25 +647,25 @@
                 console.warn('Load API keys error:', e);
             }
             
-            return { openai: null, elevenlabs: null };
+            return { groq: null, openai: null, elevenlabs: null };
         }
         
         async function loadApiKeys() {
             const wallet = getWalletAddress();
-            let keys = { openai: null, elevenlabs: null };
+            let keys = { groq: null, openai: null, elevenlabs: null };
             
             // Сначала пробуем Supabase
             if (wallet) {
                 keys = await loadApiKeysFromSupabase(wallet);
                 
                 // Кешируем в localStorage
-                if (keys.openai || keys.elevenlabs) {
+                if (keys.groq || keys.openai || keys.elevenlabs) {
                     localStorage.setItem('ai_studio_api_keys', JSON.stringify(keys));
                 }
             }
             
             // Fallback на localStorage
-            if (!keys.openai && !keys.elevenlabs) {
+            if (!keys.groq && !keys.openai && !keys.elevenlabs) {
                 const saved = localStorage.getItem('ai_studio_api_keys');
                 if (saved) {
                     keys = JSON.parse(saved);
@@ -639,6 +673,11 @@
             }
             
             // Обновляем UI
+            if (keys.groq) {
+                document.getElementById('groqKey').value = '••••••••••••';
+                document.getElementById('groqStatus').textContent = '✅ Подключен';
+                document.getElementById('groqStatus').className = 'api-status connected';
+            }
             if (keys.elevenlabs) {
                 document.getElementById('elevenlabsKey').value = '••••••••••••';
                 document.getElementById('elevenlabsStatus').textContent = '✅ Подключен';
@@ -654,7 +693,13 @@
         }
         
         async function clearApiKey(keyType) {
-            if (!confirm(`Удалить ключ ${keyType === 'elevenlabs' ? 'ElevenLabs' : 'OpenAI'}?`)) {
+            const keyNames = {
+                groq: 'Groq',
+                elevenlabs: 'ElevenLabs',
+                openai: 'OpenAI'
+            };
+            
+            if (!confirm(`Удалить ключ ${keyNames[keyType] || keyType}?`)) {
                 return;
             }
             
@@ -664,7 +709,7 @@
             if (wallet && window.SupabaseClient && SupabaseClient.client) {
                 try {
                     const updateData = {};
-                    updateData[keyType === 'elevenlabs' ? 'elevenlabs_api_key' : 'openai_api_key'] = null;
+                    updateData[keyType + '_api_key'] = null;
                     
                     await SupabaseClient.client
                         .from('ai_credits')
@@ -682,22 +727,26 @@
             localStorage.setItem('ai_studio_api_keys', JSON.stringify(keys));
             
             // Обновляем UI
-            const inputId = keyType === 'elevenlabs' ? 'elevenlabsKey' : 'openaiKey';
-            const statusId = keyType === 'elevenlabs' ? 'elevenlabsStatus' : 'openaiStatus';
+            const inputEl = document.getElementById(keyType + 'Key');
+            const statusEl = document.getElementById(keyType + 'Status');
             
-            document.getElementById(inputId).value = '';
-            document.getElementById(statusId).textContent = 'Не подключен';
-            document.getElementById(statusId).className = 'api-status not-connected';
+            if (inputEl) inputEl.value = '';
+            if (statusEl) {
+                statusEl.textContent = 'Не подключен';
+                statusEl.className = 'api-status not-connected';
+            }
             
-            alert(`✅ Ключ ${keyType === 'elevenlabs' ? 'ElevenLabs' : 'OpenAI'} удалён`);
+            alert(`✅ Ключ ${keyNames[keyType] || keyType} удалён`);
         }
         
         function updateClearButtonsVisibility() {
             const canSee = window.AIStudio && window.AIStudio.canUseOwnApi && window.AIStudio.canUseOwnApi();
             
+            const clearGroq = document.getElementById('clearGroq');
             const clearElevenlabs = document.getElementById('clearElevenlabs');
             const clearOpenai = document.getElementById('clearOpenai');
             
+            if (clearGroq) clearGroq.classList.toggle('visible', canSee);
             if (clearElevenlabs) clearElevenlabs.classList.toggle('visible', canSee);
             if (clearOpenai) clearOpenai.classList.toggle('visible', canSee);
         }
