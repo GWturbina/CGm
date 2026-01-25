@@ -1227,8 +1227,8 @@ function updateReferralLink() {
             refId = refId.substring(2);
         }
         
-        // Используем основной домен cardgift.site
-        var link = 'https://cardgift.site/?ref=' + refId;
+        // Используем текущий домен + корень с ref
+        var link = window.location.origin + '/?ref=' + refId;
         
         if (linkEl) linkEl.value = link;
         if (inputEl) inputEl.value = link;
