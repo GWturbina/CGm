@@ -45,29 +45,39 @@ async function initReferralSystem() {
 // ═══════════════════════════════════════════════════════════
 
 function updateCardGiftReferralLink() {
-    const userId = window.currentCgId 
-                || window.currentTempId
+    // Приоритет: GW ID > CG ID > Temp ID > Display ID
+    const userId = window.currentGwId
                 || window.currentDisplayId
+                || window.currentCgId 
+                || window.currentTempId
+                || localStorage.getItem('cardgift_gw_id')
+                || localStorage.getItem('cardgift_display_id')
                 || localStorage.getItem('cardgift_cg_id')
-                || localStorage.getItem('cardgift_temp_id')
-                || localStorage.getItem('cardgift_display_id');
+                || localStorage.getItem('cardgift_temp_id');
+    
+    console.log('🔗 Referral link user ID:', userId);
     
     const input = document.getElementById('referralLinkInput');
     if (input && userId) {
-        // Формируем CG ID
-        let cgId = userId;
-        if (!cgId.startsWith('CG_') && !cgId.startsWith('GW')) {
-            cgId = userId;
+        // Используем ID как есть (GW ID без префикса для читаемости)
+        let refId = userId;
+        // Убираем GW префикс если есть для более короткой ссылки
+        if (refId.startsWith('GW')) {
+            refId = refId.substring(2);
         }
         
-        const refLink = `https://cardgift.site/?ref=${cgId}`;
+        const refLink = `https://cardgift.site/?ref=${refId}`;
         input.value = refLink;
+        
+        console.log('🔗 Referral link set:', refLink);
         
         // Короткая ссылка
         const shortEl = document.getElementById('shortReferralLink');
         if (shortEl) {
-            shortEl.textContent = `cardgift.site/?ref=${cgId}`;
+            shortEl.textContent = `cardgift.site/?ref=${refId}`;
         }
+    } else {
+        console.warn('⚠️ No user ID for referral link');
     }
 }
 
