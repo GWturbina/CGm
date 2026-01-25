@@ -3,834 +3,1174 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GlobalCRM v3.0</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <title>CardGift CRM v4.0</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{--gold:#FFD700;--gold-dark:#B8860B;--bg-dark:#0f1419;--bg-card:#1a1f2e;--bg-lighter:#242b3d;--text:#E8E8E8;--text-muted:#9CA3AF;--accent:#00d4ff;--green:#4CAF50;--red:#f44336;--orange:#ff9800;--purple:#9c27b0;--border:rgba(255,215,0,0.2)}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,var(--bg-dark),#1a1a2e,var(--bg-dark));color:var(--text);min-height:100vh}
-    ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg-dark)}::-webkit-scrollbar-thumb{background:var(--gold-dark);border-radius:3px}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-dark)}::-webkit-scrollbar-thumb{background:var(--gold-dark);border-radius:3px}
+    
     .btn{padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
-    .btn:hover:not(:disabled){transform:translateY(-1px)}.btn:active{transform:scale(.98)}
+    .btn:hover{transform:translateY(-1px);opacity:.9}.btn:active{transform:scale(.98)}
     .btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#000}
     .btn-secondary{background:var(--bg-lighter);border:1px solid var(--border);color:var(--text)}
+    .btn-success{background:rgba(76,175,80,.2);border:1px solid var(--green);color:var(--green)}
     .btn-danger{background:rgba(244,67,54,.2);border:1px solid var(--red);color:var(--red)}
-    .btn-wallet{background:linear-gradient(135deg,#f0b90b,#d4a00a);color:#000;font-weight:600}
-    .btn-sm{padding:6px 12px;font-size:12px}.btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-sm{padding:6px 12px;font-size:12px}
+    
     .input{width:100%;padding:12px 14px;background:var(--bg-lighter);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px}
-    .input:focus{outline:none;border-color:var(--gold)}.input::placeholder{color:var(--text-muted)}
+    .input:focus{outline:none;border-color:var(--gold)}
+    textarea.input{min-height:100px;resize:vertical}
+    select.input{cursor:pointer}
+    
     .card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px}
     .tag{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500}
-    .tag-gold{background:rgba(255,215,0,.2);color:var(--gold)}.tag-green{background:rgba(76,175,80,.2);color:var(--green)}
-    .tag-blue{background:rgba(0,212,255,.2);color:var(--accent)}.tag-orange{background:rgba(255,152,0,.2);color:var(--orange)}
-    .tag-purple{background:rgba(156,39,176,.2);color:var(--purple)}.tag-red{background:rgba(244,67,54,.2);color:var(--red)}
-    .progress-bar{height:8px;background:var(--bg-lighter);border-radius:4px;overflow:hidden}
-    .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-dark));transition:width .3s}
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
-    .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow:auto}
-    .modal-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-    .modal-body{padding:20px}.modal-footer{padding:15px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
-    .connect-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-    .connect-card{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:40px;text-align:center;max-width:450px;width:100%}
-    .sidebar{width:260px;background:linear-gradient(180deg,var(--bg-card),var(--bg-dark));border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:fixed;left:0;top:0;z-index:50}
-    .sidebar-header{padding:20px;border-bottom:1px solid var(--border)}.sidebar-nav{flex:1;padding:15px 10px;overflow-y:auto}
+    .tag-blue{background:rgba(0,212,255,.2);color:var(--accent)}
+    .tag-orange{background:rgba(255,152,0,.2);color:var(--orange)}
+    .tag-purple{background:rgba(156,39,176,.2);color:var(--purple)}
+    .tag-gold{background:rgba(255,215,0,.2);color:var(--gold)}
+    .tag-green{background:rgba(76,175,80,.2);color:var(--green)}
+    .tag-red{background:rgba(244,67,54,.2);color:var(--red)}
+    
+    /* Layout */
+    .app{display:flex;min-height:100vh}
+    .sidebar{width:260px;background:linear-gradient(180deg,var(--bg-card),var(--bg-dark));border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:50}
+    .sidebar-header{padding:20px;border-bottom:1px solid var(--border)}
+    .sidebar-nav{flex:1;padding:15px 10px;overflow-y:auto}
+    .nav-section{font-size:10px;text-transform:uppercase;color:var(--text-muted);padding:15px 15px 8px;letter-spacing:1px}
     .nav-item{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:10px;cursor:pointer;color:var(--text-muted);font-size:14px;transition:all .2s;margin-bottom:4px}
-    .nav-item:hover{background:rgba(255,215,0,.1);color:var(--text)}.nav-item.active{background:rgba(255,215,0,.15);color:var(--gold)}
+    .nav-item:hover{background:rgba(255,215,0,.1);color:var(--text)}
+    .nav-item.active{background:rgba(255,215,0,.15);color:var(--gold)}
     .nav-item .icon{font-size:18px;width:24px;text-align:center}
     .nav-item .badge{margin-left:auto;background:var(--gold);color:#000;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
-    .nav-section{font-size:10px;text-transform:uppercase;color:var(--text-muted);padding:15px 15px 8px;letter-spacing:1px}
-    .main-content{margin-left:260px;min-height:100vh}
+    
+    .main{margin-left:260px;flex:1;min-height:100vh}
     .header{background:rgba(26,31,46,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:15px 25px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:40}
     .content{padding:25px}
+    
+    /* Stats */
     .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px}
     .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px}
     .stat-card .icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
-    .stat-card .value{font-size:26px;font-weight:700;color:var(--gold)}.stat-card .label{font-size:12px;color:var(--text-muted);margin-top:4px}
-    .table{width:100%;border-collapse:collapse}.table th,.table td{padding:12px;text-align:left;border-bottom:1px solid var(--border)}
-    .table th{font-size:11px;text-transform:uppercase;color:var(--text-muted)}.table tr:hover{background:rgba(255,215,0,.05)}
-    .funnel-stage{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:15px;min-height:350px}
+    .stat-card .value{font-size:26px;font-weight:700;color:var(--gold)}
+    .stat-card .label{font-size:12px;color:var(--text-muted);margin-top:4px}
+    
+    /* Funnel */
+    .funnel-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:15px}
+    .funnel-stage{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;min-height:400px}
+    .funnel-header{padding:15px;border-bottom:1px solid var(--border);text-align:center}
+    .funnel-header .icon{font-size:24px;margin-bottom:5px}
+    .funnel-header .name{font-size:13px;font-weight:600}
+    .funnel-header .count{font-size:11px;color:var(--text-muted);margin-top:3px}
+    .funnel-body{padding:10px;max-height:350px;overflow-y:auto}
     .funnel-card{background:var(--bg-lighter);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;cursor:pointer;transition:all .2s}
     .funnel-card:hover{border-color:var(--gold);transform:translateY(-2px)}
-    .lesson-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .3s;cursor:pointer}
-    .lesson-card:hover:not(.locked){border-color:var(--gold);transform:translateY(-2px)}
-    .lesson-card.locked{opacity:.6;cursor:not-allowed}.lesson-card.completed{border-color:var(--green)}.lesson-card.active{border-color:var(--gold)}
-    .chart-container{position:relative;height:250px}
-    .loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+    .funnel-card .name{font-weight:500;margin-bottom:4px;font-size:13px}
+    .funnel-card .contact{font-size:11px;color:var(--gold)}
+    .funnel-card .meta{font-size:10px;color:var(--text-muted);margin-top:6px}
+    
+    /* Tasks */
+    .task-item{display:flex;align-items:center;gap:12px;padding:15px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px}
+    .task-item.completed{opacity:.6}
+    .task-checkbox{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .task-checkbox.checked{background:var(--green);border-color:var(--green)}
+    .task-checkbox.checked::after{content:'✓';color:#fff;font-size:12px}
+    .task-content{flex:1}
+    .task-title{font-size:14px;margin-bottom:4px}
+    .task-meta{font-size:11px;color:var(--text-muted)}
+    
+    /* Modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+    .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow:auto}
+    .modal-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .modal-body{padding:20px}
+    .modal-footer{padding:15px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+    
+    /* Messages */
+    .message-card{background:var(--bg-lighter);border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+    .message-card:hover{border-color:var(--gold)}
+    .message-card .title{font-weight:500;color:var(--gold);margin-bottom:8px;font-size:13px}
+    .message-card .content{font-size:12px;color:var(--text-muted);line-height:1.5;white-space:pre-wrap}
+    
+    /* Contacts list */
+    .contact-row{display:flex;align-items:center;gap:15px;padding:15px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+    .contact-row:hover{border-color:var(--gold)}
+    .contact-avatar{width:45px;height:45px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-weight:600;color:#000;font-size:16px}
+    .contact-info{flex:1}
+    .contact-info .name{font-weight:500;margin-bottom:3px}
+    .contact-info .detail{font-size:12px;color:var(--text-muted)}
+    .contact-actions{display:flex;gap:8px}
+    
+    /* Loading */
+    .loading{text-align:center;padding:60px}
+    .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 15px}
     @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fade-in{animation:fadeIn .3s ease}
-    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}.pulse{animation:pulse 2s infinite}
-    .help-section{margin-bottom:30px}.help-section h2{color:var(--gold);margin-bottom:15px;font-size:20px;display:flex;align-items:center;gap:10px}
-    .help-section h3{color:var(--text);margin:20px 0 10px;font-size:16px}.help-section p{color:var(--text-muted);line-height:1.6;margin-bottom:10px}
-    .help-section ul{color:var(--text-muted);margin-left:20px;margin-bottom:15px}.help-section li{margin-bottom:8px;line-height:1.5}
-    .help-table{width:100%;border-collapse:collapse;margin:15px 0}.help-table th,.help-table td{padding:10px 12px;text-align:left;border:1px solid var(--border)}
-    .help-table th{background:var(--bg-lighter);color:var(--gold);font-size:12px}.help-table td{color:var(--text-muted);font-size:13px}
-    .help-card{background:var(--bg-lighter);border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:15px}
-    .help-card-title{color:var(--gold);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
-    .help-nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:25px}
-    .help-nav-btn{padding:8px 16px;background:var(--bg-lighter);border:1px solid var(--border);border-radius:20px;color:var(--text-muted);cursor:pointer;font-size:12px;transition:all .2s}
-    .help-nav-btn:hover,.help-nav-btn.active{background:rgba(255,215,0,.15);border-color:var(--gold);color:var(--gold)}
-    @media(max-width:1024px){.sidebar{width:70px}.sidebar .nav-text,.sidebar .nav-section,.sidebar .logo-text{display:none}.sidebar .nav-item{justify-content:center;padding:12px}.main-content{margin-left:70px}}
-    @media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    
+    /* Connect screen */
+    .connect-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .connect-card{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:40px;text-align:center;max-width:450px;width:100%}
+    
+    /* Responsive */
+    @media(max-width:1200px){.funnel-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:768px){
+      .sidebar{display:none}
+      .main{margin-left:0}
+      .funnel-grid{grid-template-columns:repeat(2,1fr)}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+    }
   </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const{useState,useEffect,useRef}=React;
 
-const CONFIG={
-  SUPABASE_URL:'https://imgpysvdosdsqucoghqa.supabase.co',
-  SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ3B5c3Zkb3Nkc3F1Y29naHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1NTU0ODYsImV4cCI6MjA4MjEzMTQ4Nn0.HTRDARe0DkeyI4et9I5xcElToiHzrfJTr2kFpwoik0Y',
-  CARDGIFT_API:'https://cardgift.vercel.app/api',
-  CHAIN_ID:204,CHAIN_NAME:'opBNB Mainnet',
-  RPC_URL:'https://opbnb-mainnet-rpc.bnbchain.org',
-  BRIDGE_ADDRESS:'0x75231309172544886f27449446A9A2a43D5Ac801',MIN_LEVEL:4
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+
+const CONFIG = {
+  SUPABASE_URL: 'https://imgpysvdosdsqucoghqa.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ3B5c3Zkb3Nkc3F1Y29naHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1NTU0ODYsImV4cCI6MjA4MjEzMTQ4Nn0.HTRDARe0DkeyI4et9I5xcElToiHzrfJTr2kFpwoik0Y'
 };
 
-const BRIDGE_ABI=['function getUserFullStatus(address) view returns (bool,uint256,uint8,uint8,bool,address,bool[12])','function isUserRegistered(address) view returns (bool)'];
-const RANKS=['Unregistered','Client','MiniAdmin','Admin','SuperAdmin','Businessman'];
-const STAGES=[{id:'new',name:'Новый',icon:'🆕',color:'blue'},{id:'interest',name:'Интерес',icon:'👀',color:'orange'},{id:'presentation',name:'Презентация',icon:'📊',color:'purple'},{id:'registration',name:'Регистрация',icon:'📝',color:'gold'},{id:'active',name:'Активный',icon:'🚀',color:'green'}];
+// Проверяем загрузку Supabase
+if (typeof window.supabase === 'undefined') {
+  console.error('Supabase library not loaded!');
+}
 
-const LESSONS=[
-  {id:1,title:'Добро пожаловать',desc:'Знакомство с системой',duration:'5 мин',reward:10,tasks:[{id:1,text:'Посмотреть обзор',type:'video'},{id:2,text:'Заполнить профиль',type:'action'},{id:3,text:'Добавить контакт',type:'action'}]},
-  {id:2,title:'Работа с контактами',desc:'Добавление контактов',duration:'10 мин',reward:20,tasks:[{id:1,text:'Добавить 5 контактов',type:'count',target:5},{id:2,text:'Использовать теги',type:'action'},{id:3,text:'Импорт из CardGift',type:'integration'}]},
-  {id:3,title:'Воронка продаж',desc:'Ведение лидов',duration:'15 мин',reward:30,tasks:[{id:1,text:'Переместить контакт',type:'action'},{id:2,text:'Добавить заметку',type:'action'},{id:3,text:'Запланировать задачу',type:'action'}]},
-  {id:4,title:'Задачи',desc:'Система напоминаний',duration:'10 мин',reward:25,tasks:[{id:1,text:'Создать 3 задачи',type:'count',target:3},{id:2,text:'Выполнить задачу',type:'action'},{id:3,text:'Настроить напоминание',type:'action'}]},
-  {id:5,title:'CardGift интеграция',desc:'Автоимпорт из открыток',duration:'12 мин',reward:35,tasks:[{id:1,text:'Подключить CardGift',type:'integration'},{id:2,text:'Импортировать контакты',type:'action'},{id:3,text:'Отправить открытку',type:'action'}]},
-  {id:6,title:'Структура партнёров',desc:'Управление командой',duration:'12 мин',reward:40,tasks:[{id:1,text:'Просмотреть дерево',type:'action'},{id:2,text:'Найти партнёра',type:'action'},{id:3,text:'Связаться',type:'action'}]},
-  {id:7,title:'Аналитика',desc:'Анализ результатов',duration:'15 мин',reward:50,tasks:[{id:1,text:'Изучить дашборд',type:'action'},{id:2,text:'Экспорт отчёта',type:'action'},{id:3,text:'Установить цель',type:'action'}]},
-  {id:8,title:'Автоматизация',desc:'Рассылки и шаблоны',duration:'20 мин',reward:60,tasks:[{id:1,text:'Создать шаблон',type:'action'},{id:2,text:'Массовая рассылка',type:'action'},{id:3,text:'Автосценарий',type:'action'}]}
-];
+const supabaseClient = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY) : null;
 
-const supabase=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+// ═══════════════════════════════════════════════════════════
+// CRM APP
+// ═══════════════════════════════════════════════════════════
 
-const App=()=>{
-  const[wallet,setWallet]=useState(null);
-  const[connecting,setConnecting]=useState(false);
-  const[error,setError]=useState(null);
-  const[userStatus,setUserStatus]=useState(null);
-  const[loadingStatus,setLoadingStatus]=useState(false);
-  const[dbUser,setDbUser]=useState(null);
-  const[contacts,setContacts]=useState([]);
-  const[tasks,setTasks]=useState([]);
-  const[lessonProgress,setLessonProgress]=useState([]);
-  const[loadingData,setLoadingData]=useState(false);
-  const[cardgiftConnected,setCardgiftConnected]=useState(false);
-  const[activeSection,setActiveSection]=useState('dashboard');
-  const[showContactModal,setShowContactModal]=useState(false);
-  const[showTaskModal,setShowTaskModal]=useState(false);
-  const[showLessonModal,setShowLessonModal]=useState(null);
-  const[editingContact,setEditingContact]=useState(null);
-  const[searchQuery,setSearchQuery]=useState('');
-  const[stageFilter,setStageFilter]=useState('all');
-
-  const connectWallet=async()=>{
-    if(!window.ethereum){setError('Установите MetaMask!');return}
-    setConnecting(true);setError(null);
-    try{
-      const accounts=await window.ethereum.request({method:'eth_requestAccounts'});
-      const chainHex=await window.ethereum.request({method:'eth_chainId'});
-      if(parseInt(chainHex,16)!==CONFIG.CHAIN_ID){
-        try{await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x'+CONFIG.CHAIN_ID.toString(16)}]})}
-        catch(e){if(e.code===4902)await window.ethereum.request({method:'wallet_addEthereumChain',params:[{chainId:'0x'+CONFIG.CHAIN_ID.toString(16),chainName:CONFIG.CHAIN_NAME,rpcUrls:[CONFIG.RPC_URL],nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18}}]})}
-      }
-      setWallet(accounts[0]);
-      await loadUserStatus(accounts[0]);
-    }catch(e){setError(e.message)}finally{setConnecting(false)}
-  };
-
-  const loadUserStatus=async(addr)=>{
-    setLoadingStatus(true);
-    try{
-      const provider=new ethers.BrowserProvider(window.ethereum);
-      const bridge=new ethers.Contract(CONFIG.BRIDGE_ADDRESS,BRIDGE_ABI,provider);
-      const s=await bridge.getUserFullStatus(addr);
-      const data={isRegistered:s[0],odixId:s[1].toString(),maxPackage:Number(s[2]),rank:Number(s[3]),rankName:RANKS[Number(s[3])]||'Unknown',quarterlyActive:s[4],sponsor:s[5],activeLevels:s[6]};
-      setUserStatus(data);
-      if(data.maxPackage>=CONFIG.MIN_LEVEL)await loadDbUser(addr,data);
-    }catch(e){
-      const demo={isRegistered:true,odixId:'1234567',maxPackage:5,rank:3,rankName:'Admin',quarterlyActive:true,sponsor:'0x0',activeLevels:[true,true,true,true,true,false,false,false,false,false,false,false]};
-      setUserStatus(demo);
-      await loadDbUser(addr,demo);
-    }finally{setLoadingStatus(false)}
-  };
-
-  const loadDbUser=async(addr,bc)=>{
-    setLoadingData(true);
-    try{
-      let{data:user,error:e}=await supabase.from('crm_users').select('*').eq('wallet_address',addr.toLowerCase()).single();
-      if(e&&e.code==='PGRST116'){
-        const{data:nu}=await supabase.from('crm_users').insert({wallet_address:addr.toLowerCase(),odix_id:bc.odixId,max_level:bc.maxPackage,access_rank:bc.rankName,total_points:0,completed_lessons:[]}).select().single();
-        user=nu;
-        const prog=LESSONS.map((l,i)=>({user_id:user.id,lesson_id:l.id,status:i===0?'active':'locked',tasks_completed:l.tasks.map(t=>({id:t.id,done:false})),points_earned:0}));
-        await supabase.from('crm_lesson_progress').insert(prog);
-      }else if(!e){
-        await supabase.from('crm_users').update({odix_id:bc.odixId,max_level:bc.maxPackage,access_rank:bc.rankName,last_login_at:new Date().toISOString()}).eq('id',user.id);
-      }
-      setDbUser(user);
-      const{data:c}=await supabase.from('crm_contacts').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
-      setContacts(c||[]);
-      const{data:t}=await supabase.from('crm_tasks').select('*').eq('user_id',user.id).order('due_date');
-      setTasks(t||[]);
-      const{data:lp}=await supabase.from('crm_lesson_progress').select('*').eq('user_id',user.id).order('lesson_id');
-      setLessonProgress(lp||[]);
-      const{data:integ}=await supabase.from('crm_integrations').select('*').eq('user_id',user.id).eq('integration_type','cardgift').single();
-      if(integ?.is_active)setCardgiftConnected(true);
-    }catch(e){console.error(e)}finally{setLoadingData(false)}
-  };
-
-  const addContact=async(c)=>{if(!dbUser)return;const{data}=await supabase.from('crm_contacts').insert({...c,user_id:dbUser.id}).select().single();if(data){setContacts(p=>[data,...p]);setShowContactModal(false)}};
-  const updateContact=async(id,u)=>{await supabase.from('crm_contacts').update({...u,updated_at:new Date().toISOString()}).eq('id',id);setContacts(p=>p.map(c=>c.id===id?{...c,...u}:c));setShowContactModal(false);setEditingContact(null)};
-  const deleteContact=async(id)=>{if(!confirm('Удалить?'))return;await supabase.from('crm_contacts').delete().eq('id',id);setContacts(p=>p.filter(c=>c.id!==id))};
-  const moveStage=async(id,st)=>updateContact(id,{stage:st,last_contact_at:new Date().toISOString()});
-  const addTask=async(t)=>{if(!dbUser)return;const{data}=await supabase.from('crm_tasks').insert({...t,user_id:dbUser.id,status:'pending'}).select().single();if(data){setTasks(p=>[...p,data].sort((a,b)=>new Date(a.due_date)-new Date(b.due_date)));setShowTaskModal(false)}};
-  const toggleTask=async(id,done)=>{const u={status:done?'completed':'pending',completed_at:done?new Date().toISOString():null};await supabase.from('crm_tasks').update(u).eq('id',id);setTasks(p=>p.map(t=>t.id===id?{...t,...u}:t))};
-  const deleteTask=async(id)=>{await supabase.from('crm_tasks').delete().eq('id',id);setTasks(p=>p.filter(t=>t.id!==id))};
-
-  const toggleLessonTask=async(lid,tid)=>{
-    const pr=lessonProgress.find(p=>p.lesson_id===lid);if(!pr||pr.status!=='active')return;
-    const ut=pr.tasks_completed.map(t=>t.id===tid?{...t,done:!t.done}:t);
-    await supabase.from('crm_lesson_progress').update({tasks_completed:ut}).eq('id',pr.id);
-    setLessonProgress(p=>p.map(x=>x.lesson_id===lid?{...x,tasks_completed:ut}:x));
-  };
-
-  const completeLesson=async(lid)=>{
-    const pr=lessonProgress.find(p=>p.lesson_id===lid);const ld=LESSONS.find(l=>l.id===lid);if(!pr||!ld)return;
-    if(!pr.tasks_completed.every(t=>t.done)){alert('Выполните все задания!');return}
-    await supabase.from('crm_lesson_progress').update({status:'completed',completed_at:new Date().toISOString(),points_earned:ld.reward}).eq('id',pr.id);
-    const nxt=lessonProgress.find(p=>p.lesson_id===lid+1);
-    if(nxt)await supabase.from('crm_lesson_progress').update({status:'active',started_at:new Date().toISOString()}).eq('id',nxt.id);
-    const np=(dbUser.total_points||0)+ld.reward;const cl=[...(dbUser.completed_lessons||[]),lid];
-    await supabase.from('crm_users').update({total_points:np,completed_lessons:cl,current_level:Math.floor(cl.length/2)+1}).eq('id',dbUser.id);
-    setDbUser(p=>({...p,total_points:np,completed_lessons:cl}));
-    const{data:lp}=await supabase.from('crm_lesson_progress').select('*').eq('user_id',dbUser.id).order('lesson_id');
-    setLessonProgress(lp||[]);setShowLessonModal(null);
-  };
-
-  const connectCardGift=async()=>{
-    if(!dbUser)return;
-    await supabase.from('crm_integrations').upsert({user_id:dbUser.id,integration_type:'cardgift',is_active:true,connected_at:new Date().toISOString(),settings:{wallet}});
-    setCardgiftConnected(true);
-  };
-
-  useEffect(()=>{
-    if(window.ethereum){
-      window.ethereum.request({method:'eth_accounts'}).then(a=>{if(a.length>0){setWallet(a[0]);loadUserStatus(a[0])}});
-      window.ethereum.on('accountsChanged',a=>{if(a.length>0){setWallet(a[0]);loadUserStatus(a[0])}else{setWallet(null);setUserStatus(null);setDbUser(null);setContacts([]);setTasks([])}});
-      window.ethereum.on('chainChanged',()=>window.location.reload());
+const CRMApp = {
+  // State
+  userId: null,
+  template: null,
+  stages: [],
+  autoTasks: [],
+  messages: [],
+  contacts: [],
+  tasks: [],
+  stats: {},
+  activeSection: 'dashboard',
+  
+  // ═══════════════════════════════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════════════════════════════
+  
+  async init() {
+    // Проверяем загрузку Supabase
+    if (!supabaseClient) {
+      this.showError('Ошибка загрузки библиотеки Supabase');
+      return;
     }
-  },[]);
-
-  const hasAccess=userStatus&&userStatus.maxPackage>=CONFIG.MIN_LEVEL;
-  const pendingTasks=tasks.filter(t=>t.status!=='completed');
-  const todayTasks=tasks.filter(t=>t.due_date===new Date().toISOString().split('T')[0]);
-  const filteredContacts=contacts.filter(c=>{const ms=(c.name||'').toLowerCase().includes(searchQuery.toLowerCase())||(c.email||'').toLowerCase().includes(searchQuery.toLowerCase());const mst=stageFilter==='all'||c.stage===stageFilter;return ms&&mst});
-  const contactsByStage=STAGES.reduce((a,s)=>{a[s.id]=contacts.filter(c=>c.stage===s.id);return a},{});
-  const completedLessons=lessonProgress.filter(p=>p.status==='completed').length;
-  const totalPoints=dbUser?.total_points||0;
-
-  if(!wallet)return(
-    <div className="connect-screen"><div className="connect-card">
-      <div style={{fontSize:'60px',marginBottom:'20px'}}>📊</div>
-      <h1 style={{fontSize:'28px',marginBottom:'10px',background:'linear-gradient(135deg,var(--gold),var(--orange))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>GlobalCRM</h1>
-      <p style={{color:'var(--text-muted)',marginBottom:'30px'}}>Система управления партнёрами</p>
-      {error&&<div style={{background:'rgba(244,67,54,.2)',border:'1px solid var(--red)',borderRadius:'8px',padding:'12px',marginBottom:'20px',color:'var(--red)',fontSize:'13px'}}>{error}</div>}
-      <button className="btn btn-wallet" onClick={connectWallet} disabled={connecting} style={{width:'100%',padding:'14px',fontSize:'15px'}}>{connecting?'⏳ Подключение...':'🔗 Подключить кошелёк'}</button>
-      <div style={{marginTop:'25px',padding:'15px',background:'var(--bg-lighter)',borderRadius:'10px',fontSize:'12px',color:'var(--text-muted)',textAlign:'left'}}>
-        <div style={{marginBottom:'8px',fontWeight:600,color:'var(--gold)'}}>⚡ Требования:</div>
-        <div>• Регистрация в GlobalWay</div><div>• Минимум 4-й пакет</div><div>• Сеть: opBNB</div>
-      </div>
-    </div></div>
-  );
-
-  if(loadingStatus||!userStatus)return(
-    <div className="connect-screen"><div className="connect-card">
-      <div className="loading-spinner" style={{margin:'0 auto 20px'}}/><h2>Проверка статуса...</h2>
-      <p style={{color:'var(--text-muted)',marginTop:'10px'}}>{wallet.slice(0,6)}...{wallet.slice(-4)}</p>
-    </div></div>
-  );
-
-  if(!hasAccess)return(
-    <div className="connect-screen"><div className="connect-card">
-      <div style={{fontSize:'60px',marginBottom:'20px'}}>🔒</div><h2 style={{marginBottom:'15px'}}>Доступ ограничен</h2>
-      <p style={{color:'var(--text-muted)',marginBottom:'20px'}}>Требуется минимум 4-й пакет</p>
-      <div style={{background:'var(--bg-lighter)',borderRadius:'10px',padding:'15px',marginBottom:'20px',textAlign:'left'}}>
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:'10px'}}><span>Уровень:</span><span className="tag tag-orange">{userStatus.maxPackage}</span></div>
-        <div style={{display:'flex',justifyContent:'space-between'}}><span>Статус:</span><span className="tag tag-blue">{userStatus.rankName}</span></div>
-      </div>
-      <a href="https://globalway.club" target="_blank" className="btn btn-primary" style={{width:'100%'}}>🚀 Активировать пакеты</a>
-      <button onClick={()=>{setWallet(null);setUserStatus(null)}} className="btn btn-secondary" style={{width:'100%',marginTop:'10px'}}>Отключить</button>
-    </div></div>
-  );
-
-  return(
-    <div style={{display:'flex'}}>
-      <aside className="sidebar">
-        <div className="sidebar-header"><div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-          <span style={{fontSize:'28px'}}>📊</span>
-          <div className="logo-text"><div style={{fontSize:'18px',fontWeight:700,color:'var(--gold)'}}>GlobalCRM</div><div style={{fontSize:'10px',color:'var(--text-muted)'}}>v3.0</div></div>
-        </div></div>
-        <nav className="sidebar-nav">
-          <div className="nav-section">Главное</div>
-          {[{id:'dashboard',icon:'📈',text:'Дашборд'},{id:'learning',icon:'🎓',text:'Обучение',badge:LESSONS.length-completedLessons}].map(i=>(
-            <div key={i.id} className={`nav-item ${activeSection===i.id?'active':''}`} onClick={()=>setActiveSection(i.id)}>
-              <span className="icon">{i.icon}</span><span className="nav-text">{i.text}</span>{i.badge>0&&<span className="badge">{i.badge}</span>}
-            </div>
-          ))}
-          <div className="nav-section">CRM</div>
-          {[{id:'contacts',icon:'👥',text:'Контакты',badge:contacts.length},{id:'funnel',icon:'🎯',text:'Воронка'},{id:'tasks',icon:'✅',text:'Задачи',badge:pendingTasks.length}].map(i=>(
-            <div key={i.id} className={`nav-item ${activeSection===i.id?'active':''}`} onClick={()=>setActiveSection(i.id)}>
-              <span className="icon">{i.icon}</span><span className="nav-text">{i.text}</span>{i.badge>0&&<span className="badge">{i.badge}</span>}
-            </div>
-          ))}
-          <div className="nav-section">Аналитика</div>
-          <div className={`nav-item ${activeSection==='analytics'?'active':''}`} onClick={()=>setActiveSection('analytics')}><span className="icon">📊</span><span className="nav-text">Аналитика</span></div>
-          <div className="nav-section">Интеграции</div>
-          {[{id:'cardgift',icon:'💌',text:'CardGift'},{id:'globalway',icon:'🌐',text:'GlobalWay'}].map(i=>(
-            <div key={i.id} className={`nav-item ${activeSection===i.id?'active':''}`} onClick={()=>setActiveSection(i.id)}>
-              <span className="icon">{i.icon}</span><span className="nav-text">{i.text}</span>
-            </div>
-          ))}
-          <div className="nav-section">Справка</div>
-          <div className={`nav-item ${activeSection==='help'?'active':''}`} onClick={()=>setActiveSection('help')}><span className="icon">📖</span><span className="nav-text">Инструкция</span></div>
-        </nav>
-        <div style={{padding:'15px',borderTop:'1px solid var(--border)'}}>
-          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
-            <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,var(--gold),var(--gold-dark))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,color:'#000'}}>{dbUser?.current_level||1}</div>
-            <div className="logo-text"><div style={{fontSize:'12px',fontWeight:600}}>{userStatus.rankName}</div><div style={{fontSize:'10px',color:'var(--gold)'}}>⭐ {totalPoints} очков</div></div>
+    
+    // Получаем userId из localStorage (должен быть установлен при входе в dashboard)
+    this.userId = localStorage.getItem('cardgift_gw_id') 
+                || localStorage.getItem('cardgift_display_id')
+                || localStorage.getItem('userGwId');
+    
+    if (!this.userId) {
+      this.showConnectScreen();
+      return;
+    }
+    
+    // Убираем GW префикс
+    this.userId = this.userId.toString().replace(/^GW/i, '');
+    
+    console.log('🚀 CRM Init for user:', this.userId);
+    
+    this.showLoading();
+    
+    try {
+      // Загружаем настройки и шаблон
+      await this.loadTemplate();
+      
+      // Загружаем контакты и задачи
+      await this.loadContacts();
+      await this.loadTasks();
+      
+      // Вычисляем статистику
+      this.calculateStats();
+      
+      // Рендерим
+      this.render();
+      
+    } catch (e) {
+      console.error('CRM Init error:', e);
+      this.showError('Ошибка загрузки CRM');
+    }
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // LOAD DATA
+  // ═══════════════════════════════════════════════════════════
+  
+  async loadTemplate() {
+    // Загружаем системный шаблон
+    const { data: template } = await supabaseClient
+      .from('crm_templates')
+      .select('*')
+      .eq('template_type', 'system')
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle();
+    
+    this.template = template;
+    
+    if (template) {
+      // Загружаем этапы
+      const { data: stages } = await supabaseClient
+        .from('crm_stages')
+        .select('*')
+        .eq('template_id', template.id)
+        .order('sort_order');
+      
+      this.stages = stages || [];
+      
+      // Загружаем автозадачи
+      const { data: autoTasks } = await supabaseClient
+        .from('crm_auto_tasks')
+        .select('*')
+        .eq('template_id', template.id)
+        .order('sort_order');
+      
+      this.autoTasks = autoTasks || [];
+      
+      // Загружаем шаблоны сообщений
+      const { data: messages } = await supabaseClient
+        .from('crm_messages')
+        .select('*')
+        .eq('template_id', template.id)
+        .order('sort_order');
+      
+      this.messages = messages || [];
+    }
+    
+    console.log('📊 Loaded:', this.stages.length, 'stages,', this.autoTasks.length, 'tasks,', this.messages.length, 'messages');
+  },
+  
+  async loadContacts() {
+    const gwId = 'GW' + this.userId;
+    
+    const { data } = await supabaseClient
+      .from('crm_contacts')
+      .select('*')
+      .or(`owner_gw_id.eq.${this.userId},owner_gw_id.eq.${gwId}`)
+      .eq('status', 'active')
+      .order('updated_at', { ascending: false });
+    
+    this.contacts = data || [];
+    console.log('👥 Loaded', this.contacts.length, 'contacts');
+  },
+  
+  async loadTasks() {
+    const gwId = 'GW' + this.userId;
+    
+    const { data } = await supabaseClient
+      .from('crm_tasks')
+      .select('*, contact:crm_contact_id(name, contact)')
+      .or(`owner_gw_id.eq.${this.userId},owner_gw_id.eq.${gwId}`)
+      .eq('status', 'pending')
+      .order('due_date');
+    
+    this.tasks = data || [];
+    console.log('📋 Loaded', this.tasks.length, 'tasks');
+  },
+  
+  calculateStats() {
+    const byStage = {};
+    this.stages.forEach(s => { byStage[s.code] = []; });
+    
+    this.contacts.forEach(c => {
+      if (byStage[c.stage_code]) {
+        byStage[c.stage_code].push(c);
+      }
+    });
+    
+    const today = new Date().toISOString().split('T')[0];
+    const todayTasks = this.tasks.filter(t => t.due_date === today);
+    const overdueTasks = this.tasks.filter(t => t.due_date && t.due_date < today);
+    const converted = this.contacts.filter(c => c.is_converted).length;
+    
+    this.stats = {
+      totalContacts: this.contacts.length,
+      converted,
+      conversionRate: this.contacts.length > 0 ? (converted / this.contacts.length * 100).toFixed(1) : 0,
+      pendingTasks: this.tasks.length,
+      todayTasks: todayTasks.length,
+      overdueTasks: overdueTasks.length,
+      byStage
+    };
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // SYNC FROM CONTACTS TABLE
+  // ═══════════════════════════════════════════════════════════
+  
+  async syncFromContacts() {
+    const gwId = 'GW' + this.userId;
+    
+    // Получаем контакты из основной таблицы contacts
+    const { data: sourceContacts } = await supabaseClient
+      .from('contacts')
+      .select('*')
+      .or(`owner_gw_id.eq.${this.userId},owner_gw_id.eq.${gwId}`)
+      .neq('status', 'archived');
+    
+    if (!sourceContacts || sourceContacts.length === 0) {
+      alert('Нет контактов для импорта');
+      return;
+    }
+    
+    let imported = 0;
+    let skipped = 0;
+    
+    for (const sc of sourceContacts) {
+      // Проверяем дубликат
+      const { data: existing } = await supabaseClient
+        .from('crm_contacts')
+        .select('id')
+        .or(`owner_gw_id.eq.${this.userId},owner_gw_id.eq.${gwId}`)
+        .eq('contact', sc.contact)
+        .maybeSingle();
+      
+      if (existing) {
+        skipped++;
+        continue;
+      }
+      
+      // Добавляем в CRM
+      await supabaseClient.from('crm_contacts').insert({
+        contact_id: sc.id,
+        owner_gw_id: this.userId,
+        name: sc.name,
+        contact: sc.contact,
+        messenger: sc.messenger,
+        stage_code: 'new',
+        stage_entered_at: new Date().toISOString(),
+        source: sc.source || 'contacts_sync',
+        status: 'active',
+        temperature: 'warm',
+        stage_history: JSON.stringify([{
+          stage: 'new',
+          entered_at: new Date().toISOString(),
+          action: 'imported'
+        }])
+      });
+      
+      imported++;
+    }
+    
+    alert(`Импортировано: ${imported}\nПропущено (дубликаты): ${skipped}`);
+    
+    // Перезагружаем
+    await this.loadContacts();
+    this.calculateStats();
+    this.render();
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // CONTACT ACTIONS
+  // ═══════════════════════════════════════════════════════════
+  
+  async addContact(data) {
+    const contact = {
+      owner_gw_id: this.userId,
+      name: data.name,
+      contact: data.contact,
+      messenger: data.messenger,
+      stage_code: 'new',
+      stage_entered_at: new Date().toISOString(),
+      source: 'manual',
+      status: 'active',
+      temperature: data.temperature || 'warm',
+      notes: data.notes || '',
+      stage_history: JSON.stringify([{
+        stage: 'new',
+        entered_at: new Date().toISOString(),
+        action: 'created'
+      }])
+    };
+    
+    const { data: newContact, error } = await supabaseClient
+      .from('crm_contacts')
+      .insert(contact)
+      .select()
+      .single();
+    
+    if (error) {
+      alert('Ошибка: ' + error.message);
+      return;
+    }
+    
+    // Создаём автозадачи для этапа "new"
+    await this.createAutoTasksForContact(newContact.id, 'new');
+    
+    this.contacts.unshift(newContact);
+    this.calculateStats();
+    this.closeModal();
+    this.render();
+  },
+  
+  async moveContactToStage(contactId, newStage) {
+    const contact = this.contacts.find(c => c.id === contactId);
+    if (!contact) return;
+    
+    const oldStage = contact.stage_code;
+    
+    // Обновляем историю
+    let history = [];
+    try { history = JSON.parse(contact.stage_history || '[]'); } catch(e) {}
+    history.push({
+      stage: newStage,
+      from: oldStage,
+      entered_at: new Date().toISOString()
+    });
+    
+    await supabaseClient
+      .from('crm_contacts')
+      .update({
+        stage_code: newStage,
+        stage_entered_at: new Date().toISOString(),
+        stage_history: JSON.stringify(history),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', contactId);
+    
+    // Создаём автозадачи для нового этапа
+    await this.createAutoTasksForContact(contactId, newStage);
+    
+    // Если "active" - отмечаем как конвертирован
+    if (newStage === 'active') {
+      await supabaseClient
+        .from('crm_contacts')
+        .update({
+          is_converted: true,
+          converted_at: new Date().toISOString(),
+          status: 'converted'
+        })
+        .eq('id', contactId);
+    }
+    
+    // Перезагружаем
+    await this.loadContacts();
+    await this.loadTasks();
+    this.calculateStats();
+    this.render();
+  },
+  
+  async createAutoTasksForContact(contactId, stageCode) {
+    const stage = this.stages.find(s => s.code === stageCode);
+    if (!stage) return;
+    
+    const stageTasks = this.autoTasks.filter(t => t.stage_id === stage.id && t.trigger_type === 'on_enter');
+    
+    for (const at of stageTasks) {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + (at.due_days || 1));
+      
+      await supabaseClient.from('crm_tasks').insert({
+        owner_gw_id: this.userId,
+        crm_contact_id: contactId,
+        title: at.title,
+        description: at.description,
+        icon: at.icon,
+        task_type: 'auto',
+        auto_task_id: at.id,
+        due_date: dueDate.toISOString().split('T')[0],
+        priority: at.priority,
+        status: 'pending'
+      });
+    }
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // TASK ACTIONS
+  // ═══════════════════════════════════════════════════════════
+  
+  async addTask(data) {
+    const task = {
+      owner_gw_id: this.userId,
+      crm_contact_id: data.contact_id || null,
+      title: data.title,
+      description: data.description || '',
+      icon: '📋',
+      task_type: 'manual',
+      due_date: data.due_date,
+      priority: data.priority || 'normal',
+      status: 'pending'
+    };
+    
+    const { data: newTask, error } = await supabaseClient
+      .from('crm_tasks')
+      .insert(task)
+      .select()
+      .single();
+    
+    if (!error) {
+      this.tasks.push(newTask);
+      this.closeModal();
+      this.render();
+    }
+  },
+  
+  async completeTask(taskId) {
+    await supabaseClient
+      .from('crm_tasks')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', taskId);
+    
+    this.tasks = this.tasks.filter(t => t.id !== taskId);
+    this.calculateStats();
+    this.render();
+  },
+  
+  async deleteTask(taskId) {
+    if (!confirm('Удалить задачу?')) return;
+    
+    await supabaseClient.from('crm_tasks').delete().eq('id', taskId);
+    this.tasks = this.tasks.filter(t => t.id !== taskId);
+    this.render();
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════
+  
+  render() {
+    const app = document.getElementById('app');
+    
+    app.innerHTML = `
+      <div class="app">
+        ${this.renderSidebar()}
+        <main class="main">
+          ${this.renderHeader()}
+          <div class="content">
+            ${this.renderContent()}
           </div>
-          <div className="progress-bar" style={{marginBottom:'5px'}}><div className="progress-fill" style={{width:`${(completedLessons/LESSONS.length)*100}%`}}/></div>
-          <div className="logo-text" style={{fontSize:'10px',color:'var(--text-muted)',marginBottom:'10px'}}>{completedLessons}/{LESSONS.length} уроков</div>
-          <button onClick={()=>{setWallet(null);setUserStatus(null);setDbUser(null);setContacts([]);setTasks([])}} className="btn btn-secondary btn-sm" style={{width:'100%'}}>🚪 Выйти</button>
+        </main>
+      </div>
+    `;
+    
+    this.bindEvents();
+  },
+  
+  renderSidebar() {
+    const navItems = [
+      { id: 'dashboard', icon: '📈', text: 'Дашборд' },
+      { id: 'funnel', icon: '🎯', text: 'Воронка', badge: this.contacts.length },
+      { id: 'contacts', icon: '👥', text: 'Контакты' },
+      { id: 'tasks', icon: '✅', text: 'Задачи', badge: this.tasks.length },
+      { id: 'messages', icon: '💬', text: 'Шаблоны' },
+      { id: 'settings', icon: '⚙️', text: 'Настройки' }
+    ];
+    
+    return `
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:28px;">🎯</span>
+            <div>
+              <div style="font-size:18px;font-weight:700;color:var(--gold);">CardGift CRM</div>
+              <div style="font-size:10px;color:var(--text-muted);">v4.0</div>
+            </div>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-section">Управление</div>
+          ${navItems.map(item => `
+            <div class="nav-item ${this.activeSection === item.id ? 'active' : ''}" data-section="${item.id}">
+              <span class="icon">${item.icon}</span>
+              <span>${item.text}</span>
+              ${item.badge ? `<span class="badge">${item.badge}</span>` : ''}
+            </div>
+          `).join('')}
+        </nav>
+        <div style="padding:15px;border-top:1px solid var(--border);">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">ID: ${this.userId}</div>
+          <a href="dashboard.html" class="btn btn-secondary btn-sm" style="width:100%;text-decoration:none;justify-content:center;">← Панель</a>
         </div>
       </aside>
-      <main className="main-content">
-        <header className="header">
-          <h1 style={{fontSize:'20px'}}>
-            {activeSection==='dashboard'&&'📈 Дашборд'}{activeSection==='learning'&&'🎓 Обучение'}{activeSection==='contacts'&&'👥 Контакты'}
-            {activeSection==='funnel'&&'🎯 Воронка'}{activeSection==='tasks'&&'✅ Задачи'}{activeSection==='analytics'&&'📊 Аналитика'}
-            {activeSection==='cardgift'&&'💌 CardGift'}{activeSection==='globalway'&&'🌐 GlobalWay'}{activeSection==='help'&&'📖 Инструкция'}
-          </h1>
-          <div style={{display:'flex',gap:'10px'}}>
-            {(activeSection==='contacts'||activeSection==='funnel')&&<button className="btn btn-primary" onClick={()=>{setEditingContact(null);setShowContactModal(true)}}>➕ Добавить</button>}
-            {activeSection==='tasks'&&<button className="btn btn-primary" onClick={()=>setShowTaskModal(true)}>➕ Задача</button>}
-          </div>
-        </header>
-        <div className="content fade-in">
-          {loadingData?<div style={{textAlign:'center',padding:'60px'}}><div className="loading-spinner" style={{margin:'0 auto 20px'}}/><div>Загрузка...</div></div>:(
-            <>
-              {activeSection==='dashboard'&&<Dashboard contacts={contacts} tasks={tasks} pendingTasks={pendingTasks} todayTasks={todayTasks} contactsByStage={contactsByStage} completedLessons={completedLessons} totalPoints={totalPoints} setActiveSection={setActiveSection} setShowContactModal={setShowContactModal} setShowTaskModal={setShowTaskModal}/>}
-              {activeSection==='learning'&&<Learning lessons={LESSONS} progress={lessonProgress} totalPoints={totalPoints} onOpen={setShowLessonModal}/>}
-              {activeSection==='contacts'&&<Contacts contacts={filteredContacts} search={searchQuery} setSearch={setSearchQuery} filter={stageFilter} setFilter={setStageFilter} onEdit={c=>{setEditingContact(c);setShowContactModal(true)}} onDelete={deleteContact} onStage={moveStage}/>}
-              {activeSection==='funnel'&&<Funnel stages={STAGES} byStage={contactsByStage} onEdit={c=>{setEditingContact(c);setShowContactModal(true)}}/>}
-              {activeSection==='tasks'&&<Tasks tasks={tasks} onToggle={toggleTask} onDelete={deleteTask}/>}
-              {activeSection==='analytics'&&<Analytics contacts={contacts} tasks={tasks} byStage={contactsByStage} stages={STAGES}/>}
-              {activeSection==='cardgift'&&<CardGift connected={cardgiftConnected} onConnect={connectCardGift}/>}
-              {activeSection==='globalway'&&<GWStatus userStatus={userStatus} wallet={wallet}/>}
-              {activeSection==='help'&&<HelpSection/>}
-            </>
-          )}
+    `;
+  },
+  
+  renderHeader() {
+    const titles = {
+      dashboard: '📈 Дашборд',
+      funnel: '🎯 Воронка продаж',
+      contacts: '👥 Контакты',
+      tasks: '✅ Задачи',
+      messages: '💬 Шаблоны сообщений',
+      settings: '⚙️ Настройки'
+    };
+    
+    return `
+      <header class="header">
+        <h1 style="font-size:20px;">${titles[this.activeSection] || ''}</h1>
+        <div style="display:flex;gap:10px;">
+          ${this.activeSection === 'contacts' || this.activeSection === 'funnel' ? `
+            <button class="btn btn-secondary" onclick="CRMApp.syncFromContacts()">🔄 Импорт</button>
+            <button class="btn btn-primary" onclick="CRMApp.showAddContactModal()">➕ Добавить</button>
+          ` : ''}
+          ${this.activeSection === 'tasks' ? `
+            <button class="btn btn-primary" onclick="CRMApp.showAddTaskModal()">➕ Задача</button>
+          ` : ''}
         </div>
-      </main>
-      {showContactModal&&<ContactModal contact={editingContact} stages={STAGES} onSave={editingContact?d=>updateContact(editingContact.id,d):addContact} onClose={()=>{setShowContactModal(false);setEditingContact(null)}}/>}
-      {showTaskModal&&<TaskModal contacts={contacts} onSave={addTask} onClose={()=>setShowTaskModal(false)}/>}
-      {showLessonModal&&<LessonModal lesson={LESSONS.find(l=>l.id===showLessonModal)} progress={lessonProgress.find(p=>p.lesson_id===showLessonModal)} onToggle={toggleLessonTask} onComplete={completeLesson} onClose={()=>setShowLessonModal(null)}/>}
-    </div>
-  );
-};
-
-// Dashboard
-const Dashboard=({contacts,tasks,pendingTasks,todayTasks,contactsByStage,completedLessons,totalPoints,setActiveSection,setShowContactModal,setShowTaskModal})=>(
-  <>
-    {completedLessons===0&&<div className="card pulse" style={{marginBottom:'20px',background:'linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,165,0,.05))',borderColor:'var(--gold)'}}>
-      <div style={{display:'flex',alignItems:'center',gap:'20px',flexWrap:'wrap'}}>
-        <div style={{fontSize:'50px'}}>🎉</div>
-        <div style={{flex:1,minWidth:'200px'}}><h2 style={{color:'var(--gold)',marginBottom:'8px'}}>Добро пожаловать!</h2><p style={{color:'var(--text-muted)',marginBottom:'15px'}}>Пройдите обучение</p><button className="btn btn-primary" onClick={()=>setActiveSection('learning')}>🎓 Начать</button></div>
-      </div>
-    </div>}
-    <div className="stats-grid">
-      <div className="stat-card"><div className="icon" style={{background:'rgba(0,212,255,.2)'}}>👥</div><div className="value">{contacts.length}</div><div className="label">Контактов</div></div>
-      <div className="stat-card"><div className="icon" style={{background:'rgba(76,175,80,.2)'}}>🚀</div><div className="value">{contactsByStage.active?.length||0}</div><div className="label">Активных</div></div>
-      <div className="stat-card"><div className="icon" style={{background:'rgba(255,152,0,.2)'}}>✅</div><div className="value">{pendingTasks.length}</div><div className="label">Задач</div></div>
-      <div className="stat-card"><div className="icon" style={{background:'rgba(255,215,0,.2)'}}>⭐</div><div className="value">{totalPoints}</div><div className="label">Очков</div></div>
-    </div>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'20px'}}>
-      <div className="card"><h3 style={{marginBottom:'15px'}}>🚀 Действия</h3><div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-        <button className="btn btn-primary" onClick={()=>setShowContactModal(true)}>➕ Добавить контакт</button>
-        <button className="btn btn-secondary" onClick={()=>setShowTaskModal(true)}>📋 Создать задачу</button>
-        <button className="btn btn-secondary" onClick={()=>setActiveSection('funnel')}>🎯 Воронка</button>
-      </div></div>
-      <div className="card"><h3 style={{marginBottom:'15px'}}>📋 Сегодня</h3>
-        {todayTasks.length===0?<div style={{textAlign:'center',padding:'20px',color:'var(--text-muted)'}}><div style={{fontSize:'30px',marginBottom:'10px'}}>🎉</div>Нет задач</div>:
-        todayTasks.slice(0,3).map(t=><div key={t.id} style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 0',borderBottom:'1px solid var(--border)'}}><span className={`tag tag-${t.priority==='high'?'red':'orange'}`} style={{width:'8px',height:'8px',padding:0,borderRadius:'50%'}}/><span style={{flex:1,fontSize:'13px'}}>{t.title}</span></div>)}
-      </div>
-    </div>
-  </>
-);
-
-// Learning
-const Learning=({lessons,progress,totalPoints,onOpen})=>{
-  const getStatus=id=>{const p=progress.find(x=>x.lesson_id===id);return p?.status||'locked'};
-  const getTasks=id=>{const p=progress.find(x=>x.lesson_id===id);return p?.tasks_completed?.filter(t=>t.done).length||0};
-  const comp=progress.filter(p=>p.status==='completed').length;
-  return(<>
-    <div className="card" style={{marginBottom:'25px'}}><div style={{display:'flex',alignItems:'center',gap:'20px',flexWrap:'wrap'}}>
-      <div style={{flex:1}}><h3 style={{marginBottom:'10px'}}>Ваш прогресс</h3><div className="progress-bar" style={{height:'12px',marginBottom:'10px'}}><div className="progress-fill" style={{width:`${(comp/lessons.length)*100}%`}}/></div><div style={{fontSize:'13px',color:'var(--text-muted)'}}>Пройдено {comp} из {lessons.length}</div></div>
-      <div style={{textAlign:'center',padding:'15px 30px',background:'var(--bg-lighter)',borderRadius:'12px'}}><div style={{fontSize:'28px',fontWeight:700,color:'var(--gold)'}}>⭐ {totalPoints}</div><div style={{fontSize:'12px',color:'var(--text-muted)'}}>очков</div></div>
-    </div></div>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:'20px'}}>
-      {lessons.map((l,i)=>{const st=getStatus(l.id);const tc=getTasks(l.id);return(
-        <div key={l.id} className={`lesson-card ${st}`} onClick={()=>st!=='locked'&&onOpen(l.id)}>
-          <div style={{padding:'20px'}}><div style={{display:'flex',gap:'15px',alignItems:'flex-start'}}>
-            <div style={{width:'50px',height:'50px',borderRadius:'12px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',fontWeight:700,flexShrink:0,background:st==='completed'?'rgba(76,175,80,.2)':st==='active'?'rgba(255,215,0,.2)':'var(--bg-lighter)',color:st==='completed'?'var(--green)':st==='active'?'var(--gold)':'var(--text-muted)'}}>{st==='completed'?'✓':st==='locked'?'🔒':i+1}</div>
-            <div style={{flex:1}}><h3 style={{fontSize:'15px',marginBottom:'6px'}}>{l.title}</h3><p style={{fontSize:'12px',color:'var(--text-muted)',marginBottom:'10px',lineHeight:1.4}}>{l.desc}</p><div style={{display:'flex',gap:'15px',fontSize:'11px',color:'var(--text-muted)'}}><span>⏱️ {l.duration}</span><span style={{color:'var(--gold)'}}>🎁 +{l.reward}</span></div></div>
-          </div>
-          {st==='active'&&<div style={{marginTop:'15px'}}><div className="progress-bar" style={{height:'6px'}}><div className="progress-fill" style={{width:`${(tc/l.tasks.length)*100}%`}}/></div><div style={{fontSize:'10px',color:'var(--text-muted)',marginTop:'5px'}}>{tc}/{l.tasks.length}</div></div>}
-          </div>
-        </div>
-      )})}
-    </div>
-  </>);
-};
-
-// Contacts
-const Contacts=({contacts,search,setSearch,filter,setFilter,onEdit,onDelete,onStage})=>(<>
-  <div style={{display:'flex',gap:'15px',marginBottom:'20px',flexWrap:'wrap'}}>
-    <input className="input" placeholder="🔍 Поиск..." value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:'250px'}}/>
-    <select className="input" value={filter} onChange={e=>setFilter(e.target.value)} style={{width:'auto'}}><option value="all">Все этапы</option>{STAGES.map(s=><option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}</select>
-  </div>
-  <div className="card" style={{overflow:'auto'}}><table className="table"><thead><tr><th>Контакт</th><th>Телефон</th><th>Этап</th><th>Источник</th><th>Действия</th></tr></thead><tbody>
-    {contacts.map(c=><tr key={c.id}><td><div style={{fontWeight:500}}>{c.name}</div><div style={{fontSize:'12px',color:'var(--text-muted)'}}>{c.email}</div></td><td style={{fontSize:'13px'}}>{c.phone||'—'}</td>
-    <td><select className="input" value={c.stage} onChange={e=>onStage(c.id,e.target.value)} style={{padding:'6px',fontSize:'12px',width:'auto'}}>{STAGES.map(s=><option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}</select></td>
-    <td><span className="tag tag-blue">{c.source}</span></td>
-    <td><div style={{display:'flex',gap:'5px'}}><button className="btn btn-sm btn-secondary" onClick={()=>onEdit(c)}>✏️</button><button className="btn btn-sm btn-danger" onClick={()=>onDelete(c.id)}>🗑️</button></div></td></tr>)}
-  </tbody></table>{contacts.length===0&&<div style={{textAlign:'center',padding:'40px',color:'var(--text-muted)'}}>Нет контактов</div>}</div>
-</>);
-
-// Funnel
-const Funnel=({stages,byStage,onEdit})=>(<div style={{display:'grid',gridTemplateColumns:`repeat(${stages.length},1fr)`,gap:'15px',overflowX:'auto',minWidth:'800px'}}>
-  {stages.map(s=><div key={s.id} className="funnel-stage">
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'15px',paddingBottom:'10px',borderBottom:'1px solid var(--border)'}}><span style={{fontWeight:600}}>{s.icon} {s.name}</span><span className={`tag tag-${s.color}`}>{byStage[s.id]?.length||0}</span></div>
-    {byStage[s.id]?.map(c=><div key={c.id} className="funnel-card" onClick={()=>onEdit(c)}><div style={{fontWeight:500,marginBottom:'4px'}}>{c.name}</div><div style={{fontSize:'11px',color:'var(--text-muted)'}}>{c.email}</div></div>)}
-    {(!byStage[s.id]||byStage[s.id].length===0)&&<div style={{textAlign:'center',padding:'20px',color:'var(--text-muted)',fontSize:'12px'}}>Пусто</div>}
-  </div>)}
-</div>);
-
-// Tasks
-const Tasks=({tasks,onToggle,onDelete})=>{const pend=tasks.filter(t=>t.status!=='completed');const done=tasks.filter(t=>t.status==='completed');return(<>
-  <h3 style={{marginBottom:'15px'}}>📋 К выполнению ({pend.length})</h3>
-  <div className="card" style={{marginBottom:'25px'}}>{pend.length===0?<div style={{textAlign:'center',padding:'30px',color:'var(--text-muted)'}}>🎉 Все выполнено!</div>:pend.map(t=><div key={t.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderBottom:'1px solid var(--border)'}}>
-    <input type="checkbox" onChange={()=>onToggle(t.id,true)} style={{width:'18px',height:'18px',accentColor:'var(--gold)'}}/>
-    <div style={{flex:1}}><div style={{fontWeight:500}}>{t.title}</div><div style={{fontSize:'11px',color:'var(--text-muted)'}}>📅 {t.due_date}</div></div>
-    <span className={`tag tag-${t.priority==='high'?'red':t.priority==='medium'?'orange':'blue'}`}>{t.priority}</span>
-    <button className="btn btn-sm btn-danger" onClick={()=>onDelete(t.id)}>🗑️</button>
-  </div>)}</div>
-  {done.length>0&&<><h3 style={{marginBottom:'15px',color:'var(--text-muted)'}}>✅ Выполнено ({done.length})</h3><div className="card" style={{opacity:.7}}>{done.slice(0,5).map(t=><div key={t.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'10px',borderBottom:'1px solid var(--border)'}}><input type="checkbox" checked onChange={()=>onToggle(t.id,false)} style={{width:'16px',height:'16px',accentColor:'var(--green)'}}/><span style={{textDecoration:'line-through',color:'var(--text-muted)'}}>{t.title}</span></div>)}</div></>}
-</>)};
-
-// Analytics
-const Analytics=({contacts,tasks,byStage,stages})=>{
-  const chartRef=useRef(null);const chartInst=useRef(null);
-  useEffect(()=>{
-    if(chartRef.current){
-      if(chartInst.current)chartInst.current.destroy();
-      chartInst.current=new Chart(chartRef.current,{type:'doughnut',data:{labels:stages.map(s=>s.name),datasets:[{data:stages.map(s=>byStage[s.id]?.length||0),backgroundColor:['#00d4ff','#ff9800','#9c27b0','#FFD700','#4CAF50'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9CA3AF',padding:15}}}}});
+      </header>
+    `;
+  },
+  
+  renderContent() {
+    switch (this.activeSection) {
+      case 'dashboard': return this.renderDashboard();
+      case 'funnel': return this.renderFunnel();
+      case 'contacts': return this.renderContacts();
+      case 'tasks': return this.renderTasks();
+      case 'messages': return this.renderMessages();
+      case 'settings': return this.renderSettings();
+      default: return '';
     }
-    return()=>{if(chartInst.current)chartInst.current.destroy()};
-  },[contacts,byStage]);
-  const conv=contacts.length?Math.round((byStage.active?.length||0)/contacts.length*100):0;
-  const compTasks=tasks.filter(t=>t.status==='completed').length;
-  return(<>
-    <div className="stats-grid" style={{marginBottom:'25px'}}>
-      <div className="stat-card"><div className="value" style={{color:'var(--accent)'}}>{contacts.length}</div><div className="label">Всего контактов</div></div>
-      <div className="stat-card"><div className="value" style={{color:'var(--green)'}}>{byStage.active?.length||0}</div><div className="label">Активных</div></div>
-      <div className="stat-card"><div className="value" style={{color:'var(--orange)'}}>{conv}%</div><div className="label">Конверсия</div></div>
-      <div className="stat-card"><div className="value" style={{color:'var(--purple)'}}>{compTasks}</div><div className="label">Задач выполнено</div></div>
-    </div>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'20px'}}>
-      <div className="card"><h3 style={{marginBottom:'20px'}}>📊 Воронка</h3><div className="chart-container"><canvas ref={chartRef}/></div></div>
-      <div className="card"><h3 style={{marginBottom:'20px'}}>📈 По этапам</h3>
-        {stages.map(s=>{const cnt=byStage[s.id]?.length||0;const pct=contacts.length?Math.round(cnt/contacts.length*100):0;return(
-          <div key={s.id} style={{marginBottom:'15px'}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:'5px',fontSize:'13px'}}><span>{s.icon} {s.name}</span><span style={{color:'var(--gold)'}}>{cnt} ({pct}%)</span></div><div className="progress-bar"><div className="progress-fill" style={{width:`${pct}%`}}/></div></div>
-        )})}
-      </div>
-    </div>
-  </>);
-};
-
-// CardGift
-const CardGift=({connected,onConnect})=>{
-  if(!connected)return(<div className="card" style={{textAlign:'center',padding:'60px'}}><div style={{fontSize:'60px',marginBottom:'20px'}}>💌</div><h2 style={{marginBottom:'15px',color:'var(--gold)'}}>CardGift</h2><p style={{color:'var(--text-muted)',marginBottom:'25px',maxWidth:'400px',margin:'0 auto 25px'}}>Автоимпорт контактов из открыток</p><button className="btn btn-primary" onClick={onConnect}>🔗 Подключить</button></div>);
-  return(<div className="card"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><span className="tag tag-green">✅ Подключено</span><span style={{marginLeft:'15px',color:'var(--text-muted)'}}>Интеграция активна</span></div><button className="btn btn-secondary">🔄 Синхронизировать</button></div></div>);
-};
-
-// GWStatus
-const GWStatus=({userStatus,wallet})=>(<div className="card"><h2 style={{marginBottom:'20px',color:'var(--gold)'}}>🌐 GlobalWay статус</h2>
-  <div style={{display:'grid',gap:'12px'}}>
-    {[{l:'ODIX ID',v:userStatus.odixId},{l:'Ранг',v:userStatus.rankName,tag:'gold'},{l:'Пакет',v:userStatus.maxPackage},{l:'Квартал',v:userStatus.quarterlyActive?'✅ Активен':'❌ Нет',tag:userStatus.quarterlyActive?'green':'red'}].map((i,idx)=>(
-      <div key={idx} style={{display:'flex',justifyContent:'space-between',padding:'15px',background:'var(--bg-lighter)',borderRadius:'8px'}}><span style={{color:'var(--text-muted)'}}>{i.l}</span>{i.tag?<span className={`tag tag-${i.tag}`}>{i.v}</span>:<span style={{color:'var(--gold)',fontWeight:600}}>{i.v}</span>}</div>
-    ))}
-  </div>
-  <div style={{marginTop:'20px'}}><h3 style={{marginBottom:'15px'}}>Пакеты</h3><div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-    {userStatus.activeLevels?.map((a,i)=><div key={i} style={{width:'40px',height:'40px',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',background:a?'rgba(76,175,80,.2)':'var(--bg-lighter)',border:`1px solid ${a?'var(--green)':'var(--border)'}`,color:a?'var(--green)':'var(--text-muted)',fontWeight:600}}>{i+1}</div>)}
-  </div></div>
-</div>);
-
-// HELP SECTION - Полная инструкция
-const HelpSection=()=>{
-  const[activeTab,setActiveTab]=useState('start');
-  const tabs=[
-    {id:'start',icon:'🚀',name:'Начало работы'},
-    {id:'contacts',icon:'👥',name:'Контакты'},
-    {id:'funnel',icon:'🎯',name:'Воронка'},
-    {id:'tasks',icon:'✅',name:'Задачи'},
-    {id:'learning',icon:'🎓',name:'Обучение'},
-    {id:'analytics',icon:'📊',name:'Аналитика'},
-    {id:'integrations',icon:'🔗',name:'Интеграции'},
-    {id:'future',icon:'🔮',name:'Планы v4.0'}
-  ];
-  return(<>
-    <div className="card" style={{marginBottom:'25px',background:'linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,165,0,.05))',borderColor:'var(--gold)'}}>
-      <div style={{display:'flex',alignItems:'center',gap:'20px'}}>
-        <div style={{fontSize:'50px'}}>📖</div>
-        <div><h2 style={{color:'var(--gold)',marginBottom:'5px'}}>Документация GlobalCRM v3.0</h2><p style={{color:'var(--text-muted)'}}>Полное руководство по использованию системы</p></div>
-      </div>
-    </div>
-    <div className="help-nav">
-      {tabs.map(t=><button key={t.id} className={`help-nav-btn ${activeTab===t.id?'active':''}`} onClick={()=>setActiveTab(t.id)}>{t.icon} {t.name}</button>)}
-    </div>
-    <div className="card">
-      {activeTab==='start'&&<HelpStart/>}
-      {activeTab==='contacts'&&<HelpContacts/>}
-      {activeTab==='funnel'&&<HelpFunnel/>}
-      {activeTab==='tasks'&&<HelpTasks/>}
-      {activeTab==='learning'&&<HelpLearning/>}
-      {activeTab==='analytics'&&<HelpAnalytics/>}
-      {activeTab==='integrations'&&<HelpIntegrations/>}
-      {activeTab==='future'&&<HelpFuture/>}
-    </div>
-  </>);
-};
-
-const HelpStart=()=>(<div className="help-section">
-  <h2>🚀 Начало работы</h2>
-  <p>GlobalCRM — система управления контактами и партнёрами для участников GlobalWay.</p>
+  },
   
-  <h3>📋 Основные возможности</h3>
-  <table className="help-table">
-    <thead><tr><th>Функция</th><th>Описание</th></tr></thead>
-    <tbody>
-      <tr><td>👥 Контакты</td><td>База всех ваших контактов с тегами и заметками</td></tr>
-      <tr><td>🎯 Воронка</td><td>5 этапов: Новый → Интерес → Презентация → Регистрация → Активный</td></tr>
-      <tr><td>✅ Задачи</td><td>Планирование звонков, встреч, follow-up</td></tr>
-      <tr><td>🎓 Обучение</td><td>8 уроков с заданиями (до 270 очков)</td></tr>
-      <tr><td>📊 Аналитика</td><td>Графики, конверсия, статистика</td></tr>
-      <tr><td>💌 CardGift</td><td>Автоимпорт контактов из открыток</td></tr>
-    </tbody>
-  </table>
-
-  <h3>⚡ Требования для доступа</h3>
-  <ul>
-    <li>✅ Регистрация в GlobalWay</li>
-    <li>✅ Минимум 4-й пакет (MiniAdmin)</li>
-    <li>✅ Сеть opBNB</li>
-    <li>✅ Кошелёк MetaMask или SafePal</li>
-  </ul>
-
-  <h3>🔗 Шаги подключения</h3>
-  <div className="help-card"><div className="help-card-title">1️⃣ Откройте CRM</div><p>Перейдите на страницу CRM или нажмите кнопку в дашборде CardGift</p></div>
-  <div className="help-card"><div className="help-card-title">2️⃣ Подключите кошелёк</div><p>Нажмите "Подключить кошелёк" и подтвердите в MetaMask/SafePal</p></div>
-  <div className="help-card"><div className="help-card-title">3️⃣ Проверка статуса</div><p>Система автоматически проверит ваш статус в GlobalWay</p></div>
-  <div className="help-card"><div className="help-card-title">4️⃣ Начните работу</div><p>Пройдите обучение и добавьте первые контакты</p></div>
-</div>);
-
-const HelpContacts=()=>(<div className="help-section">
-  <h2>👥 Управление контактами</h2>
-  
-  <h3>➕ Добавление контакта</h3>
-  <p>Нажмите "Добавить" в разделе Контакты или Воронка и заполните форму:</p>
-  <table className="help-table">
-    <thead><tr><th>Поле</th><th>Описание</th></tr></thead>
-    <tbody>
-      <tr><td><strong>Имя *</strong></td><td>Обязательное поле</td></tr>
-      <tr><td>Email</td><td>Для email-рассылок</td></tr>
-      <tr><td>Телефон</td><td>Для звонков</td></tr>
-      <tr><td>Telegram</td><td>Username без @</td></tr>
-      <tr><td>Этап</td><td>Текущий этап воронки</td></tr>
-      <tr><td>Источник</td><td>Откуда пришёл контакт</td></tr>
-      <tr><td>Заметки</td><td>Любая дополнительная информация</td></tr>
-    </tbody>
-  </table>
-
-  <h3>📋 Источники контактов</h3>
-  <ul>
-    <li><strong>Вручную</strong> — добавлен вами</li>
-    <li><strong>CardGift</strong> — из цифровых открыток</li>
-    <li><strong>Telegram</strong> — из мессенджера</li>
-    <li><strong>Сайт</strong> — заявка с сайта</li>
-    <li><strong>Реферал</strong> — по рекомендации</li>
-  </ul>
-
-  <h3>🔧 Действия с контактом</h3>
-  <ul>
-    <li>✏️ <strong>Редактировать</strong> — изменить данные</li>
-    <li>🗑️ <strong>Удалить</strong> — удалить контакт</li>
-    <li>📋 <strong>Сменить этап</strong> — выбрать из списка</li>
-  </ul>
-
-  <h3>🔍 Поиск и фильтры</h3>
-  <p>Используйте поле поиска для быстрого нахождения контактов по имени или email. Фильтр по этапам покажет только контакты на выбранном этапе воронки.</p>
-</div>);
-
-const HelpFunnel=()=>(<div className="help-section">
-  <h2>🎯 Воронка продаж</h2>
-  <p>Воронка — визуальное представление пути клиента от первого контакта до активного партнёра.</p>
-  
-  <h3>📊 5 этапов воронки</h3>
-  <table className="help-table">
-    <thead><tr><th>Этап</th><th>Описание</th><th>Действия</th></tr></thead>
-    <tbody>
-      <tr><td>🆕 <strong>Новый</strong></td><td>Только добавленный контакт</td><td>Первый контакт, знакомство</td></tr>
-      <tr><td>👀 <strong>Интерес</strong></td><td>Проявил интерес</td><td>Отправить материалы, ответить на вопросы</td></tr>
-      <tr><td>📊 <strong>Презентация</strong></td><td>Назначена презентация</td><td>Провести презентацию, объяснить детали</td></tr>
-      <tr><td>📝 <strong>Регистрация</strong></td><td>В процессе регистрации</td><td>Помочь с регистрацией</td></tr>
-      <tr><td>🚀 <strong>Активный</strong></td><td>Зарегистрирован</td><td>Поддержка, обучение партнёра</td></tr>
-    </tbody>
-  </table>
-
-  <h3>🔄 Перемещение контактов</h3>
-  <p>В разделе Воронка кликните на карточку контакта для редактирования. В разделе Контакты используйте выпадающий список в колонке "Этап".</p>
-
-  <div className="help-card">
-    <div className="help-card-title">💡 Совет</div>
-    <p>Регулярно обновляйте этапы контактов — это поможет отслеживать прогресс и планировать следующие действия.</p>
-  </div>
-</div>);
-
-const HelpTasks=()=>(<div className="help-section">
-  <h2>✅ Задачи и напоминания</h2>
-  
-  <h3>➕ Создание задачи</h3>
-  <p>Нажмите "Задача" в разделе Задачи и заполните:</p>
-  <ul>
-    <li><strong>Название</strong> — что нужно сделать</li>
-    <li><strong>Контакт</strong> — к кому относится (опционально)</li>
-    <li><strong>Срок</strong> — дата выполнения</li>
-    <li><strong>Приоритет</strong> — важность задачи</li>
-  </ul>
-
-  <h3>🎨 Приоритеты</h3>
-  <table className="help-table">
-    <thead><tr><th>Приоритет</th><th>Цвет</th><th>Когда использовать</th></tr></thead>
-    <tbody>
-      <tr><td>🔵 Низкий</td><td>Синий</td><td>Можно отложить</td></tr>
-      <tr><td>🟡 Средний</td><td>Оранжевый</td><td>Стандартные задачи</td></tr>
-      <tr><td>🔴 Высокий</td><td>Красный</td><td>Срочные задачи</td></tr>
-    </tbody>
-  </table>
-
-  <h3>✓ Выполнение</h3>
-  <ul>
-    <li>Отметьте чекбокс — задача перейдёт в "Выполнено"</li>
-    <li>Снимите галочку — вернётся в "К выполнению"</li>
-    <li>На Дашборде видны задачи на сегодня</li>
-  </ul>
-</div>);
-
-const HelpLearning=()=>(<div className="help-section">
-  <h2>🎓 Система обучения</h2>
-  
-  <h3>📚 8 уроков</h3>
-  <table className="help-table">
-    <thead><tr><th>#</th><th>Урок</th><th>Время</th><th>Очки</th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td>Добро пожаловать</td><td>5 мин</td><td>10</td></tr>
-      <tr><td>2</td><td>Работа с контактами</td><td>10 мин</td><td>20</td></tr>
-      <tr><td>3</td><td>Воронка продаж</td><td>15 мин</td><td>30</td></tr>
-      <tr><td>4</td><td>Задачи и напоминания</td><td>10 мин</td><td>25</td></tr>
-      <tr><td>5</td><td>CardGift интеграция</td><td>12 мин</td><td>35</td></tr>
-      <tr><td>6</td><td>Структура партнёров</td><td>12 мин</td><td>40</td></tr>
-      <tr><td>7</td><td>Аналитика</td><td>15 мин</td><td>50</td></tr>
-      <tr><td>8</td><td>Автоматизация</td><td>20 мин</td><td>60</td></tr>
-    </tbody>
-  </table>
-  <p style={{marginTop:'10px',color:'var(--gold)',fontWeight:600}}>Всего: 270 очков</p>
-
-  <h3>📖 Прохождение урока</h3>
-  <ol>
-    <li>Откройте раздел "Обучение"</li>
-    <li>Выберите активный урок (с золотой рамкой)</li>
-    <li>Посмотрите видео</li>
-    <li>Выполните все задания (кликайте для отметки)</li>
-    <li>Нажмите "Завершить урок"</li>
-  </ol>
-
-  <h3>📊 Статусы уроков</h3>
-  <ul>
-    <li>🔒 <strong>Заблокирован</strong> — пройдите предыдущий</li>
-    <li>🟡 <strong>Активный</strong> — можно проходить</li>
-    <li>✅ <strong>Завершён</strong> — урок пройден</li>
-  </ul>
-</div>);
-
-const HelpAnalytics=()=>(<div className="help-section">
-  <h2>📊 Аналитика</h2>
-  
-  <h3>📈 Метрики</h3>
-  <table className="help-table">
-    <thead><tr><th>Метрика</th><th>Описание</th></tr></thead>
-    <tbody>
-      <tr><td>Всего контактов</td><td>Общее количество в базе</td></tr>
-      <tr><td>Активных</td><td>Контакты на этапе "Активный"</td></tr>
-      <tr><td>Конверсия</td><td>% активных от общего числа</td></tr>
-      <tr><td>Задач выполнено</td><td>Количество завершённых задач</td></tr>
-    </tbody>
-  </table>
-
-  <h3>📊 График воронки</h3>
-  <p>Круговая диаграмма показывает распределение контактов по этапам — визуальное соотношение с легендой.</p>
-
-  <h3>📈 По этапам</h3>
-  <p>Прогресс-бары для каждого этапа показывают количество контактов и процент от общего числа.</p>
-</div>);
-
-const HelpIntegrations=()=>(<div className="help-section">
-  <h2>🔗 Интеграции</h2>
-  
-  <h3>💌 CardGift</h3>
-  <p>Автоматический импорт контактов из цифровых открыток.</p>
-  <div className="help-card">
-    <div className="help-card-title">Как работает</div>
-    <ol>
-      <li>Вы создаёте открытку в CardGift</li>
-      <li>Получатель открывает и оставляет контакт</li>
-      <li>Контакт автоматически появляется в CRM</li>
-    </ol>
-  </div>
-  <p><strong>Подключение:</strong> Откройте раздел CardGift → Нажмите "Подключить"</p>
-
-  <h3>🌐 GlobalWay</h3>
-  <p>Отображает ваш статус в блокчейне:</p>
-  <ul>
-    <li><strong>ODIX ID</strong> — ваш номер в системе</li>
-    <li><strong>Ранг</strong> — Client, MiniAdmin, Admin...</li>
-    <li><strong>Пакет</strong> — максимальный активированный</li>
-    <li><strong>Квартал</strong> — статус квартального платежа</li>
-    <li><strong>Пакеты</strong> — визуализация 12 пакетов</li>
-  </ul>
-</div>);
-
-const HelpFuture=()=>(<div className="help-section">
-  <h2>🔮 Планы развития v4.0</h2>
-  
-  <div className="help-card" style={{borderColor:'var(--gold)'}}>
-    <div className="help-card-title">📂 Мульти-проекты</div>
-    <p>Создавайте несколько CRM для разных проектов:</p>
-    <ul>
-      <li>GlobalWay CRM</li>
-      <li>Интернет-магазин</li>
-      <li>Фриланс клиенты</li>
-      <li>И другие...</li>
-    </ul>
-  </div>
-
-  <div className="help-card" style={{borderColor:'var(--accent)'}}>
-    <div className="help-card-title">📧 Система рассылок</div>
-    <p>Создавайте несколько кампаний:</p>
-    <ul>
-      <li>Приветственная серия</li>
-      <li>Реактивация</li>
-      <li>Анонс вебинара</li>
-      <li>Автоматические цепочки</li>
-    </ul>
-  </div>
-
-  <div className="help-card" style={{borderColor:'var(--purple)'}}>
-    <div className="help-card-title">🎯 Кастомные воронки</div>
-    <p>Создавайте свои воронки с любыми этапами:</p>
-    <ul>
-      <li>Лид → Созвон → Оплата → Обучение → Отзыв</li>
-      <li>Любое количество этапов</li>
-      <li>Свои названия и иконки</li>
-    </ul>
-  </div>
-
-  <div className="help-card" style={{borderColor:'var(--green)'}}>
-    <div className="help-card-title">🔒 Режим инкогнито</div>
-    <p>Анонимные контакты без личных данных:</p>
-    <ul>
-      <li>Только ID или адрес кошелька</li>
-      <li>Без email и телефона</li>
-      <li>Максимальная приватность</li>
-    </ul>
-  </div>
-
-  <div style={{marginTop:'20px',padding:'15px',background:'var(--bg-lighter)',borderRadius:'10px',textAlign:'center'}}>
-    <p style={{color:'var(--text-muted)',marginBottom:'10px'}}>Есть идеи? Напишите нам!</p>
-    <p style={{color:'var(--gold)'}}>Telegram: @globalway_support</p>
-  </div>
-</div>);
-
-// ContactModal
-const ContactModal=({contact,stages,onSave,onClose})=>{
-  const[form,setForm]=useState(contact||{name:'',email:'',phone:'',telegram:'',stage:'new',source:'manual',notes:''});
-  return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-header"><h2>{contact?'✏️ Редактировать':'➕ Новый контакт'}</h2><button onClick={onClose} style={{background:'none',border:'none',color:'var(--text-muted)',fontSize:'20px',cursor:'pointer'}}>✕</button></div>
-    <form onSubmit={e=>{e.preventDefault();if(form.name.trim())onSave(form)}}><div className="modal-body">
-      {[{k:'name',l:'Имя *',t:'text'},{k:'email',l:'Email',t:'email'},{k:'phone',l:'Телефон',t:'text'},{k:'telegram',l:'Telegram',t:'text'}].map(f=><div key={f.k} style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'5px',fontSize:'13px',color:'var(--text-muted)'}}>{f.l}</label><input className="input" type={f.t} value={form[f.k]} onChange={e=>setForm({...form,[f.k]:e.target.value})}/></div>)}
-      <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'5px',fontSize:'13px',color:'var(--text-muted)'}}>Этап</label><select className="input" value={form.stage} onChange={e=>setForm({...form,stage:e.target.value})}>{stages.map(s=><option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}</select></div>
-      <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'5px',fontSize:'13px',color:'var(--text-muted)'}}>Источник</label><select className="input" value={form.source} onChange={e=>setForm({...form,source:e.target.value})}><option value="manual">Вручную</option><option value="cardgift">CardGift</option><option value="telegram">Telegram</option><option value="website">Сайт</option><option value="referral">Реферал</option></select></div>
-      <div><label style={{display:'block',marginBottom:'5px',fontSize:'13px',color:'var(--text-muted)'}}>Заметки</label><textarea className="input" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} rows="3"/></div>
-    </div><div className="modal-footer"><button type="button" className="btn btn-secondary" onClick={onClose}>Отмена</button><button type="submit" className="btn btn-primary">{contact?'Сохранить':'Добавить'}</button></div></form>
-  </div></div>);
-};
-
-// TaskModal
-const TaskModal=({contacts,onSave,onClose})=>{
-  const[form,setForm]=useState({title:'',contact_id:null,due_date:new Date().toISOString().split('T')[0],priority:'medium'});
-  return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-header"><h2>➕ Новая задача</h2><button onClick={onClose} style={{background:'none',border:'none',color:'var(--text-muted)',fontSize:'20px',cursor:'pointer'}}>✕</button></div>
-    <form onSubmit={e=>{e.preventDefault();if(form.title.trim())onSave(form)}}><div className="modal-body">
-      <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'5px',fontSize:'13px',color:'var(--text-muted)'}}>Название *</label><input className="input" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Позвонить..."/></div>
-      <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'5px',fontSize:'13px',color:'var(--text-muted)'}}>Контакт</label><select className="input" value={form.contact_id||''} onChange={e=>setForm({...form,contact_id:e.target.value||null})}><option value="">— Без контакта —</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-      <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'5px',fontSize:'13px',color:'var(--text-muted)'}}>Срок</label><input className="input" type="date" value={form.due_date} onChange={e=>setForm({...form,due_date:e.target.value})}/></div>
-      <div><label style={{display:'block',marginBottom:'5px',fontSize:'13px',color:'var(--text-muted)'}}>Приоритет</label><select className="input" value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}><option value="low">🔵 Низкий</option><option value="medium">🟡 Средний</option><option value="high">🔴 Высокий</option></select></div>
-    </div><div className="modal-footer"><button type="button" className="btn btn-secondary" onClick={onClose}>Отмена</button><button type="submit" className="btn btn-primary">Добавить</button></div></form>
-  </div></div>);
-};
-
-// LessonModal
-const LessonModal=({lesson,progress,onToggle,onComplete,onClose})=>{
-  if(!lesson||!progress)return null;
-  const allDone=progress.tasks_completed?.every(t=>t.done);
-  return(<div className="modal-overlay" onClick={onClose}><div className="modal" style={{maxWidth:'650px'}} onClick={e=>e.stopPropagation()}>
-    <div className="modal-header"><div><h2 style={{fontSize:'18px',marginBottom:'5px'}}>🎓 Урок {lesson.id}: {lesson.title}</h2><div style={{fontSize:'13px',color:'var(--text-muted)'}}>⏱️ {lesson.duration} • 🎁 +{lesson.reward} очков</div></div><button onClick={onClose} style={{background:'none',border:'none',color:'var(--text-muted)',fontSize:'20px',cursor:'pointer'}}>✕</button></div>
-    <div className="modal-body">
-      <p style={{marginBottom:'20px',color:'var(--text-muted)',lineHeight:1.5}}>{lesson.desc}</p>
-      <div style={{background:'var(--bg-lighter)',borderRadius:'12px',padding:'50px',textAlign:'center',marginBottom:'25px'}}><div style={{fontSize:'50px',marginBottom:'10px'}}>🎬</div><div style={{color:'var(--text-muted)'}}>Видео урока</div></div>
-      <h3 style={{marginBottom:'15px'}}>📋 Задания:</h3>
-      {lesson.tasks.map(task=>{const tp=progress.tasks_completed?.find(t=>t.id===task.id);const done=tp?.done||false;return(
-        <div key={task.id} onClick={()=>progress.status==='active'&&onToggle(lesson.id,task.id)} style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px',background:'var(--bg-lighter)',borderRadius:'10px',marginBottom:'10px',cursor:progress.status==='active'?'pointer':'default',border:done?'1px solid var(--green)':'1px solid var(--border)',transition:'all .2s'}}>
-          <div style={{width:'28px',height:'28px',borderRadius:'50%',border:done?'none':'2px solid var(--border)',background:done?'var(--green)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'14px',flexShrink:0}}>{done&&'✓'}</div>
-          <div style={{flex:1}}><div style={{color:done?'var(--green)':'var(--text)',fontWeight:500}}>{task.text}</div>{task.type==='count'&&<div style={{fontSize:'11px',color:'var(--text-muted)',marginTop:'3px'}}>Цель: {task.target}</div>}</div>
-          {task.type==='integration'&&<span className="tag tag-purple">Интеграция</span>}
-          {task.type==='video'&&<span className="tag tag-blue">Видео</span>}
+  renderDashboard() {
+    return `
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="icon" style="background:rgba(0,212,255,.2);">👥</div>
+          <div class="value">${this.stats.totalContacts}</div>
+          <div class="label">Всего контактов</div>
         </div>
-      )})}
-    </div>
-    <div className="modal-footer">
-      <button className="btn btn-secondary" onClick={onClose}>Закрыть</button>
-      {progress.status==='active'&&<button className="btn btn-primary" onClick={()=>onComplete(lesson.id)} disabled={!allDone}>{allDone?'🎉 Завершить урок':`Выполните задания (${progress.tasks_completed?.filter(t=>t.done).length||0}/${lesson.tasks.length})`}</button>}
-      {progress.status==='completed'&&<span className="tag tag-green" style={{padding:'10px 20px',fontSize:'13px'}}>✓ Урок пройден</span>}
-    </div>
-  </div></div>);
+        <div class="stat-card">
+          <div class="icon" style="background:rgba(76,175,80,.2);">🚀</div>
+          <div class="value">${this.stats.converted}</div>
+          <div class="label">Конвертировано</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon" style="background:rgba(255,215,0,.2);">📊</div>
+          <div class="value">${this.stats.conversionRate}%</div>
+          <div class="label">Конверсия</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon" style="background:rgba(255,152,0,.2);">✅</div>
+          <div class="value">${this.stats.pendingTasks}</div>
+          <div class="label">Задач</div>
+        </div>
+      </div>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="card">
+          <h3 style="margin-bottom:15px;">🎯 Воронка</h3>
+          ${this.stages.map(stage => {
+            const count = this.stats.byStage[stage.code]?.length || 0;
+            const percent = this.stats.totalContacts > 0 ? (count / this.stats.totalContacts * 100).toFixed(0) : 0;
+            return `
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                <span style="font-size:18px;">${stage.icon}</span>
+                <span style="flex:1;font-size:13px;">${stage.name.replace(/^[^\s]+\s/, '')}</span>
+                <span class="tag tag-gold">${count}</span>
+                <span style="font-size:11px;color:var(--text-muted);width:40px;">${percent}%</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        
+        <div class="card">
+          <h3 style="margin-bottom:15px;">📋 Задачи на сегодня</h3>
+          ${this.stats.todayTasks === 0 ? `
+            <div style="text-align:center;padding:20px;color:var(--text-muted);">
+              <div style="font-size:30px;margin-bottom:10px;">🎉</div>
+              Нет задач на сегодня
+            </div>
+          ` : this.tasks.filter(t => t.due_date === new Date().toISOString().split('T')[0]).slice(0, 5).map(t => `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+              <span class="tag tag-${t.priority === 'urgent' ? 'red' : t.priority === 'high' ? 'orange' : 'blue'}" style="width:8px;height:8px;padding:0;border-radius:50%;"></span>
+              <span style="flex:1;font-size:13px;">${t.title}</span>
+              ${t.contact ? `<span style="font-size:11px;color:var(--text-muted);">${t.contact.name}</span>` : ''}
+            </div>
+          `).join('')}
+          ${this.stats.overdueTasks > 0 ? `
+            <div style="margin-top:15px;padding:10px;background:rgba(244,67,54,.1);border-radius:8px;font-size:12px;color:var(--red);">
+              ⚠️ Просрочено: ${this.stats.overdueTasks} задач
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      
+      <div class="card" style="margin-top:20px;">
+        <h3 style="margin-bottom:15px;">🚀 Быстрые действия</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="CRMApp.showAddContactModal()">➕ Добавить контакт</button>
+          <button class="btn btn-secondary" onclick="CRMApp.showAddTaskModal()">📋 Создать задачу</button>
+          <button class="btn btn-secondary" onclick="CRMApp.syncFromContacts()">🔄 Импорт из опросов</button>
+          <button class="btn btn-secondary" onclick="CRMApp.setSection('funnel')">🎯 Воронка</button>
+        </div>
+      </div>
+    `;
+  },
+  
+  renderFunnel() {
+    return `
+      <div class="funnel-grid">
+        ${this.stages.map(stage => {
+          const contacts = this.stats.byStage[stage.code] || [];
+          return `
+            <div class="funnel-stage">
+              <div class="funnel-header" style="border-left:3px solid var(--${stage.color || 'gold'});">
+                <div class="icon">${stage.icon}</div>
+                <div class="name">${stage.name.replace(/^[^\s]+\s/, '')}</div>
+                <div class="count">${contacts.length} контактов</div>
+              </div>
+              <div class="funnel-body">
+                ${contacts.length === 0 ? `
+                  <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">
+                    Пусто
+                  </div>
+                ` : contacts.map(c => `
+                  <div class="funnel-card" onclick="CRMApp.showContactDetail('${c.id}')">
+                    <div class="name">${c.name || 'Без имени'}</div>
+                    <div class="contact">${c.contact}</div>
+                    <div class="meta">${c.messenger || ''} • ${this.formatDate(c.stage_entered_at)}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  },
+  
+  renderContacts() {
+    return `
+      <div style="margin-bottom:20px;">
+        <input type="text" class="input" placeholder="🔍 Поиск по имени или контакту..." id="search-input" style="max-width:400px;">
+      </div>
+      
+      ${this.contacts.length === 0 ? `
+        <div class="card" style="text-align:center;padding:40px;">
+          <div style="font-size:50px;margin-bottom:15px;">👥</div>
+          <h3 style="margin-bottom:10px;">Нет контактов</h3>
+          <p style="color:var(--text-muted);margin-bottom:20px;">Добавьте контакты вручную или импортируйте из опросов</p>
+          <button class="btn btn-primary" onclick="CRMApp.syncFromContacts()">🔄 Импорт из опросов</button>
+        </div>
+      ` : this.contacts.map(c => {
+        const stage = this.stages.find(s => s.code === c.stage_code);
+        return `
+          <div class="contact-row" onclick="CRMApp.showContactDetail('${c.id}')">
+            <div class="contact-avatar">${(c.name || '?')[0].toUpperCase()}</div>
+            <div class="contact-info">
+              <div class="name">${c.name || 'Без имени'}</div>
+              <div class="detail">${c.contact} • ${c.messenger || 'Не указан'}</div>
+            </div>
+            <span class="tag tag-${stage?.color || 'blue'}">${stage?.icon || ''} ${stage?.name?.replace(/^[^\s]+\s/, '') || c.stage_code}</span>
+          </div>
+        `;
+      }).join('')}
+    `;
+  },
+  
+  renderTasks() {
+    const today = new Date().toISOString().split('T')[0];
+    
+    return `
+      ${this.tasks.length === 0 ? `
+        <div class="card" style="text-align:center;padding:40px;">
+          <div style="font-size:50px;margin-bottom:15px;">✅</div>
+          <h3 style="margin-bottom:10px;">Нет задач</h3>
+          <p style="color:var(--text-muted);margin-bottom:20px;">Задачи создаются автоматически при работе с контактами</p>
+          <button class="btn btn-primary" onclick="CRMApp.showAddTaskModal()">➕ Создать задачу</button>
+        </div>
+      ` : this.tasks.map(t => {
+        const isOverdue = t.due_date && t.due_date < today;
+        return `
+          <div class="task-item ${t.status === 'completed' ? 'completed' : ''}">
+            <div class="task-checkbox ${t.status === 'completed' ? 'checked' : ''}" onclick="CRMApp.completeTask('${t.id}')"></div>
+            <div class="task-content">
+              <div class="task-title">${t.icon || '📋'} ${t.title}</div>
+              <div class="task-meta">
+                ${t.contact ? `👤 ${t.contact.name} • ` : ''}
+                📅 ${this.formatDate(t.due_date)}
+                ${isOverdue ? ' <span style="color:var(--red);">⚠️ Просрочено</span>' : ''}
+              </div>
+            </div>
+            <span class="tag tag-${t.priority === 'urgent' ? 'red' : t.priority === 'high' ? 'orange' : 'blue'}">${t.priority}</span>
+            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();CRMApp.deleteTask('${t.id}')">🗑️</button>
+          </div>
+        `;
+      }).join('')}
+    `;
+  },
+  
+  renderMessages() {
+    return `
+      <p style="color:var(--text-muted);margin-bottom:20px;">
+        Готовые шаблоны сообщений для каждого этапа воронки. Нажмите чтобы скопировать.
+      </p>
+      
+      ${this.stages.map(stage => {
+        const stageMessages = this.messages.filter(m => m.stage_id === stage.id);
+        if (stageMessages.length === 0) return '';
+        
+        return `
+          <div class="card" style="margin-bottom:20px;">
+            <h3 style="margin-bottom:15px;">${stage.icon} ${stage.name}</h3>
+            ${stageMessages.map(m => `
+              <div class="message-card" onclick="CRMApp.copyMessage(\`${m.content.replace(/`/g, "'")}\`)">
+                <div class="title">${m.title}</div>
+                <div class="content">${m.content.substring(0, 200)}${m.content.length > 200 ? '...' : ''}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }).join('')}
+    `;
+  },
+  
+  renderSettings() {
+    return `
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="margin-bottom:15px;">🎯 Текущий шаблон CRM</h3>
+        <div style="display:flex;align-items:center;gap:15px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
+          <span style="font-size:30px;">${this.template?.icon || '📊'}</span>
+          <div>
+            <div style="font-weight:600;">${this.template?.name || 'Стандартный'}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${this.template?.description || ''}</div>
+          </div>
+          <span class="tag tag-green" style="margin-left:auto;">Активен</span>
+        </div>
+      </div>
+      
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="margin-bottom:15px;">📊 Статистика воронки</h3>
+        <table style="width:100%;font-size:13px;">
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:10px 0;color:var(--text-muted);">Этап</th>
+            <th style="text-align:center;padding:10px 0;color:var(--text-muted);">Контактов</th>
+            <th style="text-align:right;padding:10px 0;color:var(--text-muted);">Целевая конверсия</th>
+          </tr>
+          ${this.stages.map(s => `
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:10px 0;">${s.icon} ${s.name.replace(/^[^\s]+\s/, '')}</td>
+              <td style="text-align:center;padding:10px 0;">${this.stats.byStage[s.code]?.length || 0}</td>
+              <td style="text-align:right;padding:10px 0;color:var(--gold);">${s.target_conversion || 0}%</td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+      
+      <div class="card">
+        <h3 style="margin-bottom:15px;">🔧 Действия</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="CRMApp.syncFromContacts()">🔄 Синхронизировать контакты</button>
+          <button class="btn btn-secondary" onclick="location.reload()">🔃 Обновить данные</button>
+        </div>
+      </div>
+    `;
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // MODALS
+  // ═══════════════════════════════════════════════════════════
+  
+  showAddContactModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'modal';
+    modal.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <h2>➕ Новый контакт</h2>
+          <button class="btn btn-secondary btn-sm" onclick="CRMApp.closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Имя *</label>
+            <input type="text" class="input" id="contact-name" placeholder="Введите имя">
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Контакт *</label>
+            <input type="text" class="input" id="contact-value" placeholder="+380... или @username">
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Мессенджер</label>
+            <select class="input" id="contact-messenger">
+              <option value="telegram">Telegram</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="viber">Viber</option>
+              <option value="phone">Телефон</option>
+              <option value="email">Email</option>
+            </select>
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Заметка</label>
+            <textarea class="input" id="contact-notes" placeholder="Дополнительная информация..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="CRMApp.closeModal()">Отмена</button>
+          <button class="btn btn-primary" onclick="CRMApp.submitAddContact()">Добавить</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  },
+  
+  submitAddContact() {
+    const name = document.getElementById('contact-name').value.trim();
+    const contact = document.getElementById('contact-value').value.trim();
+    const messenger = document.getElementById('contact-messenger').value;
+    const notes = document.getElementById('contact-notes').value.trim();
+    
+    if (!name || !contact) {
+      alert('Заполните обязательные поля');
+      return;
+    }
+    
+    this.addContact({ name, contact, messenger, notes });
+  },
+  
+  showAddTaskModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'modal';
+    modal.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <h2>➕ Новая задача</h2>
+          <button class="btn btn-secondary btn-sm" onclick="CRMApp.closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Название *</label>
+            <input type="text" class="input" id="task-title" placeholder="Что нужно сделать?">
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Дата</label>
+            <input type="date" class="input" id="task-date" value="${new Date().toISOString().split('T')[0]}">
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Приоритет</label>
+            <select class="input" id="task-priority">
+              <option value="normal">Обычный</option>
+              <option value="high">Высокий</option>
+              <option value="urgent">Срочный</option>
+            </select>
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Контакт (опционально)</label>
+            <select class="input" id="task-contact">
+              <option value="">Без привязки</option>
+              ${this.contacts.map(c => `<option value="${c.id}">${c.name} (${c.contact})</option>`).join('')}
+            </select>
+          </div>
+          <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:5px;font-size:13px;color:var(--text-muted);">Описание</label>
+            <textarea class="input" id="task-desc" placeholder="Подробности..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="CRMApp.closeModal()">Отмена</button>
+          <button class="btn btn-primary" onclick="CRMApp.submitAddTask()">Создать</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  },
+  
+  submitAddTask() {
+    const title = document.getElementById('task-title').value.trim();
+    const due_date = document.getElementById('task-date').value;
+    const priority = document.getElementById('task-priority').value;
+    const contact_id = document.getElementById('task-contact').value || null;
+    const description = document.getElementById('task-desc').value.trim();
+    
+    if (!title) {
+      alert('Введите название задачи');
+      return;
+    }
+    
+    this.addTask({ title, due_date, priority, contact_id, description });
+  },
+  
+  showContactDetail(contactId) {
+    const contact = this.contacts.find(c => c.id === contactId);
+    if (!contact) return;
+    
+    const stage = this.stages.find(s => s.code === contact.stage_code);
+    const stageMessages = this.messages.filter(m => m.stage_id === stage?.id);
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'modal';
+    modal.innerHTML = `
+      <div class="modal" style="max-width:700px;">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:15px;">
+            <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-weight:600;color:#000;font-size:20px;">${(contact.name || '?')[0].toUpperCase()}</div>
+            <div>
+              <h2>${contact.name || 'Без имени'}</h2>
+              <div style="font-size:13px;color:var(--gold);">${contact.contact}</div>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="CRMApp.closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom:20px;">
+            <label style="display:block;margin-bottom:8px;font-size:13px;color:var(--text-muted);">Этап воронки</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              ${this.stages.map(s => `
+                <button class="btn ${s.code === contact.stage_code ? 'btn-primary' : 'btn-secondary'} btn-sm" 
+                        onclick="CRMApp.moveContactToStage('${contact.id}', '${s.code}');CRMApp.closeModal();">
+                  ${s.icon} ${s.name.replace(/^[^\s]+\s/, '')}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          
+          ${stageMessages.length > 0 ? `
+            <div style="margin-bottom:20px;">
+              <label style="display:block;margin-bottom:8px;font-size:13px;color:var(--text-muted);">💬 Шаблоны для этого этапа</label>
+              ${stageMessages.map(m => `
+                <div class="message-card" onclick="CRMApp.copyMessage(\`${m.content.replace(/`/g, "'").replace(/{name}/g, contact.name || '')}\`)">
+                  <div class="title">${m.title}</div>
+                  <div class="content">${m.content.replace(/{name}/g, contact.name || '').substring(0, 150)}...</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;font-size:13px;">
+            <div><span style="color:var(--text-muted);">Мессенджер:</span> ${contact.messenger || 'Не указан'}</div>
+            <div><span style="color:var(--text-muted);">Температура:</span> ${contact.temperature || 'warm'}</div>
+            <div><span style="color:var(--text-muted);">Источник:</span> ${contact.source || 'manual'}</div>
+            <div><span style="color:var(--text-muted);">Добавлен:</span> ${this.formatDate(contact.created_at)}</div>
+          </div>
+          
+          ${contact.notes ? `
+            <div style="margin-top:15px;padding:15px;background:var(--bg-lighter);border-radius:8px;">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:5px;">📝 Заметки</div>
+              <div style="white-space:pre-wrap;font-size:13px;">${contact.notes}</div>
+            </div>
+          ` : ''}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger btn-sm" onclick="CRMApp.deleteContact('${contact.id}')">🗑️ Удалить</button>
+          <button class="btn btn-secondary" onclick="CRMApp.closeModal()">Закрыть</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  },
+  
+  async deleteContact(contactId) {
+    if (!confirm('Удалить контакт?')) return;
+    
+    await supabaseClient.from('crm_contacts').delete().eq('id', contactId);
+    this.contacts = this.contacts.filter(c => c.id !== contactId);
+    this.calculateStats();
+    this.closeModal();
+    this.render();
+  },
+  
+  closeModal() {
+    const modal = document.getElementById('modal');
+    if (modal) modal.remove();
+  },
+  
+  copyMessage(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('✅ Скопировано в буфер обмена!');
+    });
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // UTILS
+  // ═══════════════════════════════════════════════════════════
+  
+  formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('ru-RU');
+  },
+  
+  setSection(section) {
+    this.activeSection = section;
+    this.render();
+  },
+  
+  bindEvents() {
+    // Nav items
+    document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+      item.onclick = () => {
+        this.activeSection = item.dataset.section;
+        this.render();
+      };
+    });
+    
+    // Search
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.oninput = (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.contact-row').forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(query) ? '' : 'none';
+        });
+      };
+    }
+  },
+  
+  // ═══════════════════════════════════════════════════════════
+  // SCREENS
+  // ═══════════════════════════════════════════════════════════
+  
+  showConnectScreen() {
+    document.getElementById('app').innerHTML = `
+      <div class="connect-screen">
+        <div class="connect-card">
+          <div style="font-size:60px;margin-bottom:20px;">🎯</div>
+          <h1 style="font-size:28px;margin-bottom:10px;background:linear-gradient(135deg,var(--gold),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">CardGift CRM</h1>
+          <p style="color:var(--text-muted);margin-bottom:30px;">Войдите через Панель управления</p>
+          <a href="dashboard.html" class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;text-decoration:none;justify-content:center;">🔗 Перейти в Панель</a>
+        </div>
+      </div>
+    `;
+  },
+  
+  showLoading() {
+    document.getElementById('app').innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>Загрузка CRM...</div>
+      </div>
+    `;
+  },
+  
+  showError(message) {
+    document.getElementById('app').innerHTML = `
+      <div class="connect-screen">
+        <div class="connect-card">
+          <div style="font-size:60px;margin-bottom:20px;">❌</div>
+          <h2 style="margin-bottom:15px;">${message}</h2>
+          <button class="btn btn-primary" onclick="location.reload()">🔄 Повторить</button>
+        </div>
+      </div>
+    `;
+  }
 };
 
-ReactDOM.render(<App/>,document.getElementById('root'));
+// Start
+document.addEventListener('DOMContentLoaded', () => CRMApp.init());
 </script>
+
 </body>
 </html>
