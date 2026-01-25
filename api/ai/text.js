@@ -1,6 +1,6 @@
-// api/ai/image.js
-// Vercel Serverless Function - Image Generation via OpenAI DALL-E
-// ИСПРАВЛЕНО: Более мягкий фильтр контента
+// api/ai/text.js
+// Vercel Serverless Function - Text Generation via Groq (Llama 3.1)
+// Groq даёт 14,400 бесплатных запросов в день!
 
 export default async function handler(req, res) {
     // CORS
@@ -17,112 +17,102 @@ export default async function handler(req, res) {
     }
     
     try {
-        const { prompt, format, style, userApiKey } = req.body;
+        const { prompt, style, language, userApiKey } = req.body;
         
         if (!prompt || prompt.trim().length === 0) {
             return res.status(400).json({ error: 'Prompt required' });
         }
         
-        // ИСПРАВЛЕННЫЙ ФИЛЬТР - только жёсткий контент
+        // Фильтр контента
         const filterResult = contentFilter(prompt);
         if (!filterResult.allowed) {
             return res.status(400).json({ 
-                error: 'Контент для взрослых запрещён',
+                error: 'Запрещённый контент',
                 reason: filterResult.reason
             });
         }
         
         // API ключ - сначала пользовательский, потом серверный
-        const apiKey = userApiKey || process.env.OPENAI_API_KEY;
+        const apiKey = userApiKey || process.env.GROQ_API_KEY;
         
         if (!apiKey) {
-            return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
+            return res.status(500).json({ error: 'GROQ_API_KEY not configured. Добавьте ключ в настройках.' });
         }
         
-        // Определяем размер
-        const sizes = {
-            '1:1': '1024x1024',
-            '16:9': '1792x1024',
-            '9:16': '1024x1792'
-        };
-        const size = sizes[format] || '1024x1024';
-        
-        // Добавляем стиль к промпту
-        const styles = {
-            'realistic': 'photorealistic, high quality, detailed',
-            'artistic': 'artistic, creative, stylized illustration',
-            'cartoon': 'cartoon style, colorful, playful',
-            'anime': 'anime style, japanese animation',
-            'minimalist': 'minimalist, clean, simple design',
-            '3d': '3D render, volumetric lighting, high detail'
+        // Системный промпт в зависимости от стиля
+        const systemPrompts = {
+            greeting: 'Ты профессиональный копирайтер. Пиши тёплые, искренние поздравления.',
+            business: 'Ты бизнес-консультант. Пиши в формальном деловом стиле.',
+            motivational: 'Ты мотивационный коуч. Вдохновляй и мотивируй людей.',
+            friendly: 'Ты дружелюбный помощник. Пиши тепло и приветливо.',
+            romantic: 'Ты поэт. Пиши романтично, с чувством и любовью.',
+            club: 'Ты амбассадор GlobalWay. Пиши вдохновляюще о возможностях платформы и командной работе.'
         };
         
-        const stylePrompt = styles[style] || '';
-        const fullPrompt = stylePrompt ? `${prompt}, ${stylePrompt}` : prompt;
-
-        console.log('🎨 Generating image:', fullPrompt.substring(0, 100));
-
-        // OpenAI DALL-E 3 API
-        const response = await fetch('https://api.openai.com/v1/images/generations', {
+        const langInstructions = {
+            ru: 'Отвечай только на русском языке.',
+            en: 'Respond only in English.',
+            ua: 'Відповідай тільки українською мовою.'
+        };
+        
+        const currentLang = language || 'ru';
+        const systemMessage = `${systemPrompts[style] || systemPrompts.friendly} ${langInstructions[currentLang] || langInstructions.ru}`;
+        
+        console.log('📝 Generating text with Groq:', prompt.substring(0, 50));
+        
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'dall-e-3',
-                prompt: fullPrompt,
-                n: 1,
-                size: size,
-                quality: 'standard',
-                response_format: 'url'
+                model: 'llama-3.1-70b-versatile',  // Llama 3.1 70B - очень умная и бесплатная!
+                messages: [
+                    { role: 'system', content: systemMessage },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.7,
+                max_tokens: 2000,
+                top_p: 0.9
             })
         });
         
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            console.error('OpenAI error:', err);
-            
-            // Обработка специфичных ошибок OpenAI
-            if (err.error?.code === 'content_policy_violation') {
-                return res.status(400).json({ 
-                    error: 'OpenAI отклонил запрос из-за политики контента',
-                    suggestion: 'Попробуйте изменить описание'
-                });
-            }
+            console.error('Groq error:', err);
             
             if (response.status === 401) {
-                return res.status(401).json({ error: 'Invalid API Key' });
+                return res.status(401).json({ error: 'Неверный API ключ Groq' });
             }
             if (response.status === 429) {
-                return res.status(429).json({ error: 'Rate limit exceeded' });
-            }
-            if (response.status === 400) {
-                return res.status(400).json({ error: err.error?.message || 'Invalid request' });
+                return res.status(429).json({ error: 'Лимит запросов Groq исчерпан. Попробуйте позже.' });
             }
             
             return res.status(response.status).json({ 
-                error: err.error?.message || 'Image generation failed' 
+                error: err.error?.message || 'Groq API error' 
             });
         }
         
         const data = await response.json();
-        const imageUrl = data.data?.[0]?.url;
+        const text = data.choices?.[0]?.message?.content;
         
-        if (!imageUrl) {
-            return res.status(500).json({ error: 'No image generated' });
+        if (!text) {
+            return res.status(500).json({ error: 'Текст не сгенерирован' });
         }
         
-        console.log('✅ Image generated successfully');
+        console.log('✅ Text generated with Groq successfully');
         
         return res.status(200).json({
             success: true,
-            url: imageUrl,
-            revised_prompt: data.data?.[0]?.revised_prompt
+            text: text.trim(),
+            model: 'llama-3.1-70b',
+            provider: 'groq',
+            usage: data.usage
         });
         
     } catch (error) {
-        console.error('Image generation error:', error);
+        console.error('Text generation error:', error);
         return res.status(500).json({ 
             error: 'Server error',
             details: error.message 
@@ -131,8 +121,7 @@ export default async function handler(req, res) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// ИСПРАВЛЕННЫЙ ФИЛЬТР КОНТЕНТА
-// Блокирует только явно запрещённый контент
+// ФИЛЬТР КОНТЕНТА
 // ═══════════════════════════════════════════════════════════
 
 function contentFilter(text) {
@@ -143,19 +132,19 @@ function contentFilter(text) {
     // Только ЯВНО запрещённый контент
     const strictlyForbidden = {
         // Порнография
-        porn: [/\bporn/i, /\bxxx\b/i, /\bhentai\b/i, /\berotic\s*nude/i, /\bнагой\s*секс/i],
+        porn: [/\bporn/i, /\bxxx\b/i, /\bhentai\b/i, /\berotic\s*nude/i],
         
         // Детская эксплуатация (строго!)
-        child_abuse: [/child.*nude/i, /nude.*child/i, /ребён.*голы/i, /голы.*ребён/i, /детск.*порн/i],
+        child_abuse: [/child.*nude/i, /nude.*child/i, /ребён.*голы/i, /детск.*порн/i],
         
         // Экстремальное насилие
-        extreme_violence: [/dismember/i, /torture.*blood/i, /gore\s*kill/i, /расчленен/i, /пытк.*кров/i],
+        extreme_violence: [/dismember/i, /torture.*blood/i, /gore\s*kill/i, /расчленен/i],
         
         // Терроризм
         terrorism: [/how.*make.*bomb/i, /террорист.*атак/i, /взорв.*людей/i],
         
-        // Мат (только грубый)
-        profanity: [/\bхуй/i, /\bпизд/i, /\bебат/i, /\bблядь?\b/i, /\bfuck\b/i, /\bshit\b/i]
+        // Мат (грубый)
+        profanity: [/\bхуй/i, /\bпизд/i, /\bебат/i, /\bблядь?\b/i]
     };
     
     for (const [category, patterns] of Object.entries(strictlyForbidden)) {
@@ -166,10 +155,6 @@ function contentFilter(text) {
             }
         }
     }
-    
-    // ВСЁ ОСТАЛЬНОЕ РАЗРЕШЕНО!
-    // "влюблённая пара", "костёр", "закат", "палатка" - OK
-    // "человек работает", "аналогия" - OK
     
     return { allowed: true };
 }
