@@ -882,111 +882,258 @@ const CRMApp = {
   
   renderHelp() {
     return `
-      <div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,165,0,.05));border-color:var(--gold);">
-        <h2 style="color:var(--gold);margin-bottom:10px;">🎯 Быстрый старт</h2>
-        <p style="color:var(--text-muted);line-height:1.6;">
-          CRM помогает не потерять ни одного контакта и знать что делать с каждым человеком.
-          Все контакты проходят через воронку: от "Нового" до "Активного партнёра".
-        </p>
+      <!-- Навигация по справке -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('help-start').scrollIntoView({behavior:'smooth'})">🚀 Быстрый старт</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('help-funnel').scrollIntoView({behavior:'smooth'})">📊 Воронка</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('help-messages').scrollIntoView({behavior:'smooth'})">💬 Примеры сообщений</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('help-objections').scrollIntoView({behavior:'smooth'})">🤔 Возражения</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('help-faq').scrollIntoView({behavior:'smooth'})">❓ FAQ</button>
       </div>
       
+      <!-- Быстрый старт -->
+      <div id="help-start" class="card" style="margin-bottom:20px;background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,165,0,.05));border-color:var(--gold);">
+        <h2 style="color:var(--gold);margin-bottom:15px;">🚀 Быстрый старт (5 минут)</h2>
+        
+        <div style="margin-bottom:20px;">
+          <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Шаг 1: Импортируйте контакты</div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">Если у вас уже есть контакты из опросов CardGift:</p>
+          <div style="padding:12px;background:var(--bg-lighter);border-radius:8px;font-size:13px;">
+            1. Нажмите кнопку <strong style="color:var(--gold);">"🔄 Импорт"</strong> вверху<br>
+            2. Все контакты автоматически перенесутся в CRM
+          </div>
+        </div>
+        
+        <div style="margin-bottom:20px;">
+          <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Шаг 2: Изучите воронку</div>
+          <p style="font-size:13px;color:var(--text-muted);">Перейдите в раздел "🎯 Воронка" - там 6 этапов:</p>
+          <div style="padding:12px;background:var(--bg-lighter);border-radius:8px;font-size:14px;text-align:center;margin-top:10px;">
+            🆕 Новый → 👀 Интерес → 📊 Презентация → 🤔 Возражения → 📝 Регистрация → 🚀 Активный
+          </div>
+        </div>
+        
+        <div>
+          <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Шаг 3: Начните работу</div>
+          <div style="padding:12px;background:var(--bg-lighter);border-radius:8px;font-size:13px;">
+            1. Нажмите на контакт в воронке<br>
+            2. Посмотрите шаблоны сообщений<br>
+            3. Скопируйте → напишите человеку<br>
+            4. Переместите на следующий этап
+          </div>
+        </div>
+      </div>
+      
+      <!-- Воронка продаж -->
+      <div id="help-funnel" class="card" style="margin-bottom:20px;">
+        <h2 style="color:var(--gold);margin-bottom:20px;">📊 Воронка продаж - подробно</h2>
+        
+        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;border-left:4px solid var(--accent);">
+          <div style="font-size:16px;font-weight:600;color:var(--accent);margin-bottom:8px;">🆕 1. НОВЫЙ</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Контакт только получен. <strong>Действуй в 24 часа!</strong></p>
+          <div style="font-size:12px;">✅ Написать приветствие<br>✅ Представиться<br>✅ Спросить удобно ли общаться</div>
+          <div style="font-size:11px;color:var(--green);margin-top:8px;">📈 Целевая конверсия: 80%</div>
+        </div>
+        
+        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;border-left:4px solid var(--orange);">
+          <div style="font-size:16px;font-weight:600;color:var(--orange);margin-bottom:8px;">👀 2. ИНТЕРЕС</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Человек ответил и хочет узнать больше.</p>
+          <div style="font-size:12px;">✅ Выслать описание CardGift<br>✅ Назначить время для презентации</div>
+          <div style="font-size:11px;color:var(--green);margin-top:8px;">📈 Целевая конверсия: 60%</div>
+        </div>
+        
+        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;border-left:4px solid var(--purple);">
+          <div style="font-size:16px;font-weight:600;color:var(--purple);margin-bottom:8px;">📊 3. ПРЕЗЕНТАЦИЯ</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Человек смотрит презентацию.</p>
+          <div style="font-size:12px;">✅ Провести презентацию<br>✅ Показать примеры<br>✅ Спросить вопросы</div>
+          <div style="font-size:11px;color:var(--green);margin-top:8px;">📈 Целевая конверсия: 50%</div>
+        </div>
+        
+        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;border-left:4px solid var(--gold);">
+          <div style="font-size:16px;font-weight:600;color:var(--gold);margin-bottom:8px;">🤔 4. ВОЗРАЖЕНИЯ</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Есть сомнения или вопросы.</p>
+          <div style="font-size:12px;">✅ Выяснить что смущает<br>✅ Использовать готовые ответы<br>✅ Предложить попробовать бесплатно</div>
+          <div style="font-size:11px;color:var(--green);margin-top:8px;">📈 Целевая конверсия: 40%</div>
+        </div>
+        
+        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;border-left:4px solid var(--green);">
+          <div style="font-size:16px;font-weight:600;color:var(--green);margin-bottom:8px;">📝 5. РЕГИСТРАЦИЯ</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Готов регистрироваться!</p>
+          <div style="font-size:12px;">✅ Отправить реф. ссылку<br>✅ Помочь с регистрацией<br>✅ Проверить успех</div>
+          <div style="font-size:11px;color:var(--red);margin-top:8px;">⚡ СРОЧНО! Конверсия: 90%</div>
+        </div>
+        
+        <div style="padding:15px;background:var(--bg-lighter);border-radius:10px;border-left:4px solid var(--green);">
+          <div style="font-size:16px;font-weight:600;color:var(--green);margin-bottom:8px;">🚀 6. АКТИВНЫЙ</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Партнёр зарегистрирован! 🎉</p>
+          <div style="font-size:12px;">✅ Поздравить<br>✅ Помочь с первой открыткой<br>✅ Объяснить как приглашать<br>✅ Добавить в чат</div>
+        </div>
+      </div>
+      
+      <!-- Примеры сообщений -->
+      <div id="help-messages" class="card" style="margin-bottom:20px;">
+        <h2 style="color:var(--gold);margin-bottom:15px;">💬 Примеры сообщений</h2>
+        <p style="color:var(--text-muted);margin-bottom:15px;font-size:12px;">Нажмите чтобы скопировать. Замените {name} на имя.</p>
+        
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px;font-weight:600;color:var(--accent);margin-bottom:10px;">🆕 Этап "Новый"</div>
+          <div class="message-card" onclick="CRMApp.copyMessage('Привет, {name}! 👋\\n\\nСпасибо что прошли опрос! Меня зовут [Ваше имя].\\n\\nВижу вы интересуетесь дополнительным доходом. Расскажу кратко о CardGift.\\n\\nУдобно сейчас пообщаться?')">
+            <div class="title">Приветствие после опроса</div>
+            <div class="content">Привет, {name}! 👋 Спасибо что прошли опрос! Меня зовут [Ваше имя]. Вижу вы интересуетесь доп. доходом...</div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px;font-weight:600;color:var(--orange);margin-bottom:10px;">👀 Этап "Интерес"</div>
+          <div class="message-card" onclick="CRMApp.copyMessage('CardGift - платформа для создания цифровых открыток 🎁\\n\\n✅ Создавайте открытки с фото, видео, музыкой\\n✅ Отправляйте через любой мессенджер\\n✅ Собирайте контакты через опросы\\n✅ Получайте доход от партнёров\\n\\nХотите посмотреть как работает?')">
+            <div class="title">Краткое описание CardGift</div>
+            <div class="content">CardGift - платформа для создания цифровых открыток 🎁 ✅ Создавайте открытки ✅ Отправляйте ✅ Собирайте контакты...</div>
+          </div>
+          <div class="message-card" onclick="CRMApp.copyMessage('{name}, предлагаю показать как всё работает.\\n\\nМогу провести презентацию (15-20 минут):\\n• Как создать открытку\\n• Как работает система дохода\\n• Реальные примеры\\n\\nКогда удобнее: сегодня или завтра?')">
+            <div class="title">Приглашение на презентацию</div>
+            <div class="content">{name}, предлагаю показать как всё работает. Могу провести презентацию (15-20 минут)...</div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:10px;">📝 Этап "Регистрация"</div>
+          <div class="message-card" onclick="CRMApp.copyMessage('Отлично! Вот как зарегистрироваться:\\n\\n1️⃣ Перейдите по ссылке: [ВАША ССЫЛКА]\\n2️⃣ Подключите кошелёк (SafePal/Trust Wallet)\\n3️⃣ Подтвердите регистрацию\\n\\nЕсли что-то непонятно - пишите! 💪')">
+            <div class="title">Инструкция по регистрации</div>
+            <div class="content">Отлично! Вот как зарегистрироваться: 1️⃣ Перейдите по ссылке 2️⃣ Подключите кошелёк 3️⃣ Подтвердите...</div>
+          </div>
+        </div>
+        
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:10px;">🚀 Этап "Активный"</div>
+          <div class="message-card" onclick="CRMApp.copyMessage('🎉 Поздравляю, {name}! Вы в команде CardGift!\\n\\nЧто дальше:\\n1️⃣ Создайте первую открытку (5 минут)\\n2️⃣ Отправьте кому-то из близких\\n3️⃣ Посмотрите как работает опрос\\n\\nЯ помогу на каждом шаге. Начнём? 🚀')">
+            <div class="title">Поздравление с регистрацией</div>
+            <div class="content">🎉 Поздравляю, {name}! Вы в команде CardGift! Что дальше: 1️⃣ Создайте открытку 2️⃣ Отправьте...</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Возражения -->
+      <div id="help-objections" class="card" style="margin-bottom:20px;">
+        <h2 style="color:var(--gold);margin-bottom:15px;">🤔 Ответы на возражения</h2>
+        <p style="color:var(--text-muted);margin-bottom:15px;font-size:12px;">Нажмите чтобы скопировать готовый ответ.</p>
+        
+        <div class="message-card" onclick="CRMApp.copyMessage('Понимаю, время - самый ценный ресурс.\\n\\nИменно поэтому CardGift подходит занятым людям:\\n• Создание открытки - 5-10 минут\\n• Система работает автоматически 24/7\\n• Нет обязательных звонков и встреч\\n\\nНачать можно с 30 минут в день. Попробуете?')">
+          <div class="title" style="color:var(--red);">"У меня нет времени"</div>
+          <div class="content">Понимаю, время - самый ценный ресурс. Именно поэтому CardGift подходит занятым людям: создание открытки 5-10 минут, система работает 24/7...</div>
+        </div>
+        
+        <div class="message-card" onclick="CRMApp.copyMessage('Отлично что сказали! Здесь не нужно продавать.\\n\\nВ CardGift вы:\\n• Делитесь красивыми открытками\\n• Предлагаете пройти опрос\\n• Система сама собирает контакты\\n\\nЭто как рекомендация друга, не продажи.')">
+          <div class="title" style="color:var(--red);">"Я не умею продавать"</div>
+          <div class="content">Отлично что сказали! Здесь не нужно продавать. В CardGift вы делитесь открытками, предлагаете опрос, система сама собирает контакты...</div>
+        </div>
+        
+        <div class="message-card" onclick="CRMApp.copyMessage('Хороший вопрос!\\n\\nВ пирамиде деньги берутся из взносов участников.\\n\\nВ CardGift:\\n✅ Реальный продукт - цифровые открытки\\n✅ Доход от рекламы и подписок\\n✅ Всё на блокчейне - прозрачно\\n\\nЭто реферальный маркетинг, как Dropbox.')">
+          <div class="title" style="color:var(--red);">"Это пирамида?"</div>
+          <div class="content">Хороший вопрос! В пирамиде деньги из взносов. В CardGift: ✅ Реальный продукт ✅ Доход от рекламы ✅ Блокчейн - прозрачно...</div>
+        </div>
+        
+        <div class="message-card" onclick="CRMApp.copyMessage('Конечно, это правильно! 👍\\n\\nПока думаете, предлагаю попробовать:\\n• Зарегистрируйтесь бесплатно\\n• Создайте одну открытку\\n• Почувствуйте как это работает\\n\\nБез обязательств. Как вам?')">
+          <div class="title" style="color:var(--red);">"Мне нужно подумать"</div>
+          <div class="content">Конечно, это правильно! 👍 Пока думаете, попробуйте: зарегистрируйтесь бесплатно, создайте открытку, без обязательств...</div>
+        </div>
+        
+        <div class="message-card" onclick="CRMApp.copyMessage('Понимаю осторожность!\\n\\nФакты:\\n• CardGift работает с 2024\\n• Более 10,000 пользователей\\n• Всё на блокчейне - прозрачно\\n• Можно начать без вложений\\n\\nПросто попробуйте создать открытку - это бесплатно.')">
+          <div class="title" style="color:var(--red);">"Не доверяю таким проектам"</div>
+          <div class="content">Понимаю осторожность! Факты: CardGift с 2024, 10,000+ пользователей, блокчейн - прозрачно. Попробуйте бесплатно...</div>
+        </div>
+      </div>
+      
+      <!-- FAQ -->
+      <div id="help-faq" class="card" style="margin-bottom:20px;">
+        <h2 style="color:var(--gold);margin-bottom:15px;">❓ Частые вопросы</h2>
+        
+        <div style="margin-bottom:12px;padding:12px;background:var(--bg-lighter);border-radius:8px;">
+          <div style="font-weight:600;margin-bottom:5px;">Контакты из опросов не появляются?</div>
+          <p style="font-size:12px;color:var(--text-muted);">Нажмите "🔄 Импорт" в разделе Контакты или Воронка.</p>
+        </div>
+        
+        <div style="margin-bottom:12px;padding:12px;background:var(--bg-lighter);border-radius:8px;">
+          <div style="font-weight:600;margin-bottom:5px;">Как изменить этап контакта?</div>
+          <p style="font-size:12px;color:var(--text-muted);">Нажмите на контакт → выберите новый этап из кнопок.</p>
+        </div>
+        
+        <div style="margin-bottom:12px;padding:12px;background:var(--bg-lighter);border-radius:8px;">
+          <div style="font-weight:600;margin-bottom:5px;">Где шаблоны сообщений?</div>
+          <p style="font-size:12px;color:var(--text-muted);">Раздел "💬 Шаблоны" или нажмите на контакт.</p>
+        </div>
+        
+        <div style="margin-bottom:12px;padding:12px;background:var(--bg-lighter);border-radius:8px;">
+          <div style="font-weight:600;margin-bottom:5px;">Задачи создаются автоматически?</div>
+          <p style="font-size:12px;color:var(--text-muted);">Да! При добавлении контакта и при переходе на этап.</p>
+        </div>
+        
+        <div style="padding:12px;background:var(--bg-lighter);border-radius:8px;">
+          <div style="font-weight:600;margin-bottom:5px;">Как удалить контакт?</div>
+          <p style="font-size:12px;color:var(--text-muted);">Нажмите на контакт → внизу кнопка "🗑️ Удалить".</p>
+        </div>
+      </div>
+      
+      <!-- Ежедневная рутина -->
       <div class="card" style="margin-bottom:20px;">
-        <h3 style="margin-bottom:15px;">📊 Воронка продаж - 6 этапов</h3>
+        <h2 style="color:var(--gold);margin-bottom:15px;">⏰ Ежедневная рутина (15-30 мин)</h2>
         
-        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-size:16px;font-weight:600;color:var(--gold);margin-bottom:8px;">🆕 1. Новый</div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Контакт только получен. <strong>Действуй быстро!</strong></p>
-          <div style="font-size:12px;color:var(--text);">✅ Написать приветствие в течение 24 часов</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px;">
+          <div style="padding:12px;background:var(--bg-lighter);border-radius:8px;text-align:center;">
+            <div style="font-size:20px;margin-bottom:5px;">🌅</div>
+            <div style="font-weight:600;font-size:12px;">Утро</div>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:5px;">Задачи на сегодня</p>
+          </div>
+          <div style="padding:12px;background:var(--bg-lighter);border-radius:8px;text-align:center;">
+            <div style="font-size:20px;margin-bottom:5px;">☀️</div>
+            <div style="font-weight:600;font-size:12px;">День</div>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:5px;">Выполнять задачи</p>
+          </div>
+          <div style="padding:12px;background:var(--bg-lighter);border-radius:8px;text-align:center;">
+            <div style="font-size:20px;margin-bottom:5px;">🌙</div>
+            <div style="font-weight:600;font-size:12px;">Вечер</div>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:5px;">Проверить итоги</p>
+          </div>
         </div>
         
-        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-size:16px;font-weight:600;color:var(--orange);margin-bottom:8px;">👀 2. Интерес</div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Человек ответил и хочет узнать больше.</p>
-          <div style="font-size:12px;color:var(--text);">✅ Выслать информацию о CardGift<br>✅ Назначить время для презентации</div>
-        </div>
-        
-        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-size:16px;font-weight:600;color:var(--purple);margin-bottom:8px;">📊 3. Презентация</div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Человек смотрит презентацию.</p>
-          <div style="font-size:12px;color:var(--text);">✅ Провести презентацию<br>✅ Спросить какие вопросы</div>
-        </div>
-        
-        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-size:16px;font-weight:600;color:var(--gold);margin-bottom:8px;">🤔 4. Возражения</div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Есть сомнения или вопросы.</p>
-          <div style="font-size:12px;color:var(--text);">✅ Выяснить что смущает<br>✅ Использовать готовые ответы из шаблонов</div>
-        </div>
-        
-        <div style="margin-bottom:20px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-size:16px;font-weight:600;color:var(--green);margin-bottom:8px;">📝 5. Регистрация</div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Готов регистрироваться!</p>
-          <div style="font-size:12px;color:var(--text);">✅ Отправить реферальную ссылку<br>✅ Помочь с регистрацией</div>
-        </div>
-        
-        <div style="padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-size:16px;font-weight:600;color:var(--green);margin-bottom:8px;">🚀 6. Активный</div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Партнёр зарегистрирован! 🎉</p>
-          <div style="font-size:12px;color:var(--text);">✅ Поздравить<br>✅ Помочь создать первую открытку<br>✅ Добавить в командный чат</div>
+        <div style="padding:12px;background:rgba(255,215,0,.1);border-radius:8px;text-align:center;">
+          <div style="font-size:14px;font-weight:600;color:var(--gold);">💡 Главное правило</div>
+          <p style="font-size:13px;margin-top:5px;">Каждый день - хотя бы одно действие с каждым контактом!</p>
         </div>
       </div>
       
-      <div class="card" style="margin-bottom:20px;">
-        <h3 style="margin-bottom:15px;">💡 Как работать с CRM</h3>
-        
-        <div style="margin-bottom:15px;">
-          <div style="font-weight:600;color:var(--gold);margin-bottom:5px;">1. Импортируйте контакты</div>
-          <p style="font-size:13px;color:var(--text-muted);">Кнопка "🔄 Импорт" перенесёт все контакты из ваших опросов.</p>
-        </div>
-        
-        <div style="margin-bottom:15px;">
-          <div style="font-weight:600;color:var(--gold);margin-bottom:5px;">2. Выполняйте задачи</div>
-          <p style="font-size:13px;color:var(--text-muted);">Система автоматически создаёт задачи для каждого этапа. Выполняйте их по порядку.</p>
-        </div>
-        
-        <div style="margin-bottom:15px;">
-          <div style="font-weight:600;color:var(--gold);margin-bottom:5px;">3. Используйте шаблоны</div>
-          <p style="font-size:13px;color:var(--text-muted);">Готовые тексты для каждого этапа. Нажмите на шаблон - он скопируется.</p>
-        </div>
-        
-        <div style="margin-bottom:15px;">
-          <div style="font-weight:600;color:var(--gold);margin-bottom:5px;">4. Перемещайте по воронке</div>
-          <p style="font-size:13px;color:var(--text-muted);">Когда человек готов - переведите его на следующий этап.</p>
-        </div>
-      </div>
-      
-      <div class="card" style="margin-bottom:20px;">
-        <h3 style="margin-bottom:15px;">🤔 Ответы на возражения</h3>
-        
-        <div style="margin-bottom:15px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-weight:600;margin-bottom:8px;">"У меня нет времени"</div>
-          <p style="font-size:12px;color:var(--text-muted);">CardGift занимает 5-10 минут в день. Система работает автоматически 24/7. Начать можно с 30 минут в день.</p>
-        </div>
-        
-        <div style="margin-bottom:15px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-weight:600;margin-bottom:8px;">"Я не умею продавать"</div>
-          <p style="font-size:12px;color:var(--text-muted);">Здесь не нужно продавать! Вы делитесь открытками и опросами. Это как рекомендация друга.</p>
-        </div>
-        
-        <div style="margin-bottom:15px;padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-weight:600;margin-bottom:8px;">"Это пирамида?"</div>
-          <p style="font-size:12px;color:var(--text-muted);">Нет! Есть реальный продукт (открытки), доход от рекламы и подписок. Это реферальный маркетинг как Dropbox.</p>
-        </div>
-        
-        <div style="padding:15px;background:var(--bg-lighter);border-radius:10px;">
-          <div style="font-weight:600;margin-bottom:8px;">"Мне нужно подумать"</div>
-          <p style="font-size:12px;color:var(--text-muted);">Отлично! Пока думаете - попробуйте бесплатно. Создайте одну открытку без обязательств.</p>
-        </div>
-      </div>
-      
+      <!-- Советы -->
       <div class="card">
-        <h3 style="margin-bottom:15px;">⏰ Ежедневная рутина (15-30 минут)</h3>
-        <div style="font-size:13px;line-height:1.8;color:var(--text-muted);">
-          <strong style="color:var(--text);">Утро:</strong> Посмотрите задачи на сегодня<br>
-          <strong style="color:var(--text);">День:</strong> Выполняйте задачи, перемещайте контакты<br>
-          <strong style="color:var(--text);">Вечер:</strong> Проверьте что всё выполнено, план на завтра
+        <h2 style="color:var(--gold);margin-bottom:15px;">🏆 Советы для успеха</h2>
+        
+        <div style="margin-bottom:12px;display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:20px;">⚡</span>
+          <div>
+            <div style="font-weight:600;font-size:13px;">Скорость - ключ к успеху</div>
+            <p style="font-size:12px;color:var(--text-muted);">Связывайтесь в течение 24 часов. Чем быстрее - тем выше конверсия.</p>
+          </div>
         </div>
-        <div style="margin-top:15px;padding:12px;background:rgba(255,215,0,.1);border-radius:8px;font-size:13px;color:var(--gold);">
-          💡 <strong>Главное правило:</strong> Каждый день делайте хотя бы одно действие с каждым активным контактом!
+        
+        <div style="margin-bottom:12px;display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:20px;">💪</span>
+          <div>
+            <div style="font-weight:600;font-size:13px;">Не бойтесь возражений</div>
+            <p style="font-size:12px;color:var(--text-muted);">Возражения = человек думает. Используйте готовые ответы.</p>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:12px;display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:20px;">📱</span>
+          <div>
+            <div style="font-weight:600;font-size:13px;">Будьте на связи</div>
+            <p style="font-size:12px;color:var(--text-muted);">Отвечайте быстро. Без ответа - человек уйдёт.</p>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:20px;">🤝</span>
+          <div>
+            <div style="font-weight:600;font-size:13px;">Помогайте новичкам</div>
+            <p style="font-size:12px;color:var(--text-muted);">Регистрация - только начало. Помогите сделать первые шаги.</p>
+          </div>
         </div>
       </div>
     `;
