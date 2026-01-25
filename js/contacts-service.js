@@ -173,8 +173,10 @@ const ContactsService = {
                 .select('temp_id, gw_id, name, messenger, contact, gw_level, wallet_address, created_at');
             
             if (idType === 'gw') {
-                const normalizedId = this.normalizeGwId(userId);
-                query = query.eq('referrer_gw_id', normalizedId);
+                // Ищем по обоим вариантам ID (с GW и без)
+                const rawId = userId.replace(/^GW/i, '');
+                const gwId = 'GW' + rawId;
+                query = query.or(`referrer_gw_id.eq.${rawId},referrer_gw_id.eq.${gwId}`);
             } else if (idType === 'temp') {
                 query = query.eq('referrer_temp_id', userId);
             } else {
@@ -252,11 +254,11 @@ const ContactsService = {
                 });
             }
             
-            // Рефералы
+            // Рефералы (ищем по обоим вариантам ID)
             const { count: referralsCount } = await SupabaseClient.client
                 .from('users')
                 .select('*', { count: 'exact', head: true })
-                .eq(referrerField, normalizedId);
+                .or(`referrer_gw_id.eq.${rawId},referrer_gw_id.eq.${gwId}`);
             
             stats.totalReferrals = referralsCount || 0;
             
@@ -264,7 +266,7 @@ const ContactsService = {
             const { count: activeCount } = await SupabaseClient.client
                 .from('users')
                 .select('*', { count: 'exact', head: true })
-                .eq(referrerField, normalizedId)
+                .or(`referrer_gw_id.eq.${rawId},referrer_gw_id.eq.${gwId}`)
                 .gt('gw_level', 0);
             
             stats.activeReferrals = activeCount || 0;
@@ -277,7 +279,7 @@ const ContactsService = {
             const { count: monthCount } = await SupabaseClient.client
                 .from('contacts')
                 .select('*', { count: 'exact', head: true })
-                .eq(ownerField, normalizedId)
+                .or(`owner_gw_id.eq.${rawId},owner_gw_id.eq.${gwId}`)
                 .gte('created_at', startOfMonth.toISOString());
             
             stats.contactsThisMonth = monthCount || 0;
@@ -495,13 +497,13 @@ const ContactsService = {
         }
         
         try {
-            const ownerField = idType === 'gw' ? 'owner_gw_id' : 'owner_temp_id';
-            const normalizedId = idType === 'gw' ? this.normalizeGwId(ownerId) : ownerId;
+            const rawId = ownerId.replace(/^GW/i, '');
+            const gwId = 'GW' + rawId;
             
             const { count } = await SupabaseClient.client
                 .from('contacts')
                 .select('*', { count: 'exact', head: true })
-                .eq(ownerField, normalizedId)
+                .or(`owner_gw_id.eq.${rawId},owner_gw_id.eq.${gwId}`)
                 .eq('messenger', messenger)
                 .ilike('contact', contact);
             
