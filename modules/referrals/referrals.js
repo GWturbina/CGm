@@ -66,7 +66,8 @@ function updateCardGiftReferralLink() {
             refId = refId.substring(2);
         }
         
-        const refLink = `https://cardgift.site/?ref=${refId}`;
+        // Используем текущий домен + корень с ref
+        const refLink = `${window.location.origin}/?ref=${refId}`;
         input.value = refLink;
         
         console.log('🔗 Referral link set:', refLink);
@@ -74,7 +75,7 @@ function updateCardGiftReferralLink() {
         // Короткая ссылка
         const shortEl = document.getElementById('shortReferralLink');
         if (shortEl) {
-            shortEl.textContent = `cardgift.site/?ref=${refId}`;
+            shortEl.textContent = `${window.location.host}/?ref=${refId}`;
         }
     } else {
         console.warn('⚠️ No user ID for referral link');
