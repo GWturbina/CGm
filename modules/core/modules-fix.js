@@ -1215,12 +1215,25 @@ function saveContacts() {
 
 // ============ REFERRAL LINK ============
 function updateReferralLink() {
-    var displayId = window.currentDisplayId || window.currentGwId || window.currentTempId;
+    // Приоритет: GW ID > Display ID > Temp ID
+    var displayId = window.currentGwId || window.currentDisplayId || window.currentTempId;
     var linkEl = document.getElementById('referralLinkDisplay');
+    var inputEl = document.getElementById('referralLinkInput');
     
-    if (linkEl && displayId) {
-        var link = window.location.origin + '/registration.html?ref=' + displayId;
-        linkEl.value = link;
+    if (displayId) {
+        // Убираем GW префикс для короткой ссылки
+        var refId = displayId;
+        if (refId.startsWith && refId.startsWith('GW')) {
+            refId = refId.substring(2);
+        }
+        
+        // Используем основной домен cardgift.site
+        var link = 'https://cardgift.site/?ref=' + refId;
+        
+        if (linkEl) linkEl.value = link;
+        if (inputEl) inputEl.value = link;
+        
+        console.log('🔗 Referral link updated:', link);
     }
     
     // Загружаем рефералов при открытии секции
