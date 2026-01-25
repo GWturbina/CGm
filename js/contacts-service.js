@@ -310,10 +310,13 @@ const ContactsService = {
         const idType = this.getIdType(ownerId);
         console.log('📋 ID type:', idType);
         
+        // Убираем GW префикс для единообразия
+        const rawId = ownerId.toString().replace(/^GW/i, '');
+        
         // Формируем данные для вставки (только существующие колонки)
         const insertData = {
             owner_temp_id: idType === 'temp' ? ownerId : null,
-            owner_gw_id: idType === 'gw' ? this.normalizeGwId(ownerId) : null,
+            owner_gw_id: idType === 'gw' ? rawId : null,
             name: contactData.name,
             messenger: contactData.messenger || contactData.platform,
             contact: contactData.contact,
@@ -584,19 +587,15 @@ const ContactsService = {
         }
         
         try {
-            let query = SupabaseClient.client
+            // Ищем по обоим вариантам ID
+            const rawId = userId.replace(/^GW/i, '');
+            const gwId = 'GW' + rawId;
+            
+            const { data, error } = await SupabaseClient.client
                 .from('users')
-                .select('referrer_gw_id, referrer_temp_id');
-            
-            if (idType === 'gw') {
-                query = query.eq('gw_id', this.normalizeGwId(userId));
-            } else if (idType === 'temp') {
-                query = query.eq('temp_id', userId);
-            } else {
-                return null;
-            }
-            
-            const { data, error } = await query.limit(1);
+                .select('referrer_gw_id, referrer_temp_id')
+                .or(`gw_id.eq.${rawId},gw_id.eq.${gwId}`)
+                .limit(1);
             
             if (error || !data || data.length === 0) return null;
             
