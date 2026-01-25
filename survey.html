@@ -385,40 +385,31 @@ class SurveyApp {
       console.log('📧 Saving contact. Owner GW ID:', ownerGwId);
       
       if (ownerGwId) {
-        // Проверяем дубликат в contacts
-        const { data: existingContact } = await supabaseClient
-          .from('contacts')
-          .select('id')
-          .eq('owner_gw_id', ownerGwId)
-          .eq('contact', contactData.contact)
-          .maybeSingle();
+        // Базовые данные контакта
+        const baseContactData = {
+          name: contactData.name,
+          messenger: contactData.type,
+          contact: contactData.contact,
+          push_consent: contactData.pushConsent || false,
+          source: 'survey',
+          source_details: JSON.stringify({
+            survey_id: surveyId,
+            survey_title: survey.title,
+            respondent_id: data.id,
+            answers_count: this.state.answers.length
+          }),
+          status: 'new'
+        };
         
-        if (!existingContact) {
-          // Только если контакта нет - добавляем
-          const contactToSave = {
-            owner_gw_id: ownerGwId,
-            name: contactData.name,
-            messenger: contactData.type,
-            contact: contactData.contact,
-            push_consent: contactData.pushConsent || false,
-            source: 'survey',
-            source_details: JSON.stringify({
-              survey_id: surveyId,
-              survey_title: survey.title,
-              respondent_id: data.id,
-              answers_count: this.state.answers.length
-            }),
-            status: 'new'
-          };
-          
-          try {
-            await supabaseClient.from('contacts').insert(contactToSave);
-            console.log('✅ Contact saved to owner:', ownerGwId);
-          } catch (contactError) {
-            console.warn('⚠️ Could not save contact:', contactError.message);
-          }
-        } else {
-          console.log('⚠️ Contact already exists for owner, skipping');
+        // 1. Сохраняем владельцу опроса
+        const ownerSaved = await this.saveContactToOwner(ownerGwId, baseContactData, 0);
+        
+        // 2. Распространяем вверх по рефералке (до OWNER)
+        if (ownerSaved) {
+          await this.distributeContactUpline(ownerGwId, {
+            ...baseContactData,
+            source: 'survey_viral' // Помечаем как вирусный контакт
+          });
         }
       }
       
@@ -471,6 +462,116 @@ class SurveyApp {
     const code = this.state.survey.short_code || this.state.survey.id;
     const base = CONFIG.BASE_URL + '/s/' + code;
     return `${base}?ref=${this.state.respondent.id}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // СПОНСОРСКАЯ СИСТЕМА - Распространение контактов вверх
+  // ═══════════════════════════════════════════════════════════
+  
+  // Сохранить контакт конкретному владельцу с дедупликацией
+  async saveContactToOwner(ownerId, contactData, level = 0) {
+    if (!ownerId) return false;
+    
+    // Нормализуем ID (ищем по обоим вариантам)
+    const rawId = ownerId.toString().replace(/^GW/i, '');
+    const gwId = 'GW' + rawId;
+    
+    try {
+      // Проверяем дубликат - ищем по обоим вариантам ID
+      const { data: existing } = await supabaseClient
+        .from('contacts')
+        .select('id')
+        .or(`owner_gw_id.eq.${rawId},owner_gw_id.eq.${gwId}`)
+        .eq('contact', contactData.contact)
+        .maybeSingle();
+      
+      if (existing) {
+        console.log(`⏭️ Level ${level}: Contact already exists for ${ownerId}`);
+        return false; // Дубликат - не сохраняем
+      }
+      
+      // Сохраняем контакт
+      const toSave = {
+        ...contactData,
+        owner_gw_id: rawId, // Сохраняем без GW префикса для единообразия
+        source_level: level
+      };
+      
+      await supabaseClient.from('contacts').insert(toSave);
+      console.log(`✅ Level ${level}: Contact saved to ${ownerId}`);
+      return true;
+      
+    } catch (e) {
+      console.warn(`⚠️ Level ${level}: Error saving to ${ownerId}:`, e.message);
+      return false;
+    }
+  }
+  
+  // Получить ID спонсора (реферера)
+  async getSponsorId(userId) {
+    if (!userId) return null;
+    
+    const rawId = userId.toString().replace(/^GW/i, '');
+    const gwId = 'GW' + rawId;
+    
+    try {
+      const { data, error } = await supabaseClient
+        .from('users')
+        .select('referrer_gw_id, referrer_temp_id')
+        .or(`gw_id.eq.${rawId},gw_id.eq.${gwId}`)
+        .limit(1);
+      
+      if (error || !data || data.length === 0) return null;
+      
+      return data[0].referrer_gw_id || data[0].referrer_temp_id;
+    } catch (e) {
+      console.warn('getSponsorId error:', e);
+      return null;
+    }
+  }
+  
+  // Распространить контакт вверх по рефералке до OWNER
+  async distributeContactUpline(startId, contactData, maxLevels = 10) {
+    let currentId = startId;
+    let level = 1;
+    const distributed = [];
+    
+    console.log('📤 Starting upline distribution from:', startId);
+    
+    while (currentId && level <= maxLevels) {
+      // Получаем спонсора
+      const sponsorId = await this.getSponsorId(currentId);
+      
+      if (!sponsorId || sponsorId === currentId) {
+        console.log(`🏁 Level ${level}: No more sponsors (reached top)`);
+        break;
+      }
+      
+      // Сохраняем контакт спонсору
+      const saved = await this.saveContactToOwner(sponsorId, {
+        ...contactData,
+        source_details: JSON.stringify({
+          ...JSON.parse(contactData.source_details || '{}'),
+          via_user: currentId,
+          upline_level: level
+        })
+      }, level);
+      
+      if (saved) {
+        distributed.push({ id: sponsorId, level });
+      } else {
+        // Если дубликат - прекращаем распространение вверх
+        // (если контакт уже есть у спонсора, то он уже есть и выше)
+        console.log(`🛑 Level ${level}: Duplicate found, stopping distribution`);
+        break;
+      }
+      
+      currentId = sponsorId;
+      level++;
+    }
+    
+    console.log(`✅ Contact distributed to ${distributed.length} sponsors:`, distributed.map(d => d.id).join(' → '));
+    return distributed;
   }
 
   showNotification(message, type = 'info') {
@@ -576,7 +677,7 @@ class SurveyApp {
     e.preventDefault();
     const form = e.target;
     const name = form.name.value.trim();
-    const contact = form.contact.value.trim();
+    let contact = form.contact.value.trim();
     const type = form.contact_type.value;
     const pushConsent = form.push_consent?.checked || false;
     
@@ -584,6 +685,59 @@ class SurveyApp {
       this.state.error = 'Заполните все поля';
       this.render();
       return;
+    }
+    
+    // Валидация телефона
+    if (type === 'phone' || type === 'whatsapp') {
+      // Убираем пробелы и скобки
+      contact = contact.replace(/[\s\(\)\-]/g, '');
+      
+      // Если начинается с 0 - добавляем +38
+      if (contact.startsWith('0')) {
+        contact = '+38' + contact;
+      }
+      // Если начинается с 38 без + - добавляем +
+      else if (contact.startsWith('38') && !contact.startsWith('+')) {
+        contact = '+' + contact;
+      }
+      // Если начинается с 8 (российский формат) - конвертируем в +7
+      else if (contact.startsWith('8') && contact.length === 11) {
+        contact = '+7' + contact.substring(1);
+      }
+      
+      // Проверяем формат: должен начинаться с + и содержать 12-13 цифр
+      const phoneRegex = /^\+\d{10,13}$/;
+      if (!phoneRegex.test(contact)) {
+        this.state.error = 'Неверный формат телефона. Используйте формат +380XXXXXXXXX';
+        this.render();
+        return;
+      }
+    }
+    
+    // Валидация email
+    if (type === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(contact)) {
+        this.state.error = 'Неверный формат email';
+        this.render();
+        return;
+      }
+    }
+    
+    // Валидация telegram
+    if (type === 'telegram') {
+      // Убираем @ в начале если есть, потом добавим
+      if (contact.startsWith('@')) {
+        contact = contact.substring(1);
+      }
+      // Проверяем что это валидный username
+      if (contact.length < 3) {
+        this.state.error = 'Telegram username должен быть минимум 3 символа';
+        this.render();
+        return;
+      }
+      // Добавляем @ обратно
+      contact = '@' + contact;
     }
     
     this.state.screen = 'saving';
