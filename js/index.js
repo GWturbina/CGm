@@ -204,8 +204,7 @@ function checkReferralParam() {
         // Добавляем ref ко всем ссылкам на странице
         addRefToLinks(refId);
         
-        // Показываем уведомление о реферале (не перенаправляем!)
-        showReferralBanner(refId);
+        // Баннер не показываем - ref уже добавлен ко всем ссылкам
     } else {
         // Проверяем есть ли сохранённый ref
         const savedRef = localStorage.getItem('referralId');
