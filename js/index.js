@@ -201,9 +201,32 @@ function checkReferralParam() {
         localStorage.setItem('referralId', refId);
         console.log('📋 Referral ID saved:', refId);
         
+        // Добавляем ref ко всем ссылкам на странице
+        addRefToLinks(refId);
+        
         // Показываем уведомление о реферале (не перенаправляем!)
         showReferralBanner(refId);
+    } else {
+        // Проверяем есть ли сохранённый ref
+        const savedRef = localStorage.getItem('referralId');
+        if (savedRef) {
+            addRefToLinks(savedRef);
+        }
     }
+}
+
+// Добавляем ref параметр ко всем внутренним ссылкам
+function addRefToLinks(refId) {
+    const links = document.querySelectorAll('a[href]');
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        // Только для внутренних ссылок на HTML страницы
+        if (href && !href.startsWith('http') && !href.startsWith('#') && href.endsWith('.html')) {
+            const separator = href.includes('?') ? '&' : '?';
+            link.setAttribute('href', `${href}${separator}ref=${refId}`);
+        }
+    });
+    console.log('🔗 Added ref to all links:', refId);
 }
 
 // Показываем баннер что пользователь пришёл по реферальной ссылке
