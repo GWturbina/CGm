@@ -1,176 +1,282 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
+/* =====================================================
+   CARDGIFT - INDEX PAGE JAVASCRIPT
+   Скрипты для главной страницы
+   ===================================================== */
 
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#FFD700">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CardGift">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+// ===== ПЕРЕМЕННЫЕ =====
+let deferredPrompt;
+// currentLanguage уже объявлена в common.js
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="pageTitle">CardGift - Цифровые открытки</title>
+// ===== ПЕРЕВОДЫ ДЛЯ INDEX =====
+const indexTranslations = {
+    en: {
+        pageTitle: "CardGift - Digital Greeting Cards",
+        tagline: "Create golden greeting cards for free!",
+        heroTitle: "Digital Cards for Every Occasion",
+        heroSubtitle: "Send beautiful personalized greeting cards powered by blockchain technology",
+        createCardBtn: "🎨 Create Card",
+        registerBtn: "📝 Register",
+        dashboardBtn: "📊 Dashboard",
+        featuresTitle: "Why Choose CardGift?",
+        feature1Title: "Card Creation",
+        feature1Desc: "Create beautiful digital greeting cards with photos, videos, text and effects",
+        feature2Title: "Web3 Powered",
+        feature2Desc: "Secure blockchain technology ensures your cards are unique",
+        feature3Title: "Share Anywhere",
+        feature3Desc: "Send via WhatsApp, Telegram, Email or any social platform",
+        feature4Title: "Video Support",
+        feature4Desc: "Add YouTube, TikTok or Instagram videos to your cards",
+        howItWorksTitle: "How It Works",
+        step1Title: "Choose Template",
+        step1Desc: "Select from our beautiful collection",
+        step2Title: "Customize",
+        step2Desc: "Add your message, photos or videos",
+        step3Title: "Share",
+        step3Desc: "Send to your loved ones instantly",
+        statCardsLabel: "Cards Created",
+        statUsersLabel: "Happy Users",
+        statCountriesLabel: "Countries",
+        ctaTitle: "Ready to Create Your First Card?",
+        ctaDesc: "Join thousands of users who are already sending amazing digital cards",
+        ctaBtn: "🚀 Get Started Free",
+        footerDesc: "Web3 Digital Greeting Cards Platform",
+        footerCreate: "Create Card",
+        footerRegister: "Register",
+        footerDemo: "Demo Card",
+        footerFollow: "Follow us:",
+        footerRights: "All rights reserved.",
+        footerPowered: "Powered by opBNB Blockchain"
+    },
+    ru: {
+        pageTitle: "CardGift - Цифровые открытки",
+        tagline: "Создавайте золотые поздравительные открытки бесплатно!",
+        heroTitle: "Цифровые открытки на любой случай",
+        heroSubtitle: "Отправляйте красивые персональные открытки с блокчейн технологией",
+        createCardBtn: "🎨 Создать карту",
+        registerBtn: "📝 Регистрация",
+        dashboardBtn: "📊 Кабинет",
+        featuresTitle: "Почему CardGift?",
+        feature1Title: "Создание карт",
+        feature1Desc: "Создавайте красивые цифровые открытки с фото, видео и эффектами",
+        feature2Title: "Web3 технология",
+        feature2Desc: "Блокчейн технология гарантирует уникальность ваших открыток",
+        feature3Title: "Делитесь везде",
+        feature3Desc: "Отправляйте через WhatsApp, Telegram, Email или соцсети",
+        feature4Title: "Поддержка видео",
+        feature4Desc: "Добавляйте видео с YouTube, TikTok или Instagram",
+        howItWorksTitle: "Как это работает",
+        step1Title: "Выберите шаблон",
+        step1Desc: "Выберите из нашей коллекции",
+        step2Title: "Настройте",
+        step2Desc: "Добавьте сообщение, фото или видео",
+        step3Title: "Поделитесь",
+        step3Desc: "Отправьте близким мгновенно",
+        statCardsLabel: "Создано открыток",
+        statUsersLabel: "Счастливых пользователей",
+        statCountriesLabel: "Стран",
+        ctaTitle: "Готовы создать первую открытку?",
+        ctaDesc: "Присоединяйтесь к тысячам пользователей",
+        ctaBtn: "🚀 Начать бесплатно",
+        footerDesc: "Платформа цифровых открыток Web3",
+        footerCreate: "Создать карту",
+        footerRegister: "Регистрация",
+        footerDemo: "Демо карта",
+        footerFollow: "Мы в соцсетях:",
+        footerRights: "Все права защищены.",
+        footerPowered: "Работает на блокчейне opBNB"
+    },
+    ua: {
+        pageTitle: "CardGift - Цифрові листівки",
+        tagline: "Створюйте золоті привітальні листівки безкоштовно!",
+        heroTitle: "Цифрові листівки на будь-який випадок",
+        heroSubtitle: "Надсилайте красиві персональні листівки з блокчейн технологією",
+        createCardBtn: "🎨 Створити карту",
+        registerBtn: "📝 Реєстрація",
+        dashboardBtn: "📊 Кабінет",
+        featuresTitle: "Чому CardGift?",
+        feature1Title: "Створення карт",
+        feature1Desc: "Створюйте красиві цифрові листівки з фото, відео та ефектами",
+        feature2Title: "Web3 технологія",
+        feature2Desc: "Блокчейн технологія гарантує унікальність ваших листівок",
+        feature3Title: "Діліться скрізь",
+        feature3Desc: "Надсилайте через WhatsApp, Telegram, Email або соцмережі",
+        feature4Title: "Підтримка відео",
+        feature4Desc: "Додавайте відео з YouTube, TikTok або Instagram",
+        howItWorksTitle: "Як це працює",
+        step1Title: "Оберіть шаблон",
+        step1Desc: "Оберіть з нашої колекції",
+        step2Title: "Налаштуйте",
+        step2Desc: "Додайте повідомлення, фото або відео",
+        step3Title: "Поділіться",
+        step3Desc: "Надішліть близьким миттєво",
+        statCardsLabel: "Створено листівок",
+        statUsersLabel: "Щасливих користувачів",
+        statCountriesLabel: "Країн",
+        ctaTitle: "Готові створити першу листівку?",
+        ctaDesc: "Приєднуйтесь до тисяч користувачів",
+        ctaBtn: "🚀 Почати безкоштовно",
+        footerDesc: "Платформа цифрових листівок Web3",
+        footerCreate: "Створити карту",
+        footerRegister: "Реєстрація",
+        footerDemo: "Демо карта",
+        footerFollow: "Ми в соцмережах:",
+        footerRights: "Всі права захищені.",
+        footerPowered: "Працює на блокчейні opBNB"
+    }
+};
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+document.addEventListener('DOMContentLoaded', function() {
+    initializeIndexPage();
+});
+
+function initializeIndexPage() {
+    // Определяем язык
+    const savedLang = localStorage.getItem('selectedLanguage') || detectLanguage();
+    currentLanguage = savedLang;
+    switchLanguage(savedLang);
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+    // Проверяем реферальный параметр
+    checkReferralParam();
     
-    <meta property="og:title" content="CardGift - Digital Greeting Cards">
-    <meta property="og:description" content="Create stunning digital greeting cards">
-    <meta property="og:type" content="website">
+    // Регистрируем Service Worker
+    registerServiceWorker();
     
-    <link rel="stylesheet" href="/css/common.css">
-    <link rel="stylesheet" href="/css/index.css">
-</head>
-<body>
-    <!-- LANGUAGE SWITCHER -->
-    <div class="language-switcher">
-        <button class="lang-btn" onclick="switchLanguage('en')" id="langEn">EN</button>
-        <button class="lang-btn active" onclick="switchLanguage('ru')" id="langRu">RU</button>
-        <button class="lang-btn" onclick="switchLanguage('ua')" id="langUa">UA</button>
-    </div>
+    console.log('✅ Index page initialized');
+}
 
-    <!-- PARTICLES -->
-    <div class="particles" id="particles"></div>
+// ===== ОПРЕДЕЛЕНИЕ ЯЗЫКА =====
+function detectLanguage() {
+    const browserLang = navigator.language || navigator.userLanguage || 'en';
+    if (browserLang.startsWith('uk')) return 'ua';
+    if (browserLang.startsWith('ru')) return 'ru';
+    return 'en';
+}
 
-    <!-- MAIN -->
-    <div class="container">
-        <!-- HEADER -->
-        <header class="header">
-            <div class="logo-box">
-                <span class="logo-icon">🎁</span>
-                <span class="logo-text">CardGift</span>
-            </div>
-            <p class="tagline" id="tagline">Создавайте золотые поздравительные открытки бесплатно!</p>
-        </header>
-
-        <!-- HERO -->
-        <section class="hero">
-            <h1 class="hero-title" id="heroTitle">Цифровые открытки на любой случай</h1>
-            <p class="hero-subtitle" id="heroSubtitle">Отправляйте красивые персональные открытки с блокчейн технологией</p>
-            
-            <div class="cta-buttons">
-                <a href="generator.html" class="btn btn-primary" id="createCardBtn">🎨 Создать карту</a>
-                <a href="registration.html" class="btn btn-outline" id="registerBtn">📝 Регистрация</a>
-                <a href="dashboard.html" class="btn btn-outline" id="dashboardBtn">📊 Кабинет</a>
-            </div>
-        </section>
-
-        <!-- FEATURES -->
-        <section class="features">
-            <h2 class="section-title" id="featuresTitle">Почему CardGift?</h2>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3 class="feature-title" id="feature1Title">Создание карт</h3>
-                    <p class="feature-desc" id="feature1Desc">Создавайте красивые цифровые открытки с фото, видео и эффектами</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🔗</div>
-                    <h3 class="feature-title" id="feature2Title">Web3 технология</h3>
-                    <p class="feature-desc" id="feature2Desc">Блокчейн технология гарантирует уникальность ваших открыток</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3 class="feature-title" id="feature3Title">Делитесь везде</h3>
-                    <p class="feature-desc" id="feature3Desc">Отправляйте через WhatsApp, Telegram, Email или соцсети</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🎬</div>
-                    <h3 class="feature-title" id="feature4Title">Поддержка видео</h3>
-                    <p class="feature-desc" id="feature4Desc">Добавляйте видео с YouTube, TikTok или Instagram</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- HOW IT WORKS -->
-        <section class="how-it-works">
-            <h2 class="section-title" id="howItWorksTitle">Как это работает</h2>
-            
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3 id="step1Title">Выберите шаблон</h3>
-                    <p id="step1Desc">Выберите из нашей коллекции</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3 id="step2Title">Настройте</h3>
-                    <p id="step2Desc">Добавьте сообщение, фото или видео</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3 id="step3Title">Поделитесь</h3>
-                    <p id="step3Desc">Отправьте близким мгновенно</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- STATS -->
-        <section class="stats">
-            <div class="stat-item">
-                <div class="stat-number">10,000+</div>
-                <div class="stat-label" id="statCardsLabel">Создано открыток</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">5,000+</div>
-                <div class="stat-label" id="statUsersLabel">Счастливых пользователей</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">50+</div>
-                <div class="stat-label" id="statCountriesLabel">Стран</div>
-            </div>
-        </section>
-
-        <!-- CTA -->
-        <section class="cta-section">
-            <h2 id="ctaTitle">Готовы создать первую открытку?</h2>
-            <p id="ctaDesc">Присоединяйтесь к тысячам пользователей</p>
-            <a href="generator.html" class="btn btn-primary btn-large" id="ctaBtn">🚀 Начать бесплатно</a>
-        </section>
-
-        <!-- FOOTER -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <div class="logo-small">🎁 CardGift</div>
-                    <p id="footerDesc">Платформа цифровых открыток Web3</p>
-                </div>
-                
-                <div class="footer-links">
-                    <a href="generator.html" id="footerCreate">Создать карту</a>
-                    <a href="registration.html" id="footerRegister">Регистрация</a>
-                    <a href="card-viewer.html" id="footerDemo">Демо карта</a>
-                </div>
-                
-                <div class="footer-social">
-                    <span id="footerFollow">Мы в соцсетях:</span>
-                    <a href="#" class="social-link">📘</a>
-                    <a href="#" class="social-link">🐦</a>
-                    <a href="#" class="social-link">📸</a>
-                    <a href="#" class="social-link">💬</a>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2024 CardGift. <span id="footerRights">Все права защищены.</span></p>
-                <p id="footerPowered">Работает на блокчейне opBNB</p>
-            </div>
-        </footer>
-    </div>
-
-    <script src="/js/common.js"></script>
-    <script src="/js/id-linking-service.js?v=3"></script>
-    <script src="/js/index.js"></script>
+// ===== ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА =====
+function switchLanguage(lang) {
+    if (!['en', 'ru', 'ua'].includes(lang)) lang = 'en';
     
-    <!-- PWA Auto Update -->
-    <script src="/js/pwa-updater.js"></script>
-</body>
-</html>
+    currentLanguage = lang;
+    localStorage.setItem('selectedLanguage', lang);
+    
+    // Обновляем кнопки языка
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    const activeBtn = document.getElementById('lang' + lang.charAt(0).toUpperCase() + lang.slice(1));
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    // Обновляем тексты
+    updateIndexTexts();
+    
+    // Обновляем атрибут lang
+    document.documentElement.lang = lang === 'ua' ? 'uk' : lang;
+}
+
+// ===== ОБНОВЛЕНИЕ ТЕКСТОВ =====
+function updateIndexTexts() {
+    const t = indexTranslations[currentLanguage];
+    if (!t) return;
+    
+    Object.keys(t).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+            element.textContent = t[key];
+        }
+    });
+    
+    if (t.pageTitle) {
+        document.title = t.pageTitle;
+    }
+}
+
+// ===== РЕФЕРАЛЬНАЯ СИСТЕМА =====
+function checkReferralParam() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refId = urlParams.get('ref');
+    
+    if (refId) {
+        // Сохраняем ref для последующей регистрации
+        localStorage.setItem('referralId', refId);
+        console.log('📋 Referral ID saved:', refId);
+        
+        // Добавляем ref ко всем ссылкам на странице
+        addRefToLinks(refId);
+        
+        // Показываем уведомление о реферале (не перенаправляем!)
+        showReferralBanner(refId);
+    } else {
+        // Проверяем есть ли сохранённый ref
+        const savedRef = localStorage.getItem('referralId');
+        if (savedRef) {
+            addRefToLinks(savedRef);
+        }
+    }
+}
+
+// Добавляем ref параметр ко всем внутренним ссылкам
+function addRefToLinks(refId) {
+    const links = document.querySelectorAll('a[href]');
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        // Только для внутренних ссылок на HTML страницы
+        if (href && !href.startsWith('http') && !href.startsWith('#') && href.endsWith('.html')) {
+            const separator = href.includes('?') ? '&' : '?';
+            link.setAttribute('href', `${href}${separator}ref=${refId}`);
+        }
+    });
+    console.log('🔗 Added ref to all links:', refId);
+}
+
+// Показываем баннер что пользователь пришёл по реферальной ссылке
+function showReferralBanner(refId) {
+    // Проверяем не показывали ли уже
+    if (document.getElementById('referralBanner')) return;
+    
+    const banner = document.createElement('div');
+    banner.id = 'referralBanner';
+    banner.style.cssText = `
+        position: fixed;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 90%;
+    `;
+    banner.innerHTML = `
+        <span>🎁 Вас пригласил партнёр #${refId}</span>
+        <a href="registration.html?ref=${refId}" style="background: white; color: #2E7D32; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: 600;">Регистрация</a>
+        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">✕</button>
+    `;
+    document.body.appendChild(banner);
+    
+    // Автоскрытие через 15 секунд
+    setTimeout(() => {
+        if (banner.parentElement) banner.remove();
+    }, 15000);
+}
+
+// ===== SERVICE WORKER =====
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('✅ Service Worker registered'))
+            .catch(err => console.warn('⚠️ SW failed:', err));
+    }
+}
+
+// ===== ЭКСПОРТ =====
+window.switchLanguage = switchLanguage;
+
+console.log('✅ Index JS loaded');
