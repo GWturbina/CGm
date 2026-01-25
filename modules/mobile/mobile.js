@@ -482,12 +482,12 @@ function updateReferralLink() {
         }
     }
     
-    // Получаем ID для реферальной ссылки (v4.0)
-    let displayId = window.currentDisplayId 
-                 || window.currentGwId 
+    // Получаем ID для реферальной ссылки - ПРИОРИТЕТ GW ID!
+    let displayId = window.currentGwId 
+                 || window.currentDisplayId 
                  || window.currentCgId
-                 || localStorage.getItem('cardgift_display_id')
                  || localStorage.getItem('cardgift_gw_id')
+                 || localStorage.getItem('cardgift_display_id')
                  || localStorage.getItem('cardgift_cg_id');
     
     // Owner данные
@@ -518,10 +518,11 @@ function updateReferralLink() {
             if (refId.startsWith('GW')) refId = refId.substring(2);
             if (refId.startsWith('CG_TEMP_')) refId = refId.substring(8);
             
-            const domain = window.location.origin;
+            // ✅ Используем основной домен cardgift.site
+            const domain = 'https://cardgift.site';
             
-            // Полная ссылка
-            input.value = `${domain}/registration.html?ref=${refId}`;
+            // Полная ссылка (на корень сайта)
+            input.value = `${domain}/?ref=${refId}`;
             
             // ═══════════════════════════════════════════════════════════
             // ✅ НОВОЕ: Короткая ссылка
