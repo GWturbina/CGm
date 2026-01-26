@@ -430,14 +430,14 @@ const AIStudio = {
     async checkAccess() {
         console.log('🔐 Checking access...');
         
-        // Нет кошелька - нет доступа
+        // Нет кошелька
         if (!this.state.walletAddress) {
             console.log('❌ No wallet');
             this.state.hasAccess = false;
             return false;
         }
         
-        // DEV WALLET - безлимит
+        // DEV WALLET
         if (this.DEV_WALLETS.includes(this.state.walletAddress.toLowerCase())) {
             console.log('✅ Dev wallet - unlimited');
             this.state.hasAccess = true;
@@ -447,53 +447,68 @@ const AIStudio = {
             return true;
         }
         
-        // ═══════════════════════════════════════════════════════════
-        // НОВАЯ ЛОГИКА v2.0: Кошелёк подключен = доступ есть
-        // Текст бесплатно, картинки/голос по кредитам
-        // ═══════════════════════════════════════════════════════════
-        
-        console.log('✅ Wallet connected - access granted');
-        this.state.hasAccess = true;
-        this.state.accessType = 'credits';
-        
-        // Загружаем кредиты с сервера
-        await this.loadCreditsFromServer();
-        
-        // Устанавливаем лимиты на основе кредитов
-        this.state.limits.text.max = 9999;  // Текст бесплатно
-        this.state.limits.text.used = 0;
-        
-        return true;
-    },
-    
-    // Загрузка кредитов с сервера
-    async loadCreditsFromServer() {
-        try {
-            const response = await fetch(`/api/ai/credits?action=get&wallet=${this.state.walletAddress}`);
-            const data = await response.json();
-            
-            if (data) {
-                this.state.serverCredits = data;
-                
-                // Обновляем лимиты из серверных данных
-                if (data.text) {
-                    this.state.limits.text.used = data.text.used || 0;
-                    this.state.limits.text.max = data.text.limit || 9999;
-                }
-                if (data.image) {
-                    this.state.limits.image.used = data.image.used || 0;
-                    this.state.limits.image.max = data.image.limit || 3;
-                }
-                if (data.voice) {
-                    this.state.limits.voice.used = data.voice.used || 0;
-                    this.state.limits.voice.max = data.voice.limit || 3;
-                }
-                
-                console.log('📊 Credits loaded:', data);
-            }
-        } catch (e) {
-            console.warn('Failed to load credits:', e);
+        // Нет регистрации - но ТЕКСТ доступен!
+        if (!this.state.cgId) {
+            console.log('⚠️ No CG_ID - text only access');
+            this.state.hasAccess = true;
+            this.state.accessType = 'text-only';
+            this.state.limits.text.max = 9999;
+            this.state.limits.text.used = 0;
+            this.state.limits.image.max = 0;
+            this.state.limits.voice.max = 0;
+            return true;
         }
+        
+        // Level 7+ - полный доступ (бессрочно)
+        if (this.state.level >= this.config.MIN_LEVEL_FULL) {
+            console.log('✅ Full access (Level 7+)');
+            this.state.hasAccess = true;
+            this.state.accessType = 'full';
+            this.setLimitsForLevel(this.state.level);
+            return true;
+        }
+        
+        // Level 4-6 - триал 30 дней
+        if (this.state.level >= this.config.MIN_LEVEL_TRIAL) {
+            const trial = await this.checkTrialPeriod();
+            if (trial.active) {
+                console.log('✅ Trial access (Level 4-6), days left:', trial.daysLeft);
+                this.state.hasAccess = true;
+                this.state.accessType = 'trial';
+                this.state.hasTrial = true;
+                this.state.trialEndsAt = trial.endsAt;
+                this.setLimitsForLevel(this.state.level);
+                this.showTrialBanner(trial.daysLeft);
+                return true;
+            } else {
+                console.log('❌ Trial expired - need Level 7+');
+                this.state.hasAccess = false;
+                this.showTrialExpiredMessage();
+                return false;
+            }
+        }
+        
+        // Level 1-3 - ограниченный доступ (3 генерации навсегда)
+        if (this.state.level >= this.config.MIN_LEVEL_LIMITED) {
+            console.log('✅ Limited access (Level 1-3) - 3 generations lifetime');
+            this.state.hasAccess = true;
+            this.state.accessType = 'limited';
+            this.state.isLimitedAccess = true;
+            await this.loadLifetimeUsage();
+            this.setLimitsForLevel(this.state.level);
+            this.showLimitedBanner();
+            return true;
+        }
+        
+        // Level 0 - ТЕКСТ бесплатно (Groq), остальное нет
+        console.log('✅ Level 0 - text only access (Groq free)');
+        this.state.hasAccess = true;
+        this.state.accessType = 'text-only';
+        this.state.limits.text.max = 9999;  // Текст безлимит
+        this.state.limits.text.used = 0;
+        this.state.limits.image.max = 0;    // Картинки нет
+        this.state.limits.voice.max = 0;    // Голос нет
+        return true;
     },
     
     // ═══════════════════════════════════════════════════════════
@@ -616,14 +631,8 @@ const AIStudio = {
         }
     },
     
-    async useCredits(amount = 1, type = 'image') {
-        // DEV - безлимит
-        if (this.DEV_WALLETS.includes(this.state.walletAddress?.toLowerCase())) {
-            return { success: true };
-        }
-        
-        // Текст бесплатно - просто считаем
-        if (type === 'text') {
+    async useCredits(amount = 1, type = 'generation') {
+        if (this.state.credits.isUnlimited) {
             return { success: true };
         }
         
@@ -633,54 +642,30 @@ const AIStudio = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     wallet: this.state.walletAddress,
-                    type: type  // 'image' или 'voice'
+                    amount,
+                    type
                 })
             });
             
             const data = await response.json();
             
-            if (!response.ok || !data.success) {
-                console.error('Credits error:', data);
+            if (!data.success) {
                 return { success: false, error: data.error };
             }
             
             // Обновляем локальное состояние
-            if (data.used !== undefined) {
-                this.state.limits[type].used = data.used;
-            }
-            if (data.remaining !== undefined) {
-                this.state.limits[type].max = data.used + data.remaining;
+            if (data.usedFromBalance) {
+                this.state.credits.balance = data.remaining;
+            } else {
+                this.state.credits.usedToday = data.usedToday;
             }
             
-            this.updateLimitsDisplay();
-            return { success: true, remaining: data.remaining };
+            this.updateCreditsDisplay();
+            return { success: true };
             
         } catch (error) {
             console.error('Use credits error:', error);
             return { success: false, error: error.message };
-        }
-    },
-    
-    // Проверка - можно ли использовать кредиты для типа
-    async canUseCreditsForType(type) {
-        // DEV - безлимит
-        if (this.DEV_WALLETS.includes(this.state.walletAddress?.toLowerCase())) {
-            return true;
-        }
-        
-        // Текст всегда бесплатно
-        if (type === 'text') {
-            return true;
-        }
-        
-        try {
-            const response = await fetch(`/api/ai/credits?action=check&wallet=${this.state.walletAddress}&type=${type}`);
-            const data = await response.json();
-            return data.canUse === true;
-        } catch (e) {
-            console.warn('Check credits error:', e);
-            // В случае ошибки - разрешаем (оптимистично)
-            return true;
         }
     },
     
@@ -690,11 +675,10 @@ const AIStudio = {
             return true;
         }
         
-        // Проверяем локальные лимиты
-        const imageRemaining = (this.state.limits.image.max || 3) - (this.state.limits.image.used || 0);
-        const voiceRemaining = (this.state.limits.voice.max || 3) - (this.state.limits.voice.used || 0);
+        if (this.state.credits.isUnlimited) return true;
         
-        return imageRemaining > 0 || voiceRemaining > 0;
+        const remainingDaily = this.state.credits.dailyLimit - this.state.credits.usedToday;
+        return remainingDaily > 0 || this.state.credits.balance > 0;
     },
     
     getRemainingCredits() {
@@ -703,10 +687,11 @@ const AIStudio = {
             return '∞';
         }
         
-        const imageRemaining = Math.max(0, (this.state.limits.image.max || 3) - (this.state.limits.image.used || 0));
-        const voiceRemaining = Math.max(0, (this.state.limits.voice.max || 3) - (this.state.limits.voice.used || 0));
+        if (this.state.credits.isUnlimited) return '∞';
         
-        return `🎨${imageRemaining} 🎤${voiceRemaining}`;
+        const remainingDaily = this.state.credits.dailyLimit - this.state.credits.usedToday;
+        const total = remainingDaily + this.state.credits.balance;
+        return total;
     },
     
     updateCreditsDisplay() {
@@ -720,9 +705,13 @@ const AIStudio = {
             return;
         }
         
-        const remaining = this.getRemainingCredits();
-        el.innerHTML = `💳 ${remaining}`;
-        el.title = `Картинки: ${this.state.limits.image.max - this.state.limits.image.used}, Голос: ${this.state.limits.voice.max - this.state.limits.voice.used}`;
+        if (this.state.credits.isUnlimited) {
+            el.innerHTML = '💎 ∞';
+            el.title = 'Безлимитный доступ';
+        } else {
+            const remaining = this.getRemainingCredits();
+            el.innerHTML = `💳 ${remaining}`;
+            el.title = `Дневной лимит: ${this.state.credits.dailyLimit}, Баланс: ${this.state.credits.balance}`;
         }
     },
     
@@ -824,6 +813,9 @@ const AIStudio = {
     
     canGenerate(type) {
         if (!this.state.hasAccess) return false;
+        
+        // ТЕКСТ всегда бесплатно (Groq)
+        if (type === 'text') return true;
         
         // Авторы - всегда могут
         if (this.DEV_WALLETS.includes(this.state.walletAddress?.toLowerCase())) {
@@ -942,7 +934,10 @@ const AIStudio = {
             return;
         }
         
-        // Текст всегда бесплатно - не проверяем лимиты!
+        if (!this.canGenerate('text')) {
+            this.showNotification(this.t('limitExceeded'), 'error');
+            return;
+        }
         
         const style = document.getElementById('textStyle')?.value || 'greeting';
         const prompt = document.getElementById('textPrompt')?.value?.trim();
@@ -957,7 +952,7 @@ const AIStudio = {
         this.showLoading('✨ Генерация текста...');
         
         try {
-            // Вызов через серверный API (ключ Groq на сервере!)
+            // Вызов через серверный API (ключ на сервере!)
             const response = await fetch('/api/ai/text', {
                 method: 'POST',
                 headers: {
@@ -1001,10 +996,14 @@ async generateImage() {
         return;
     }
     
-    // Проверяем кредиты через API
-    const canUse = await this.canUseCreditsForType('image');
-    if (!canUse) {
-        this.showNotification('🎨 Лимит картинок исчерпан (3 бесплатно)', 'error');
+    if (!this.canGenerate('image')) {
+        this.showNotification(this.t('limitExceeded'), 'error');
+        return;
+    }
+    
+    // Проверяем кредиты
+    if (!this.canUseCredits()) {
+        this.showNotification('💳 Недостаточно кредитов', 'error');
         return;
     }
     
@@ -1046,16 +1045,15 @@ async generateImage() {
             throw new Error('Изображение не получено');
         }
         
-        // Списываем кредит ПОСЛЕ успешной генерации
-        const creditResult = await this.useCredits(1, 'image');
-        if (creditResult.remaining !== undefined) {
-            console.log(`🎨 Осталось картинок: ${creditResult.remaining}`);
-        }
+        // Списываем кредит
+        await this.useCredits(1, 'image');
         
         this.showImageResult(data.imageUrl);
         this.showNotification('✅ Изображение сгенерировано!', 'success');
         
+        this.state.limits.image.used++;
         this.updateLimitsDisplay();
+        this.saveTodayUsage();
         
     } catch (error) {
         console.error('Image error:', error);
@@ -1201,10 +1199,14 @@ async generateVoice() {
         return;
     }
     
-    // Проверяем кредиты через API
-    const canUse = await this.canUseCreditsForType('voice');
-    if (!canUse) {
-        this.showNotification('🎤 Лимит голоса исчерпан (3 бесплатно)', 'error');
+    if (!this.canGenerate('voice')) {
+        this.showNotification(this.t('limitExceeded'), 'error');
+        return;
+    }
+    
+    // Проверяем кредиты
+    if (!this.canUseCredits()) {
+        this.showNotification('💳 Недостаточно кредитов', 'error');
         return;
     }
     
@@ -1256,11 +1258,8 @@ async generateVoice() {
             throw new Error(data.error || 'Ошибка генерации голоса');
         }
         
-        // Списываем кредит ПОСЛЕ успешной генерации
-        const creditResult = await this.useCredits(1, 'voice');
-        if (creditResult.remaining !== undefined) {
-            console.log(`🎤 Осталось голоса: ${creditResult.remaining}`);
-        }
+        // Списываем кредит
+        await this.useCredits(1, 'voice');
         
         // Конвертируем base64 в аудио URL
         const audioBlob = new Blob(
@@ -1272,7 +1271,9 @@ async generateVoice() {
         this.showVoiceResult(audioUrl);
         this.showNotification('✅ Голос сгенерирован!', 'success');
         
+        this.state.limits.voice.used++;
         this.updateLimitsDisplay();
+        this.saveTodayUsage();
         
     } catch (error) {
         console.error('Voice error:', error);
