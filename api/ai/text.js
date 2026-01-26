@@ -67,7 +67,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'llama-3.1-70b-versatile',  // Llama 3.1 70B - очень умная и бесплатная!
+                model: 'llama-3.3-70b-versatile',  // Llama 3.3 70B - новая версия!
                 messages: [
                     { role: 'system', content: systemMessage },
                     { role: 'user', content: prompt }
@@ -106,7 +106,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
             success: true,
             text: text.trim(),
-            model: 'llama-3.1-70b',
+            model: 'llama-3.3-70b',
             provider: 'groq',
             usage: data.usage
         });
