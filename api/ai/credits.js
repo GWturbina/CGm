@@ -42,8 +42,10 @@ export default async function handler(req, res) {
                 return await initCredits(req, res);
             case 'add':
                 return await addCredits(req, res);
+            case 'list':
+                return await listUsers(req, res);  // ← ДОБАВЛЕНО
             default:
-                return res.status(400).json({ error: 'Invalid action. Use: get, check, use, init, add' });
+                return res.status(400).json({ error: 'Invalid action. Use: get, check, use, init, add, list' });
         }
     } catch (error) {
         console.error('Credits API error:', error);
@@ -326,32 +328,55 @@ async function addCredits(req, res) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// СПИСОК ПОЛЬЗОВАТЕЛЕЙ (для админки)
+// СПИСОК ПОЛЬЗОВАТЕЛЕЙ (для админки) - ДОБАВЛЕНО
 // ═══════════════════════════════════════════════════════════
 
 async function listUsers(req, res) {
     const { adminWallet } = req.query;
     
+    // Проверяем что это админ
     if (!adminWallet || !DEV_WALLETS.includes(adminWallet.toLowerCase())) {
         return res.status(403).json({ error: 'Admin access required' });
     }
     
-    const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/ai_credits?order=created_at.desc&limit=100`,
-        {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`
+    try {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/ai_credits?order=created_at.desc&limit=100`,
+            {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
             }
-        }
-    );
-    
-    const data = await response.json();
-    
-    return res.status(200).json({ 
-        success: true, 
-        users: data || [] 
-    });
+        );
+        
+        const data = await response.json();
+        
+        // Преобразуем данные для совместимости с админкой
+        const users = (data || []).map(record => ({
+            wallet_address: record.wallet_address,
+            credits_balance: record.extra_credits || 0,
+            credits_used_today: (record.image_used || 0) + (record.voice_used || 0),
+            daily_limit: FREE_LIMITS.image + FREE_LIMITS.voice,
+            total_earned: record.extra_credits || 0,
+            is_blocked: false,
+            last_reset_date: record.updated_at?.split('T')[0] || null,
+            // Дополнительно
+            text_used: record.text_used || 0,
+            image_used: record.image_used || 0,
+            voice_used: record.voice_used || 0,
+            extra_credits: record.extra_credits || 0
+        }));
+        
+        return res.status(200).json({ 
+            success: true, 
+            users: users
+        });
+        
+    } catch (error) {
+        console.error('List users error:', error);
+        return res.status(500).json({ error: error.message });
+    }
 }
 
 // ═══════════════════════════════════════════════════════════
