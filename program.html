@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>21-дневная программа | CardGift</title>
+    
+    <!-- Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        /* ═══ HEADER ═══ */
+        .program-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .program-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .program-header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        /* ═══ STATS BAR ═══ */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* ═══ MAIN ═══ */
+        .program-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        /* ═══ PROGRESS OVERVIEW ═══ */
+        .progress-overview {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .progress-header h2 {
+            font-size: 18px;
+        }
+        
+        .progress-percentage {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .progress-bar-large {
+            height: 12px;
+            background: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        
+        .progress-fill-large {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-weeks {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .week-indicator {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .week-indicator.active {
+            border-color: var(--primary);
+            background: white;
+        }
+        
+        .week-indicator.completed {
+            background: #dcfce7;
+            border-color: var(--success);
+        }
+        
+        /* ═══ WEEKS ═══ */
+        .week-section {
+            margin-bottom: 30px;
+        }
+        
+        .week-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .week-number {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .week-number.completed {
+            background: var(--success);
+        }
+        
+        .week-info h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        
+        .week-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* ═══ DAYS GRID ═══ */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .day-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .day-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .day-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .day-card.completed {
+            background: #f0fdf4;
+            border-color: var(--success);
+        }
+        
+        .day-card.current {
+            border-color: var(--primary);
+            border-width: 2px;
+        }
+        
+        .day-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .day-icon {
+            font-size: 28px;
+        }
+        
+        .day-number {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .day-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .day-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .day-progress {
+            margin-top: 12px;
+        }
+        
+        .day-progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .day-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        
+        .day-progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+        
+        /* ═══ LEADERBOARD ═══ */
+        .leaderboard-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .leaderboard-section h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+        
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+        
+        .leaderboard-item.top-3 {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+        
+        .leaderboard-item.current-user {
+            background: #e0e7ff;
+            border: 1px solid var(--primary);
+        }
+        
+        .leaderboard-rank {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .leaderboard-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .leaderboard-points {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .leaderboard-day {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* ═══ MODAL ═══ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        /* ═══ TASKS LIST ═══ */
+        .tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            background: var(--bg);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .task-item:hover {
+            background: #e2e8f0;
+        }
+        
+        .task-item.completed {
+            background: #dcfce7;
+        }
+        
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .task-item.completed .task-checkbox {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .task-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .task-points {
+            color: var(--warning);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        /* ═══ BUTTON ═══ */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        /* ═══ BACK BUTTON ═══ */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        
+        .back-link:hover {
+            opacity: 1;
+        }
+        
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 768px) {
+            .stats-bar {
+                gap: 20px;
+            }
+            
+            .stat-value {
+                font-size: 22px;
+            }
+            
+            .days-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .progress-weeks {
+                flex-wrap: wrap;
+            }
+            
+            .week-indicator {
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="program-header" style="position: relative;">
+        <a href="dashboard.html" class="back-link">
+            ← Назад
+        </a>
+        <h1>🎓 21-дневная программа</h1>
+        <p>Ваш путь к финансовой независимости</p>
+    </header>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value" id="stat-day">1</div>
+            <div class="stat-label">Текущий день</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="stat-points">0</div>
+            <div class="stat-label">Очков</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="stat-streak">0</div>
+            <div class="stat-label">Дней подряд</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="stat-achievements">0/18</div>
+            <div class="stat-label">Достижений</div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="program-main">
+        <!-- Progress Overview -->
+        <div class="progress-overview">
+            <div class="progress-header">
+                <h2>📊 Общий прогресс</h2>
+                <div class="progress-percentage" id="progress-percent">0%</div>
+            </div>
+            <div class="progress-bar-large">
+                <div class="progress-fill-large" id="progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="progress-weeks">
+                <div class="week-indicator" data-week="1">
+                    <strong>Неделя 1</strong><br>Знакомство
+                </div>
+                <div class="week-indicator" data-week="2">
+                    <strong>Неделя 2</strong><br>Коммуникация
+                </div>
+                <div class="week-indicator" data-week="3">
+                    <strong>Неделя 3</strong><br>Контент
+                </div>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 350px; gap: 30px;">
+            <div>
+                <!-- Week 1 -->
+                <section class="week-section" id="week-1-section">
+                    <div class="week-header">
+                        <div class="week-number" id="week-1-number">1</div>
+                        <div class="week-info">
+                            <h3>Неделя 1: Знакомство с инструментами</h3>
+                            <p>Создать своё лицо в интернете и сделать первые касания</p>
+                        </div>
+                    </div>
+                    <div class="days-grid" id="week-1-days">
+                        <!-- Дни генерируются JS -->
+                    </div>
+                </section>
+                
+                <!-- Week 2 -->
+                <section class="week-section" id="week-2-section">
+                    <div class="week-header">
+                        <div class="week-number" id="week-2-number">2</div>
+                        <div class="week-info">
+                            <h3>Неделя 2: Коммуникация и конверсия</h3>
+                            <p>Научиться превращать контакты в партнёров</p>
+                        </div>
+                    </div>
+                    <div class="days-grid" id="week-2-days">
+                        <!-- Дни генерируются JS -->
+                    </div>
+                </section>
+                
+                <!-- Week 3 -->
+                <section class="week-section" id="week-3-section">
+                    <div class="week-header">
+                        <div class="week-number" id="week-3-number">3</div>
+                        <div class="week-info">
+                            <h3>Неделя 3: Контент и масштабирование</h3>
+                            <p>Создать контент-машину и масштабировать результаты</p>
+                        </div>
+                    </div>
+                    <div class="days-grid" id="week-3-days">
+                        <!-- Дни генерируются JS -->
+                    </div>
+                </section>
+            </div>
+            
+            <!-- Leaderboard -->
+            <aside class="leaderboard-section">
+                <h2>🏆 Лидерборд</h2>
+                <div class="leaderboard-list" id="leaderboard">
+                    <!-- Генерируется JS -->
+                    <div class="leaderboard-item top-3">
+                        <div class="leaderboard-rank">1</div>
+                        <div class="leaderboard-name">Загрузка...</div>
+                        <div class="leaderboard-points">—</div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+    
+    <!-- Day Modal -->
+    <div class="modal-overlay" id="day-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">День 1</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Контент дня -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/lessons-data.js"></script>
+    <script src="js/modules/assistant/assistant.js"></script>
+    <script src="js/modules/assistant/assistant-ui.js"></script>
+    <script src="js/modules/assistant/assistant-init.js"></script>
+    
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        // ПРОГРАММА ОБУЧЕНИЯ - СТРАНИЦА
+        // ═══════════════════════════════════════════════════════════
+        
+        let assistant = null;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Инициализируем помощника
+            await AssistantInit.start({
+                onReady: (a) => {
+                    assistant = a;
+                    renderPage();
+                }
+            });
+        });
+        
+        // ═══════════════════════════════════════════════════════════
+        // РЕНДЕР СТРАНИЦЫ
+        // ═══════════════════════════════════════════════════════════
+        
+        function renderPage() {
+            if (!assistant) return;
+            
+            const stats = assistant.getStats();
+            
+            // Обновляем статистику
+            document.getElementById('stat-day').textContent = stats.currentDay;
+            document.getElementById('stat-points').textContent = stats.totalPoints.toLocaleString();
+            document.getElementById('stat-streak').textContent = stats.streakDays;
+            document.getElementById('stat-achievements').textContent = `${stats.achievementsEarned}/${stats.achievementsTotal}`;
+            document.getElementById('progress-percent').textContent = `${stats.programProgress}%`;
+            document.getElementById('progress-bar').style.width = `${stats.programProgress}%`;
+            
+            // Обновляем индикаторы недель
+            for (let w = 1; w <= 3; w++) {
+                const weekEl = document.querySelector(`[data-week="${w}"]`);
+                const weekDays = getWeekDays(w);
+                const allCompleted = weekDays.every(d => assistant.state.completedDays.includes(d));
+                
+                if (allCompleted) {
+                    weekEl.classList.add('completed');
+                    document.getElementById(`week-${w}-number`).classList.add('completed');
+                }
+                
+                if (stats.currentWeek === w) {
+                    weekEl.classList.add('active');
+                }
+            }
+            
+            // Рендерим дни
+            renderWeekDays(1);
+            renderWeekDays(2);
+            renderWeekDays(3);
+            
+            // Загружаем лидерборд
+            loadLeaderboard();
+        }
+        
+        function getWeekDays(week) {
+            const start = (week - 1) * 7 + 1;
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                days.push(start + i);
+            }
+            return days;
+        }
+        
+        function renderWeekDays(weekNumber) {
+            const container = document.getElementById(`week-${weekNumber}-days`);
+            const days = getWeekDays(weekNumber);
+            
+            container.innerHTML = days.map(dayNum => {
+                const dayData = assistant.getDayData(dayNum);
+                if (!dayData) return '';
+                
+                const progress = assistant.getDayProgress(dayNum);
+                const isLocked = !assistant.canAccessDay(dayNum);
+                const isCurrent = dayNum === assistant.state.currentDay;
+                const isCompleted = assistant.state.completedDays.includes(dayNum);
+                
+                let className = 'day-card';
+                if (isLocked) className += ' locked';
+                if (isCurrent) className += ' current';
+                if (isCompleted) className += ' completed';
+                
+                return `
+                    <div class="${className}" onclick="openDay(${dayNum})" data-day="${dayNum}">
+                        <div class="day-header">
+                            <span class="day-icon">${dayData.icon || '📅'}</span>
+                            <span class="day-number">День ${dayNum}</span>
+                            ${isCompleted ? '<span style="margin-left: auto; color: var(--success);">✓</span>' : ''}
+                            ${isLocked ? '<span style="margin-left: auto;">🔒</span>' : ''}
+                        </div>
+                        <div class="day-title">${dayData.title}</div>
+                        <div class="day-meta">
+                            <span>⏱ ${dayData.duration || '60 мин'}</span>
+                            <span>📋 ${dayData.tasks?.length || 0} заданий</span>
+                        </div>
+                        ${!isLocked ? `
+                            <div class="day-progress">
+                                <div class="day-progress-bar">
+                                    <div class="day-progress-fill" style="width: ${progress.percentage}%"></div>
+                                </div>
+                                <div class="day-progress-text">${progress.completed}/${progress.total} выполнено</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // МОДАЛЬНОЕ ОКНО ДНЯ
+        // ═══════════════════════════════════════════════════════════
+        
+        function openDay(dayNum) {
+            if (!assistant.canAccessDay(dayNum)) return;
+            
+            const dayData = assistant.getDayData(dayNum);
+            if (!dayData) return;
+            
+            const tasks = assistant.getTasksForDay(dayNum);
+            const progress = assistant.getDayProgress(dayNum);
+            
+            document.getElementById('modal-title').innerHTML = `
+                ${dayData.icon || '📅'} День ${dayNum}: ${dayData.title}
+            `;
+            
+            document.getElementById('modal-body').innerHTML = `
+                <!-- Приветствие -->
+                ${dayData.greeting ? `
+                    <div style="background: var(--bg); padding: 16px; border-radius: 10px; margin-bottom: 20px; white-space: pre-line; line-height: 1.6;">
+                        ${formatText(dayData.greeting)}
+                    </div>
+                ` : ''}
+                
+                <!-- Теория -->
+                ${dayData.theory ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 12px;">📚 ${dayData.theory.title}</h4>
+                        <div style="background: #f0f9ff; padding: 16px; border-radius: 10px; white-space: pre-line; line-height: 1.6; max-height: 200px; overflow-y: auto;">
+                            ${formatText(dayData.theory.content)}
+                        </div>
+                        ${dayData.theory.videoUrl ? `
+                            <a href="${dayData.theory.videoUrl}" target="_blank" 
+                               style="display: inline-block; margin-top: 12px; color: var(--primary);">
+                                🎬 Смотреть видео
+                            </a>
+                        ` : ''}
+                    </div>
+                ` : ''}
+                
+                <!-- Задания -->
+                <h4 style="margin-bottom: 12px;">📋 Задания (${progress.completed}/${progress.total})</h4>
+                <div class="tasks-list">
+                    ${tasks.map(task => `
+                        <div class="task-item ${task.completed ? 'completed' : ''}" 
+                             onclick="toggleTask('${task.id}', ${task.completed})">
+                            <div class="task-checkbox">
+                                ${task.completed ? '✓' : ''}
+                            </div>
+                            <div class="task-info">
+                                <div class="task-title">${task.title}</div>
+                                <div class="task-desc">${task.description || ''}</div>
+                            </div>
+                            <div class="task-points">+${task.points}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                ${progress.isComplete ? `
+                    <div style="text-align: center; padding: 20px; background: #dcfce7; border-radius: 10px; margin-top: 20px;">
+                        <div style="font-size: 40px; margin-bottom: 8px;">🎉</div>
+                        <strong style="color: var(--success);">День завершён!</strong>
+                    </div>
+                ` : ''}
+                
+                <!-- Вечерняя рефлексия -->
+                ${dayData.eveningReflection && progress.isComplete ? `
+                    <div style="margin-top: 20px; background: #fef3c7; padding: 16px; border-radius: 10px; white-space: pre-line;">
+                        ${formatText(dayData.eveningReflection)}
+                    </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('day-modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('day-modal').classList.remove('active');
+        }
+        
+        // Закрытие по клику на оверлей
+        document.getElementById('day-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'day-modal') closeModal();
+        });
+        
+        // Закрытие по Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+        
+        // ═══════════════════════════════════════════════════════════
+        // ВЫПОЛНЕНИЕ ЗАДАНИЯ
+        // ═══════════════════════════════════════════════════════════
+        
+        async function toggleTask(taskId, isCompleted) {
+            if (isCompleted) {
+                // Уже выполнено
+                return;
+            }
+            
+            const result = await assistant.completeTask(taskId);
+            
+            if (result.success) {
+                // Показываем уведомление
+                showNotification(`✅ Задание выполнено! +${result.points} очков`);
+                
+                // Обновляем страницу
+                renderPage();
+                
+                // Обновляем модальное окно
+                const currentDay = assistant.state.currentDay;
+                if (document.getElementById('day-modal').classList.contains('active')) {
+                    openDay(currentDay);
+                }
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // ЛИДЕРБОРД
+        // ═══════════════════════════════════════════════════════════
+        
+        async function loadLeaderboard() {
+            const container = document.getElementById('leaderboard');
+            
+            // Пока используем моковые данные
+            // TODO: заменить на реальный API вызов
+            const mockData = [
+                { rank: 1, name: 'Иван П.', points: 2450, day: 15 },
+                { rank: 2, name: 'Мария С.', points: 2100, day: 14 },
+                { rank: 3, name: 'Алексей К.', points: 1850, day: 12 },
+                { rank: 4, name: 'Вы', points: assistant?.state.totalPoints || 0, day: assistant?.state.currentDay || 1, isCurrentUser: true },
+                { rank: 5, name: 'Ольга М.', points: 1200, day: 10 },
+            ].sort((a, b) => b.points - a.points).map((item, i) => ({ ...item, rank: i + 1 }));
+            
+            container.innerHTML = mockData.map(item => `
+                <div class="leaderboard-item ${item.rank <= 3 ? 'top-3' : ''} ${item.isCurrentUser ? 'current-user' : ''}">
+                    <div class="leaderboard-rank">${item.rank <= 3 ? ['🥇', '🥈', '🥉'][item.rank - 1] : item.rank}</div>
+                    <div class="leaderboard-name">${item.name}</div>
+                    <div class="leaderboard-day">День ${item.day}</div>
+                    <div class="leaderboard-points">${item.points.toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // УТИЛИТЫ
+        // ═══════════════════════════════════════════════════════════
+        
+        function formatText(text) {
+            if (!text) return '';
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Добавляем анимации
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(120%); }
+                to { transform: translateX(0); }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); }
+                to { transform: translateX(120%); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
