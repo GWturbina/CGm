@@ -55,7 +55,7 @@ const AIStudio = {
         MIN_LEVEL_FULL: 7,      // Полный доступ с 7 уровня
         MIN_LEVEL_TRIAL: 4,     // Триал доступ с 4 уровня (30 дней)
         MIN_LEVEL_LIMITED: 1,   // Ограниченный доступ с 1 уровня (3 генерации навсегда)
-        MIN_LEVEL_OWN_API: 8,
+        MIN_LEVEL_OWN_API: 7,   // Level 7+ видят "Свой API"
         TRIAL_DAYS: 30,
         
         LIMITS_BY_LEVEL: {
@@ -399,6 +399,20 @@ const AIStudio = {
             this.state.cgId = 'DEV';
         }
         
+        // Owner контракта GlobalWay - тоже полный доступ
+        if (!this.state.cgId && window.GlobalWayBridge) {
+            try {
+                const isOwner = await GlobalWayBridge.isOwner(this.state.walletAddress);
+                if (isOwner) {
+                    console.log('👑 Contract owner - full access');
+                    this.state.level = 12;
+                    this.state.cgId = 'OWNER';
+                }
+            } catch (e) {
+                console.warn('Owner check failed:', e.message);
+            }
+        }
+        
         // Supabase
         if (window.SupabaseClient && SupabaseClient.client) {
             try {
@@ -450,6 +464,16 @@ const AIStudio = {
         // DEV WALLET
         if (this.DEV_WALLETS.includes(this.state.walletAddress.toLowerCase())) {
             console.log('✅ Dev wallet - unlimited');
+            this.state.hasAccess = true;
+            this.state.level = 12;
+            this.state.accessType = 'full';
+            this.setLimitsForLevel(12);
+            return true;
+        }
+        
+        // OWNER контракта (cgId установлен в loadUserData)
+        if (this.state.cgId === 'OWNER' || this.state.cgId === 'DEV') {
+            console.log('👑 Owner/Dev - unlimited access');
             this.state.hasAccess = true;
             this.state.level = 12;
             this.state.accessType = 'full';
@@ -1679,9 +1703,17 @@ async generateVoice() {
     // 👑 АДМИНКА АВТОРА - УПРАВЛЕНИЕ ГОЛОСАМИ И МУЗЫКОЙ
     // ═══════════════════════════════════════════════════════════
     
-    // Проверка что текущий пользователь - автор
+    // Проверка что текущий пользователь - автор/владелец
     isAuthor() {
-        return this.DEV_WALLETS.includes(this.state.walletAddress?.toLowerCase());
+        // DEV кошелёк
+        if (this.DEV_WALLETS.includes(this.state.walletAddress?.toLowerCase())) {
+            return true;
+        }
+        // Owner контракта (определён в loadUserData)
+        if (this.state.cgId === 'OWNER' || this.state.cgId === 'DEV') {
+            return true;
+        }
+        return false;
     },
     
     // Инициализация кастомных голосов из localStorage
