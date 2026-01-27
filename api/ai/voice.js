@@ -1,11 +1,5 @@
-// =====================================================
-// API/AI/VOICE.JS - ГЕНЕРАЦИЯ ГОЛОСА ELEVENLABS
-// 
-// Файл: api/ai/voice.js
-// Статус: ЗАМЕНИТЬ существующий файл
-// 
-// API ключ берётся из Vercel Environment Variables
-// =====================================================
+// api/ai/voice.js
+// ElevenLabs Voice Generation - Extended Version with emotions, speed, languages
 
 module.exports = async function handler(req, res) {
     // CORS
@@ -13,8 +7,13 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
     
     try {
         const { 
@@ -32,33 +31,28 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: 'Text required' });
         }
         
-        // API ключ: сначала серверный (Vercel), потом пользовательский
-        const apiKey = process.env.ELEVENLABS_API_KEY || userApiKey;
+        // Используем ключ пользователя или серверный
+        const apiKey = userApiKey || process.env.ELEVENLABS_API_KEY;
         
         if (!apiKey) {
-            return res.status(500).json({ 
-                error: 'API ключ не настроен. Обратитесь к администратору.' 
-            });
+            return res.status(500).json({ error: 'API key not configured' });
         }
         
-        // Маппинг голосов ElevenLabs
+        // Маппинг голосов ElevenLabs - Украинские/Русские
         const voiceMap = {
-            // Украинские/Русские
-            'alex-nekrasov': '9Sj8ugvpK1DmcAXyvi3a',
-            'taras-boyko': '2o2uQnlGaNuV3ObRpxXt',
-            'vladimir': 'BFmokXObxZMCBXC0A9ny',
-            'evgeniy': 'TEyBWD5tAHAWqAGEv6yI',
-            'leonid-drapey': 'B31Kx7rXmNnYqp1QWHR2',
-            'anna-stepanenko': 'bsourKGZEagmttzrIzmu',
-            
-            // Дополнительные мужские
+            // Мужские
+            'alex-nekrasov': '9Sj8ugvpK1DmcAXyvi3a',      // Алекс Некрасов
+            'taras-boyko': '2o2uQnlGaNuV3ObRpxXt',        // Тарас Бойко
+            'vladimir': 'BFmokXObxZMCBXC0A9ny',           // Владимир
+            'evgeniy': 'TEyBWD5tAHAWqAGEv6yI',            // Евгений
+            'leonid-drapey': 'B31Kx7rXmNnYqp1QWHR2',      // Леонид Драпей
             'voice-m6': 'h9NSQvWZaC4NFusYsxT9',
             'voice-m7': 'FqTvupDLWXjo91Dte1vR',
             'voice-m8': '0ZQZuw8Sn4cU0rN1Tm2K',
             'voice-m9': 'ARxhnQPZCfSLpMBASSii',
             'voice-m10': 'Ntd0iVwICtUtA6Fvx27M',
-            
-            // Дополнительные женские
+            // Женские
+            'anna-stepanenko': 'bsourKGZEagmttzrIzmu',    // Анна Степаненко
             'voice-f2': 'dZde1M1SiLkAKiqjpqqT',
             'voice-f3': '3rWBcFHu7rpPUEJQYEqD',
             'voice-f4': '4nLP0u2B3yI0lyzATFnN',
@@ -67,24 +61,12 @@ module.exports = async function handler(req, res) {
             'voice-f7': '96XEXOjZRHooATdYA8FY',
             'voice-f8': 'BEprpS2vpgM32yNJpTXq',
             'voice-f9': '7eVMgwCnXydb3CikjV7a',
-            'voice-f10': 'kdVjFjOXaqExaDvXZECX',
-            
-            // Английские
-            'adam': 'pNInz6obpgDQGcFmaJgB',
-            'antoni': 'ErXwobaYiN019PkySvjV',
-            'arnold': 'VR6AewLTigWG4xSOukaG',
-            'josh': 'TxGEqnHWrfWFTfGW9XjX',
-            'sam': 'yoZ06aMxZJJ28mfd3POQ',
-            'rachel': '21m00Tcm4TlvDq8ikWAM',
-            'domi': 'AZnzlk1XvdvUeBnXmlld',
-            'bella': 'EXAVITQu4vr4xnSDxMaL',
-            'elli': 'MF3mGyEYCl7XYWbV9V6O'
+            'voice-f10': 'kdVjFjOXaqExaDvXZECX'
         };
         
-        // Если передали прямой ID - используем его
-        const voiceId = voiceMap[voice] || voice;
+        const voiceId = voiceMap[voice] || voiceMap['alex-nekrasov'];
         
-        // Настройки эмоций
+        // Настройки эмоций влияют на stability и style
         const emotionSettings = {
             'neutral': { stability: 0.5, style: 0.0 },
             'happy': { stability: 0.3, style: 0.6 },
@@ -97,10 +79,10 @@ module.exports = async function handler(req, res) {
         };
         
         const emotionConfig = emotionSettings[emotion] || emotionSettings['neutral'];
+        
+        // Финальные настройки голоса
         const finalStability = stability !== undefined ? stability : emotionConfig.stability;
         const finalStyle = emotionConfig.style;
-        
-        console.log('🎤 Generating voice with ElevenLabs, voiceId:', voiceId);
         
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
             method: 'POST',
@@ -125,19 +107,19 @@ module.exports = async function handler(req, res) {
             console.error('ElevenLabs error:', err);
             
             if (response.status === 401) {
-                return res.status(401).json({ error: 'Ошибка API ключа. Обратитесь к администратору.' });
+                return res.status(401).json({ error: 'Неверный API ключ ElevenLabs' });
             }
             if (response.status === 400) {
                 return res.status(400).json({ error: err.detail?.message || 'Ошибка запроса' });
             }
             
-            return res.status(response.status).json({ error: err.detail?.message || 'Ошибка ElevenLabs' });
+            return res.status(response.status).json({ 
+                error: err.detail?.message || 'Ошибка ElevenLabs' 
+            });
         }
         
         const audioBuffer = await response.arrayBuffer();
         const base64Audio = Buffer.from(audioBuffer).toString('base64');
-        
-        console.log('✅ Voice generated successfully');
         
         return res.status(200).json({
             success: true,
