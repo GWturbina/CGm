@@ -1,5 +1,11 @@
-// api/ai/image.js
-// DALL-E Image Generation with Server-side API key
+// =====================================================
+// API/AI/IMAGE.JS - ГЕНЕРАЦИЯ ИЗОБРАЖЕНИЙ DALL-E
+// 
+// Файл: api/ai/image.js
+// Статус: ЗАМЕНИТЬ существующий файл
+// 
+// API ключ берётся из Vercel Environment Variables
+// =====================================================
 
 module.exports = async function handler(req, res) {
     // CORS
@@ -7,13 +13,8 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     
     try {
         const { prompt, format, style, userApiKey } = req.body;
@@ -22,11 +23,13 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: 'Prompt required' });
         }
         
-        // Используем ключ пользователя или серверный
-        const apiKey = userApiKey || process.env.OPENAI_API_KEY;
+        // API ключ: сначала серверный (Vercel), потом пользовательский
+        const apiKey = process.env.OPENAI_API_KEY || userApiKey;
         
         if (!apiKey) {
-            return res.status(500).json({ error: 'API key not configured' });
+            return res.status(500).json({ 
+                error: 'API ключ не настроен. Обратитесь к администратору.' 
+            });
         }
         
         // Размеры для DALL-E 3
@@ -36,7 +39,7 @@ module.exports = async function handler(req, res) {
             '9:16': '1024x1792'
         };
         
-        // Стили для промпта
+        // Стили
         const stylePrompts = {
             'realistic': 'photorealistic, high quality, detailed, professional photography',
             'cartoon': 'cartoon style, colorful, fun, animated, vibrant',
@@ -44,6 +47,8 @@ module.exports = async function handler(req, res) {
         };
         
         const fullPrompt = `${prompt}, ${stylePrompts[style] || stylePrompts.realistic}`;
+        
+        console.log('🎨 Generating image with DALL-E...');
         
         const response = await fetch('https://api.openai.com/v1/images/generations', {
             method: 'POST',
@@ -65,7 +70,7 @@ module.exports = async function handler(req, res) {
             console.error('OpenAI error:', err);
             
             if (response.status === 401) {
-                return res.status(401).json({ error: 'Неверный API ключ OpenAI' });
+                return res.status(401).json({ error: 'Ошибка API ключа. Обратитесь к администратору.' });
             }
             if (response.status === 429) {
                 return res.status(429).json({ error: 'Лимит запросов исчерпан' });
@@ -74,9 +79,7 @@ module.exports = async function handler(req, res) {
                 return res.status(400).json({ error: err.error?.message || 'Некорректный запрос' });
             }
             
-            return res.status(response.status).json({ 
-                error: err.error?.message || 'Ошибка OpenAI' 
-            });
+            return res.status(response.status).json({ error: err.error?.message || 'Ошибка OpenAI' });
         }
         
         const data = await response.json();
@@ -85,6 +88,8 @@ module.exports = async function handler(req, res) {
         if (!imageUrl) {
             return res.status(500).json({ error: 'Изображение не получено' });
         }
+        
+        console.log('✅ Image generated successfully');
         
         return res.status(200).json({
             success: true,
