@@ -21,11 +21,12 @@ const DAILY_LIMITS = {
     12: 75
 };
 
-// DEV кошельки - безлимит
+// DEV кошельки - безлимит (OWNER + Соавторы)
 const DEV_WALLETS = [
-    '0xa3496cacc8523421dd151f1d92a456c2dafa28c2',
-    '0x7bcd1753868895971e12448412cb3216d47884c8',
-    '0x03284a899147f5a07f82c622f34df92198671635'  // Owner контракта GlobalWay
+    '0x7bcd1753868895971e12448412cb3216d47884c8',  // OWNER (GW9729645)
+    '0x9b49bd9c9458615e11c051afd1ebe983563b67ee',  // Соавтор (GW7346221)
+    '0x03284a899147f5a07f82c622f34df92198671635',  // Соавтор (GW1514866)
+    '0xa3496cacc8523421dd151f1d92a456c2dafa28c2'   // Соавтор (GW7649513)
 ];
 
 module.exports = async function handler(req, res) {
