@@ -1,6 +1,12 @@
-// api/ai/text.js
-// Vercel Serverless Function - Text Generation via Groq (Llama 3.1)
-// Groq даёт 14,400 бесплатных запросов в день!
+// =====================================================
+// API/AI/TEXT.JS - ГЕНЕРАЦИЯ ТЕКСТА ЧЕРЕЗ GROQ
+// 
+// Файл: api/ai/text.js
+// Статус: ЗАМЕНИТЬ существующий файл
+// 
+// API ключ берётся из Vercel Environment Variables
+// Пользователям Level 1-6 НЕ нужно вводить свой ключ
+// =====================================================
 
 export default async function handler(req, res) {
     // CORS
@@ -8,13 +14,8 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     
     try {
         const { prompt, style, language, userApiKey } = req.body;
@@ -26,27 +27,26 @@ export default async function handler(req, res) {
         // Фильтр контента
         const filterResult = contentFilter(prompt);
         if (!filterResult.allowed) {
-            return res.status(400).json({ 
-                error: 'Запрещённый контент',
-                reason: filterResult.reason
+            return res.status(400).json({ error: 'Запрещённый контент', reason: filterResult.reason });
+        }
+        
+        // API ключ: сначала серверный (Vercel), потом пользовательский (для Level 7+)
+        const apiKey = process.env.GROQ_API_KEY || userApiKey;
+        
+        if (!apiKey) {
+            return res.status(500).json({ 
+                error: 'API ключ не настроен. Обратитесь к администратору.' 
             });
         }
         
-        // API ключ - сначала пользовательский, потом серверный
-        const apiKey = userApiKey || process.env.GROQ_API_KEY;
-        
-        if (!apiKey) {
-            return res.status(500).json({ error: 'GROQ_API_KEY not configured. Добавьте ключ в настройках.' });
-        }
-        
-        // Системный промпт в зависимости от стиля
+        // Системные промпты
         const systemPrompts = {
             greeting: 'Ты профессиональный копирайтер. Пиши тёплые, искренние поздравления.',
             business: 'Ты бизнес-консультант. Пиши в формальном деловом стиле.',
             motivational: 'Ты мотивационный коуч. Вдохновляй и мотивируй людей.',
             friendly: 'Ты дружелюбный помощник. Пиши тепло и приветливо.',
             romantic: 'Ты поэт. Пиши романтично, с чувством и любовью.',
-            club: 'Ты амбассадор GlobalWay. Пиши вдохновляюще о возможностях платформы и командной работе.'
+            club: 'Ты амбассадор GlobalWay. Пиши вдохновляюще о возможностях платформы.'
         };
         
         const langInstructions = {
@@ -56,9 +56,9 @@ export default async function handler(req, res) {
         };
         
         const currentLang = language || 'ru';
-        const systemMessage = `${systemPrompts[style] || systemPrompts.friendly} ${langInstructions[currentLang] || langInstructions.ru}`;
+        const systemMessage = `${systemPrompts[style] || systemPrompts.friendly} ${langInstructions[currentLang]}`;
         
-        console.log('📝 Generating text with Groq:', prompt.substring(0, 50));
+        console.log('📝 Generating text with Groq...');
         
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',  // Llama 3.3 70B - новая версия!
+                model: 'llama-3.1-70b-versatile',
                 messages: [
                     { role: 'system', content: systemMessage },
                     { role: 'user', content: prompt }
@@ -83,15 +83,13 @@ export default async function handler(req, res) {
             console.error('Groq error:', err);
             
             if (response.status === 401) {
-                return res.status(401).json({ error: 'Неверный API ключ Groq' });
+                return res.status(401).json({ error: 'Ошибка API ключа. Обратитесь к администратору.' });
             }
             if (response.status === 429) {
-                return res.status(429).json({ error: 'Лимит запросов Groq исчерпан. Попробуйте позже.' });
+                return res.status(429).json({ error: 'Лимит запросов исчерпан. Попробуйте позже.' });
             }
             
-            return res.status(response.status).json({ 
-                error: err.error?.message || 'Groq API error' 
-            });
+            return res.status(response.status).json({ error: err.error?.message || 'Ошибка генерации' });
         }
         
         const data = await response.json();
@@ -101,57 +99,40 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Текст не сгенерирован' });
         }
         
-        console.log('✅ Text generated with Groq successfully');
+        console.log('✅ Text generated successfully');
         
         return res.status(200).json({
             success: true,
             text: text.trim(),
-            model: 'llama-3.3-70b',
+            model: 'llama-3.1-70b',
             provider: 'groq',
             usage: data.usage
         });
         
     } catch (error) {
         console.error('Text generation error:', error);
-        return res.status(500).json({ 
-            error: 'Server error',
-            details: error.message 
-        });
+        return res.status(500).json({ error: 'Server error', details: error.message });
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// ФИЛЬТР КОНТЕНТА
-// ═══════════════════════════════════════════════════════════
-
+// Фильтр контента
 function contentFilter(text) {
     if (!text) return { allowed: true };
     
     const lower = text.toLowerCase();
     
-    // Только ЯВНО запрещённый контент
-    const strictlyForbidden = {
-        // Порнография
-        porn: [/\bporn/i, /\bxxx\b/i, /\bhentai\b/i, /\berotic\s*nude/i],
-        
-        // Детская эксплуатация (строго!)
-        child_abuse: [/child.*nude/i, /nude.*child/i, /ребён.*голы/i, /детск.*порн/i],
-        
-        // Экстремальное насилие
-        extreme_violence: [/dismember/i, /torture.*blood/i, /gore\s*kill/i, /расчленен/i],
-        
-        // Терроризм
-        terrorism: [/how.*make.*bomb/i, /террорист.*атак/i, /взорв.*людей/i],
-        
-        // Мат (грубый)
+    const forbidden = {
+        porn: [/\bporn/i, /\bxxx\b/i, /\bhentai\b/i],
+        child: [/child.*nude/i, /nude.*child/i],
+        violence: [/dismember/i, /torture.*blood/i],
+        terrorism: [/how.*make.*bomb/i],
         profanity: [/\bхуй/i, /\bпизд/i, /\bебат/i, /\bблядь?\b/i]
     };
     
-    for (const [category, patterns] of Object.entries(strictlyForbidden)) {
+    for (const [category, patterns] of Object.entries(forbidden)) {
         for (const regex of patterns) {
             if (regex.test(lower)) {
-                console.log(`🚫 Blocked: ${category}`);
-                return { allowed: false, category: category, reason: 'Запрещённый контент' };
+                return { allowed: false, category, reason: 'Запрещённый контент' };
             }
         }
     }
