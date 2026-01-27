@@ -326,6 +326,35 @@ async function addCredits(req, res) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// СПИСОК ПОЛЬЗОВАТЕЛЕЙ (для админки)
+// ═══════════════════════════════════════════════════════════
+
+async function listUsers(req, res) {
+    const { adminWallet } = req.query;
+    
+    if (!adminWallet || !DEV_WALLETS.includes(adminWallet.toLowerCase())) {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits?order=created_at.desc&limit=100`,
+        {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        }
+    );
+    
+    const data = await response.json();
+    
+    return res.status(200).json({ 
+        success: true, 
+        users: data || [] 
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════
 
