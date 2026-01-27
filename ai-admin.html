@@ -391,9 +391,10 @@
     <script>
         // DEV кошельки из CONFIG с fallback
         const DEV_WALLETS = (window.CONFIG?.DEV_WALLETS || [
-            '0xa3496cacc8523421dd151f1d92a456c2dafa28c2',
-            '0x7bcd1753868895971e12448412cb3216d47884c8',
-            '0x03284a899147f5a07f82c622f34df92198671635'  // Owner контракта
+            '0x7bcd1753868895971e12448412cb3216d47884c8',  // OWNER
+            '0x9b49bd9c9458615e11c051afd1ebe983563b67ee',  // Соавтор
+            '0x03284a899147f5a07f82c622f34df92198671635',  // Соавтор
+            '0xa3496cacc8523421dd151f1d92a456c2dafa28c2'   // Соавтор
         ]).map(w => w.toLowerCase());
         
         let adminWallet = null;
