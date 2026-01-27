@@ -172,10 +172,12 @@ const AIStudio = {
         if (window.CONFIG?.DEV_WALLETS && Array.isArray(window.CONFIG.DEV_WALLETS)) {
             return window.CONFIG.DEV_WALLETS.map(w => w.toLowerCase());
         }
-        // Fallback если CONFIG не загружен
+        // Fallback если CONFIG не загружен (OWNER + Соавторы)
         return [
-            '0xa3496cacc8523421dd151f1d92a456c2dafa28c2',
-            '0x7bcd1753868895971e12448412cb3216d47884c8'
+            '0x7bcd1753868895971e12448412cb3216d47884c8',  // OWNER
+            '0x9b49bd9c9458615e11c051afd1ebe983563b67ee',  // Соавтор
+            '0x03284a899147f5a07f82c622f34df92198671635',  // Соавтор
+            '0xa3496cacc8523421dd151f1d92a456c2dafa28c2'   // Соавтор
         ];
     },
     
@@ -1724,8 +1726,13 @@ async generateVoice() {
         }
     },
     
-    // Получить все голоса (встроенные + кастомные)
+    // Получить все голоса (из voices-data.js или встроенные)
     getAllVoices() {
+        // Приоритет: внешний voices-data.js (НЕ ТРОГАТЬ!)
+        if (window.getAllVoices && typeof window.getAllVoices === 'function') {
+            return window.getAllVoices();
+        }
+        // Fallback: встроенный список
         return [...this.config.VOICES_LIBRARY, ...this.config.CUSTOM_VOICES];
     },
     
