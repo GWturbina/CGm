@@ -1,24 +1,34 @@
 // api/ai/credits.js
-// API для управления кредитами AI Studio v2.0
-// Простая система: текст бесплатно, 3 картинки, 3 голоса
+// API для управления кредитами AI Studio
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://imgpysvdosdsqucoghqa.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = 'https://imgpysvdosdsqucoghqa.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_9I_ZSzpYB4wLXmPZ1hhIcQ_xUIPlR4D';
+
+// Дневные лимиты по уровням
+const DAILY_LIMITS = {
+    0: 0,    // Нет доступа
+    1: 3,    // Trial
+    2: 3,
+    3: 3,
+    4: 3,
+    5: 3,
+    6: 3,
+    7: 10,   // Полный доступ
+    8: 15,
+    9: 25,
+    10: 35,
+    11: 50,
+    12: 75
+};
 
 // DEV кошельки - безлимит
 const DEV_WALLETS = [
     '0xa3496cacc8523421dd151f1d92a456c2dafa28c2',
-    '0x7bcd1753868895971e12448412cb3216d47884c8'
+    '0x7bcd1753868895971e12448412cb3216d47884c8',
+    '0x03284a899147f5a07f82c622f34df92198671635'  // Owner контракта GlobalWay
 ];
 
-// Начальные бесплатные лимиты (lifetime)
-const FREE_LIMITS = {
-    text: 999999,  // Текст бесплатно неограниченно (Groq)
-    image: 3,      // 3 картинки бесплатно
-    voice: 3       // 3 голоса бесплатно
-};
-
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -34,29 +44,24 @@ export default async function handler(req, res) {
         switch (action) {
             case 'get':
                 return await getCredits(req, res);
-            case 'check':
-                return await checkCredits(req, res);
             case 'use':
                 return await useCredits(req, res);
-            case 'init':
-                return await initCredits(req, res);
             case 'add':
                 return await addCredits(req, res);
+            case 'init':
+                return await initCredits(req, res);
             case 'list':
-                return await listUsers(req, res);  // ← ДОБАВЛЕНО
+                return await listAllCredits(req, res);
             default:
-                return res.status(400).json({ error: 'Invalid action. Use: get, check, use, init, add, list' });
+                return res.status(400).json({ error: 'Invalid action' });
         }
     } catch (error) {
         console.error('Credits API error:', error);
         return res.status(500).json({ error: error.message });
     }
-}
+};
 
-// ═══════════════════════════════════════════════════════════
-// ПОЛУЧИТЬ БАЛАНС
-// ═══════════════════════════════════════════════════════════
-
+// Получить баланс кредитов
 async function getCredits(req, res) {
     const { wallet } = req.query;
     
@@ -70,218 +75,271 @@ async function getCredits(req, res) {
     if (DEV_WALLETS.includes(walletLower)) {
         return res.status(200).json({
             wallet: walletLower,
-            text: { used: 0, limit: 999999, remaining: 999999 },
-            image: { used: 0, limit: 999999, remaining: 999999 },
-            voice: { used: 0, limit: 999999, remaining: 999999 },
-            extraCredits: 999999,
-            isUnlimited: true
+            balance: 999999,
+            usedToday: 0,
+            dailyLimit: 999999,
+            isUnlimited: true,
+            isBlocked: false
         });
     }
     
     // Получаем из Supabase
-    const data = await supabaseSelect('ai_credits', `wallet_address=eq.${walletLower}`);
+    const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+        {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        }
+    );
+    
+    const data = await response.json();
     
     if (!data || data.length === 0) {
-        // Автоматически создаём запись
-        await createCreditsRecord(walletLower);
-        
         return res.status(200).json({
             wallet: walletLower,
-            text: { used: 0, limit: FREE_LIMITS.text, remaining: FREE_LIMITS.text },
-            image: { used: 0, limit: FREE_LIMITS.image, remaining: FREE_LIMITS.image },
-            voice: { used: 0, limit: FREE_LIMITS.voice, remaining: FREE_LIMITS.voice },
-            extraCredits: 0,
-            isNew: true
+            balance: 0,
+            usedToday: 0,
+            dailyLimit: 0,
+            isUnlimited: false,
+            isBlocked: false,
+            needsInit: true
         });
     }
     
     const record = data[0];
+    
+    // Проверяем сброс дневного лимита
+    const today = new Date().toISOString().split('T')[0];
+    let usedToday = record.credits_used_today;
+    
+    if (record.last_reset_date !== today) {
+        // Сбрасываем счётчик
+        usedToday = 0;
+        await resetDailyCounter(walletLower, today);
+    }
     
     return res.status(200).json({
         wallet: walletLower,
-        text: { 
-            used: record.text_used || 0, 
-            limit: FREE_LIMITS.text, 
-            remaining: FREE_LIMITS.text  // Текст всегда бесплатно
-        },
-        image: { 
-            used: record.image_used || 0, 
-            limit: FREE_LIMITS.image + (record.extra_credits || 0), 
-            remaining: Math.max(0, FREE_LIMITS.image + (record.extra_credits || 0) - (record.image_used || 0))
-        },
-        voice: { 
-            used: record.voice_used || 0, 
-            limit: FREE_LIMITS.voice + (record.extra_credits || 0), 
-            remaining: Math.max(0, FREE_LIMITS.voice + (record.extra_credits || 0) - (record.voice_used || 0))
-        },
-        extraCredits: record.extra_credits || 0
+        balance: record.credits_balance,
+        usedToday: usedToday,
+        dailyLimit: record.daily_limit,
+        isUnlimited: false,
+        isBlocked: record.is_blocked
     });
 }
 
-// ═══════════════════════════════════════════════════════════
-// ПРОВЕРИТЬ МОЖНО ЛИ ИСПОЛЬЗОВАТЬ
-// ═══════════════════════════════════════════════════════════
-
-async function checkCredits(req, res) {
-    const { wallet, type } = req.query;
-    
-    if (!wallet || !type) {
-        return res.status(400).json({ error: 'Wallet and type required' });
-    }
-    
-    const walletLower = wallet.toLowerCase();
-    
-    // DEV - всегда можно
-    if (DEV_WALLETS.includes(walletLower)) {
-        return res.status(200).json({ canUse: true, isUnlimited: true });
-    }
-    
-    // Текст - всегда бесплатно
-    if (type === 'text') {
-        return res.status(200).json({ canUse: true, isFree: true });
-    }
-    
-    // Получаем запись
-    const data = await supabaseSelect('ai_credits', `wallet_address=eq.${walletLower}`);
-    
-    if (!data || data.length === 0) {
-        // Нет записи - создаём и разрешаем (первые 3 бесплатно)
-        await createCreditsRecord(walletLower);
-        return res.status(200).json({ canUse: true, remaining: FREE_LIMITS[type] });
-    }
-    
-    const record = data[0];
-    const used = record[`${type}_used`] || 0;
-    const freeLimit = FREE_LIMITS[type] || 0;
-    const extraCredits = record.extra_credits || 0;
-    const totalLimit = freeLimit + extraCredits;
-    
-    const canUse = used < totalLimit;
-    const remaining = Math.max(0, totalLimit - used);
-    
-    return res.status(200).json({ 
-        canUse, 
-        remaining,
-        used,
-        limit: totalLimit,
-        needCredits: !canUse
-    });
-}
-
-// ═══════════════════════════════════════════════════════════
-// ИСПОЛЬЗОВАТЬ КРЕДИТ
-// ═══════════════════════════════════════════════════════════
-
-async function useCredits(req, res) {
-    const { wallet, type } = req.body;
-    
-    if (!wallet || !type) {
-        return res.status(400).json({ error: 'Wallet and type required' });
-    }
-    
-    const walletLower = wallet.toLowerCase();
-    
-    // DEV - не списываем
-    if (DEV_WALLETS.includes(walletLower)) {
-        return res.status(200).json({ success: true, isUnlimited: true });
-    }
-    
-    // Текст - не списываем (бесплатно), просто считаем
-    if (type === 'text') {
-        await incrementUsage(walletLower, 'text_used');
-        return res.status(200).json({ success: true, isFree: true });
-    }
-    
-    // Получаем текущий баланс
-    let data = await supabaseSelect('ai_credits', `wallet_address=eq.${walletLower}`);
-    
-    if (!data || data.length === 0) {
-        await createCreditsRecord(walletLower);
-        data = await supabaseSelect('ai_credits', `wallet_address=eq.${walletLower}`);
-    }
-    
-    const record = data[0];
-    const usedField = `${type}_used`;
-    const used = record[usedField] || 0;
-    const freeLimit = FREE_LIMITS[type] || 0;
-    const extraCredits = record.extra_credits || 0;
-    const totalLimit = freeLimit + extraCredits;
-    
-    // Проверяем лимит
-    if (used >= totalLimit) {
-        return res.status(400).json({ 
-            error: 'Лимит исчерпан. Нужны дополнительные кредиты.',
-            used,
-            limit: totalLimit,
-            needCredits: true
-        });
-    }
-    
-    // Списываем
-    const updateData = {};
-    updateData[usedField] = used + 1;
-    updateData.updated_at = new Date().toISOString();
-    
-    // Если превысили бесплатный лимит - списываем из extra_credits
-    if (used >= freeLimit && extraCredits > 0) {
-        updateData.extra_credits = extraCredits - 1;
-    }
-    
-    await supabaseUpdate('ai_credits', `wallet_address=eq.${walletLower}`, updateData);
-    
-    const newUsed = used + 1;
-    const remaining = Math.max(0, totalLimit - newUsed);
-    
-    return res.status(200).json({
-        success: true,
-        type,
-        used: newUsed,
-        remaining,
-        limit: totalLimit
-    });
-}
-
-// ═══════════════════════════════════════════════════════════
-// ИНИЦИАЛИЗАЦИЯ (при первом входе)
-// ═══════════════════════════════════════════════════════════
-
+// Инициализировать кредиты для нового пользователя
 async function initCredits(req, res) {
-    const { wallet } = req.body;
+    const { wallet, level } = req.body;
     
     if (!wallet) {
         return res.status(400).json({ error: 'Wallet required' });
     }
     
     const walletLower = wallet.toLowerCase();
+    const userLevel = parseInt(level) || 0;
+    const dailyLimit = DAILY_LIMITS[userLevel] || 0;
     
-    // Проверяем существует ли
-    const existing = await supabaseSelect('ai_credits', `wallet_address=eq.${walletLower}`);
+    // Начальный бонус
+    let initialBonus = 0;
+    if (userLevel >= 7) initialBonus = 10;
+    if (userLevel >= 8) initialBonus = 20;
+    
+    // Проверяем существует ли запись
+    const checkResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+        {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        }
+    );
+    
+    const existing = await checkResponse.json();
     
     if (existing && existing.length > 0) {
+        // Обновляем daily_limit если уровень изменился
+        await fetch(
+            `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    daily_limit: dailyLimit,
+                    updated_at: new Date().toISOString()
+                })
+            }
+        );
+        
         return res.status(200).json({ 
             success: true, 
-            message: 'Already initialized',
-            ...formatCreditsResponse(existing[0])
+            message: 'Credits updated',
+            dailyLimit 
         });
     }
     
     // Создаём новую запись
-    await createCreditsRecord(walletLower);
+    const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits`,
+        {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                wallet_address: walletLower,
+                credits_balance: initialBonus,
+                credits_used_today: 0,
+                daily_limit: dailyLimit,
+                last_reset_date: new Date().toISOString().split('T')[0],
+                total_earned: initialBonus,
+                total_purchased: 0,
+                is_blocked: false
+            })
+        }
+    );
     
-    return res.status(200).json({
-        success: true,
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(err);
+    }
+    
+    return res.status(200).json({ 
+        success: true, 
         message: 'Credits initialized',
-        text: { used: 0, limit: FREE_LIMITS.text, remaining: FREE_LIMITS.text },
-        image: { used: 0, limit: FREE_LIMITS.image, remaining: FREE_LIMITS.image },
-        voice: { used: 0, limit: FREE_LIMITS.voice, remaining: FREE_LIMITS.voice },
-        extraCredits: 0
+        balance: initialBonus,
+        dailyLimit 
     });
 }
 
-// ═══════════════════════════════════════════════════════════
-// ДОБАВИТЬ КРЕДИТЫ (админ или покупка)
-// ═══════════════════════════════════════════════════════════
+// Использовать кредиты
+async function useCredits(req, res) {
+    const { wallet, amount, type } = req.body;
+    
+    if (!wallet || !amount) {
+        return res.status(400).json({ error: 'Wallet and amount required' });
+    }
+    
+    const walletLower = wallet.toLowerCase();
+    const useAmount = parseInt(amount) || 1;
+    
+    // DEV кошельки - не списываем
+    if (DEV_WALLETS.includes(walletLower)) {
+        return res.status(200).json({ 
+            success: true, 
+            remaining: 999999,
+            isUnlimited: true 
+        });
+    }
+    
+    // Получаем текущий баланс
+    const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+        {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        }
+    );
+    
+    const data = await response.json();
+    
+    if (!data || data.length === 0) {
+        return res.status(400).json({ error: 'No credits record found' });
+    }
+    
+    const record = data[0];
+    
+    // Проверяем блокировку
+    if (record.is_blocked) {
+        return res.status(403).json({ error: 'Account blocked' });
+    }
+    
+    // Проверяем дневной лимит
+    const today = new Date().toISOString().split('T')[0];
+    let usedToday = record.credits_used_today;
+    
+    if (record.last_reset_date !== today) {
+        usedToday = 0;
+    }
+    
+    // Сначала проверяем дневной лимит
+    if (usedToday + useAmount > record.daily_limit) {
+        // Если дневной лимит исчерпан, пробуем использовать из баланса
+        if (record.credits_balance < useAmount) {
+            return res.status(400).json({ 
+                error: 'Insufficient credits',
+                usedToday,
+                dailyLimit: record.daily_limit,
+                balance: record.credits_balance
+            });
+        }
+        
+        // Списываем из баланса
+        await fetch(
+            `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    credits_balance: record.credits_balance - useAmount,
+                    updated_at: new Date().toISOString()
+                })
+            }
+        );
+        
+        return res.status(200).json({
+            success: true,
+            remaining: record.credits_balance - useAmount,
+            usedFromBalance: true
+        });
+    }
+    
+    // Используем из дневного лимита
+    await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+        {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                credits_used_today: usedToday + useAmount,
+                last_reset_date: today,
+                updated_at: new Date().toISOString()
+            })
+        }
+    );
+    
+    return res.status(200).json({
+        success: true,
+        usedToday: usedToday + useAmount,
+        dailyLimit: record.daily_limit,
+        balance: record.credits_balance
+    });
+}
 
+// Добавить кредиты (админ)
 async function addCredits(req, res) {
     const { wallet, amount, adminWallet } = req.body;
     
@@ -298,145 +356,8 @@ async function addCredits(req, res) {
     const addAmount = parseInt(amount);
     
     // Получаем текущий баланс
-    const data = await supabaseSelect('ai_credits', `wallet_address=eq.${walletLower}`);
-    
-    if (!data || data.length === 0) {
-        // Создаём запись с бонусом
-        await createCreditsRecord(walletLower, addAmount);
-        return res.status(200).json({
-            success: true,
-            wallet: walletLower,
-            extraCredits: addAmount,
-            added: addAmount
-        });
-    }
-    
-    const record = data[0];
-    const newExtra = (record.extra_credits || 0) + addAmount;
-    
-    await supabaseUpdate('ai_credits', `wallet_address=eq.${walletLower}`, {
-        extra_credits: newExtra,
-        updated_at: new Date().toISOString()
-    });
-    
-    return res.status(200).json({
-        success: true,
-        wallet: walletLower,
-        extraCredits: newExtra,
-        added: addAmount
-    });
-}
-
-// ═══════════════════════════════════════════════════════════
-// СПИСОК ПОЛЬЗОВАТЕЛЕЙ (для админки) - ДОБАВЛЕНО
-// ═══════════════════════════════════════════════════════════
-
-async function listUsers(req, res) {
-    const { adminWallet } = req.query;
-    
-    // Проверяем что это админ
-    if (!adminWallet || !DEV_WALLETS.includes(adminWallet.toLowerCase())) {
-        return res.status(403).json({ error: 'Admin access required' });
-    }
-    
-    try {
-        const response = await fetch(
-            `${SUPABASE_URL}/rest/v1/ai_credits?order=created_at.desc&limit=100`,
-            {
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`
-                }
-            }
-        );
-        
-        const data = await response.json();
-        
-        // Преобразуем данные для совместимости с админкой
-        const users = (data || []).map(record => ({
-            wallet_address: record.wallet_address,
-            credits_balance: record.extra_credits || 0,
-            credits_used_today: (record.image_used || 0) + (record.voice_used || 0),
-            daily_limit: FREE_LIMITS.image + FREE_LIMITS.voice,
-            total_earned: record.extra_credits || 0,
-            is_blocked: false,
-            last_reset_date: record.updated_at?.split('T')[0] || null,
-            // Дополнительно
-            text_used: record.text_used || 0,
-            image_used: record.image_used || 0,
-            voice_used: record.voice_used || 0,
-            extra_credits: record.extra_credits || 0
-        }));
-        
-        return res.status(200).json({ 
-            success: true, 
-            users: users
-        });
-        
-    } catch (error) {
-        console.error('List users error:', error);
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-// ═══════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════
-
-async function createCreditsRecord(wallet, extraCredits = 0) {
-    const record = {
-        wallet_address: wallet,
-        text_used: 0,
-        image_used: 0,
-        voice_used: 0,
-        extra_credits: extraCredits,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-    };
-    
-    await supabaseInsert('ai_credits', record);
-    return record;
-}
-
-async function incrementUsage(wallet, field) {
-    const data = await supabaseSelect('ai_credits', `wallet_address=eq.${wallet}`);
-    if (data && data.length > 0) {
-        const current = data[0][field] || 0;
-        await supabaseUpdate('ai_credits', `wallet_address=eq.${wallet}`, {
-            [field]: current + 1,
-            updated_at: new Date().toISOString()
-        });
-    }
-}
-
-function formatCreditsResponse(record) {
-    return {
-        text: { 
-            used: record.text_used || 0, 
-            limit: FREE_LIMITS.text, 
-            remaining: FREE_LIMITS.text 
-        },
-        image: { 
-            used: record.image_used || 0, 
-            limit: FREE_LIMITS.image + (record.extra_credits || 0), 
-            remaining: Math.max(0, FREE_LIMITS.image + (record.extra_credits || 0) - (record.image_used || 0))
-        },
-        voice: { 
-            used: record.voice_used || 0, 
-            limit: FREE_LIMITS.voice + (record.extra_credits || 0), 
-            remaining: Math.max(0, FREE_LIMITS.voice + (record.extra_credits || 0) - (record.voice_used || 0))
-        },
-        extraCredits: record.extra_credits || 0
-    };
-}
-
-// ═══════════════════════════════════════════════════════════
-// SUPABASE HELPERS
-// ═══════════════════════════════════════════════════════════
-
-async function supabaseSelect(table, filter) {
     const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/${table}?${filter}`,
+        `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
         {
             headers: {
                 'apikey': SUPABASE_KEY,
@@ -444,29 +365,19 @@ async function supabaseSelect(table, filter) {
             }
         }
     );
-    return response.json();
-}
-
-async function supabaseInsert(table, data) {
-    const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/${table}`,
-        {
-            method: 'POST',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify(data)
-        }
-    );
-    return response.ok;
-}
-
-async function supabaseUpdate(table, filter, data) {
-    const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/${table}?${filter}`,
+    
+    const data = await response.json();
+    
+    if (!data || data.length === 0) {
+        return res.status(400).json({ error: 'User not found' });
+    }
+    
+    const record = data[0];
+    const newBalance = record.credits_balance + addAmount;
+    
+    // Обновляем баланс
+    await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
         {
             method: 'PATCH',
             headers: {
@@ -475,8 +386,67 @@ async function supabaseUpdate(table, filter, data) {
                 'Content-Type': 'application/json',
                 'Prefer': 'return=minimal'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+                credits_balance: newBalance,
+                total_earned: record.total_earned + addAmount,
+                updated_at: new Date().toISOString()
+            })
         }
     );
-    return response.ok;
+    
+    return res.status(200).json({
+        success: true,
+        wallet: walletLower,
+        newBalance,
+        added: addAmount
+    });
+}
+
+// Список всех пользователей (админ)
+async function listAllCredits(req, res) {
+    const { adminWallet } = req.query;
+    
+    // Проверяем что это админ
+    if (!adminWallet || !DEV_WALLETS.includes(adminWallet.toLowerCase())) {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits?order=created_at.desc`,
+        {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        }
+    );
+    
+    const data = await response.json();
+    
+    return res.status(200).json({
+        success: true,
+        users: data,
+        total: data.length
+    });
+}
+
+// Сброс дневного счётчика
+async function resetDailyCounter(wallet, today) {
+    await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${wallet}`,
+        {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                credits_used_today: 0,
+                last_reset_date: today,
+                updated_at: new Date().toISOString()
+            })
+        }
+    );
 }
