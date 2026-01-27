@@ -104,24 +104,34 @@ const AIStudio = {
         // ═══════════════════════════════════════════════════════════
         // БИБЛИОТЕКА ГОЛОСОВ (ElevenLabs)
         // ═══════════════════════════════════════════════════════════
-        // Где брать голоса: https://elevenlabs.io/voice-library
-        // Нужен voice_id из ElevenLabs
+        // ID соответствуют voiceMap в api/ai/voice.js
+        // НЕ ТРОГАТЬ ПРИ ОБНОВЛЕНИЯХ!
         VOICES_LIBRARY: [
-            // Мужские голоса
-            { id: 'adam', name: 'Adam', gender: 'male', language: 'en', description: 'Глубокий мужской голос' },
-            { id: 'antoni', name: 'Antoni', gender: 'male', language: 'en', description: 'Тёплый мужской' },
-            { id: 'arnold', name: 'Arnold', gender: 'male', language: 'en', description: 'Мощный голос' },
-            { id: 'josh', name: 'Josh', gender: 'male', language: 'en', description: 'Молодой энергичный' },
-            { id: 'sam', name: 'Sam', gender: 'male', language: 'en', description: 'Спокойный нарратор' },
+            // ═══ СЛАВЯНСКИЕ ГОЛОСА (RU/UA) ═══
+            { id: 'alex-nekrasov', name: 'Алекс Некрасов', gender: 'male', language: 'ru,ua', description: 'Глубокий мужской, диктор' },
+            { id: 'taras-boyko', name: 'Тарас Бойко', gender: 'male', language: 'ua', description: 'Украинский, тёплый' },
+            { id: 'vladimir', name: 'Владимир', gender: 'male', language: 'ru', description: 'Деловой стиль' },
+            { id: 'evgeniy', name: 'Евгений', gender: 'male', language: 'ru', description: 'Молодой энергичный' },
+            { id: 'leonid-drapey', name: 'Леонид Драпей', gender: 'male', language: 'ru,ua', description: 'Спокойный нарратор' },
+            { id: 'anna-stepanenko', name: 'Анна Степаненко', gender: 'female', language: 'ua', description: 'Украинский приятный' },
             
-            // Женские голоса
-            { id: 'rachel', name: 'Rachel', gender: 'female', language: 'en', description: 'Приятный женский' },
-            { id: 'domi', name: 'Domi', gender: 'female', language: 'en', description: 'Энергичный женский' },
-            { id: 'bella', name: 'Bella', gender: 'female', language: 'en', description: 'Мягкий женский' },
-            { id: 'elli', name: 'Elli', gender: 'female', language: 'en', description: 'Молодой женский' },
+            // ═══ ДОПОЛНИТЕЛЬНЫЕ МУЖСКИЕ ═══
+            { id: 'voice-m6', name: 'Голос M6', gender: 'male', language: 'multilingual', description: 'Дополнительный мужской' },
+            { id: 'voice-m7', name: 'Голос M7', gender: 'male', language: 'multilingual', description: 'Дополнительный мужской' },
+            { id: 'voice-m8', name: 'Голос M8', gender: 'male', language: 'multilingual', description: 'Дополнительный мужской' },
+            { id: 'voice-m9', name: 'Голос M9', gender: 'male', language: 'multilingual', description: 'Дополнительный мужской' },
+            { id: 'voice-m10', name: 'Голос M10', gender: 'male', language: 'multilingual', description: 'Дополнительный мужской' },
             
-            // Русские голоса (если доступны в ElevenLabs)
-            // Добавьте voice_id из вашего аккаунта ElevenLabs
+            // ═══ ДОПОЛНИТЕЛЬНЫЕ ЖЕНСКИЕ ═══
+            { id: 'voice-f2', name: 'Голос F2', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
+            { id: 'voice-f3', name: 'Голос F3', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
+            { id: 'voice-f4', name: 'Голос F4', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
+            { id: 'voice-f5', name: 'Голос F5', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
+            { id: 'voice-f6', name: 'Голос F6', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
+            { id: 'voice-f7', name: 'Голос F7', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
+            { id: 'voice-f8', name: 'Голос F8', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
+            { id: 'voice-f9', name: 'Голос F9', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
+            { id: 'voice-f10', name: 'Голос F10', gender: 'female', language: 'multilingual', description: 'Дополнительный женский' },
         ],
         
         // Пользовательские голоса (добавляются автором)
@@ -447,16 +457,11 @@ const AIStudio = {
             return true;
         }
         
-        // Нет регистрации - но ТЕКСТ доступен!
+        // Нет регистрации
         if (!this.state.cgId) {
-            console.log('⚠️ No CG_ID - text only access');
-            this.state.hasAccess = true;
-            this.state.accessType = 'text-only';
-            this.state.limits.text.max = 9999;
-            this.state.limits.text.used = 0;
-            this.state.limits.image.max = 0;
-            this.state.limits.voice.max = 0;
-            return true;
+            console.log('❌ No CG_ID');
+            this.state.hasAccess = false;
+            return false;
         }
         
         // Level 7+ - полный доступ (бессрочно)
@@ -500,15 +505,10 @@ const AIStudio = {
             return true;
         }
         
-        // Level 0 - ТЕКСТ бесплатно (Groq), остальное нет
-        console.log('✅ Level 0 - text only access (Groq free)');
-        this.state.hasAccess = true;
-        this.state.accessType = 'text-only';
-        this.state.limits.text.max = 9999;  // Текст безлимит
-        this.state.limits.text.used = 0;
-        this.state.limits.image.max = 0;    // Картинки нет
-        this.state.limits.voice.max = 0;    // Голос нет
-        return true;
+        // Level 0 - нет доступа
+        console.log('❌ No access - need Level 1+');
+        this.state.hasAccess = false;
+        return false;
     },
     
     // ═══════════════════════════════════════════════════════════
@@ -813,9 +813,6 @@ const AIStudio = {
     
     canGenerate(type) {
         if (!this.state.hasAccess) return false;
-        
-        // ТЕКСТ всегда бесплатно (Groq)
-        if (type === 'text') return true;
         
         // Авторы - всегда могут
         if (this.DEV_WALLETS.includes(this.state.walletAddress?.toLowerCase())) {
@@ -1128,7 +1125,7 @@ async testVoice() {
         btn.textContent = '⏳';
     }
     
-    const voice = document.getElementById('voiceSelect')?.value || 'adam';
+    const voice = document.getElementById('voiceSelect')?.value || 'alex-nekrasov';
     const language = document.getElementById('voiceLanguage')?.value || 'ru';
     
     // Тестовые фразы на разных языках
