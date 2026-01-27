@@ -67,7 +67,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'llama-3.1-70b-versatile',  // Llama 3.1 70B - очень умная и бесплатная!
+                model: 'llama-3.3-70b-versatile',  // Llama 3.3 70B - актуальная версия!
                 messages: [
                     { role: 'system', content: systemMessage },
                     { role: 'user', content: prompt }
