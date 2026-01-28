@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>База знаний — CardGift</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .kb-header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-bottom: 1px solid #334155;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .kb-header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .kb-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .kb-logo-icon {
+            font-size: 32px;
+        }
+        
+        .kb-logo-text {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .kb-back-btn {
+            padding: 10px 20px;
+            background: #334155;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        
+        .kb-back-btn:hover {
+            background: #475569;
+        }
+        
+        /* Search */
+        .kb-search {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .kb-search-input {
+            width: 100%;
+            padding: 16px 24px;
+            padding-left: 50px;
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .kb-search-input:focus {
+            border-color: #6366f1;
+        }
+        
+        .kb-search-input::placeholder {
+            color: #64748b;
+        }
+        
+        .kb-search-wrapper {
+            position: relative;
+        }
+        
+        .kb-search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+        }
+        
+        /* Categories */
+        .kb-categories {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+        
+        .kb-category-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: #f59e0b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .kb-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+        
+        /* Card */
+        .kb-card {
+            background: #1e293b;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #334155;
+            transition: all 0.3s;
+        }
+        
+        .kb-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border-color: #6366f1;
+        }
+        
+        .kb-card-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #334155, #1e293b);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .kb-card-icon {
+            width: 56px;
+            height: 56px;
+            background: #6366f1;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        
+        .kb-card-title h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        
+        .kb-card-title p {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        
+        .kb-card-content {
+            padding: 20px;
+        }
+        
+        .kb-card-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .kb-card-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #0f172a;
+            border-radius: 10px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .kb-card-link:hover {
+            background: #334155;
+            transform: translateX(4px);
+        }
+        
+        .kb-card-link-icon {
+            font-size: 18px;
+        }
+        
+        .kb-card-link-text {
+            font-size: 14px;
+        }
+        
+        /* Article */
+        .kb-article {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: none;
+        }
+        
+        .kb-article.active {
+            display: block;
+        }
+        
+        .kb-article-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .kb-article-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        
+        .kb-article-title {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .kb-article-desc {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+        
+        /* Video Section */
+        .kb-video-section {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .kb-video-section:hover {
+            background: #334155;
+        }
+        
+        .kb-video-thumb {
+            width: 120px;
+            height: 68px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+        
+        .kb-video-info h4 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        
+        .kb-video-info p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .kb-video-badge {
+            padding: 4px 10px;
+            background: #f59e0b;
+            color: #000;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        /* Content sections */
+        .kb-content-section {
+            margin-bottom: 40px;
+        }
+        
+        .kb-section-title {
+            font-size: 20px;
+            color: #f59e0b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Buttons description */
+        .kb-buttons-table {
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .kb-button-row {
+            display: flex;
+            padding: 16px 20px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .kb-button-row:last-child {
+            border-bottom: none;
+        }
+        
+        .kb-button-name {
+            min-width: 150px;
+            font-weight: 600;
+            color: #6366f1;
+        }
+        
+        .kb-button-desc {
+            color: #94a3b8;
+        }
+        
+        /* Steps */
+        .kb-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .kb-step {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: #1e293b;
+            border-radius: 12px;
+        }
+        
+        .kb-step-number {
+            width: 40px;
+            height: 40px;
+            background: #6366f1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .kb-step-content h4 {
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+        
+        .kb-step-content p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* Tips */
+        .kb-tips {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .kb-tip {
+            padding: 16px 20px;
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 4px solid #f59e0b;
+            border-radius: 0 12px 12px 0;
+        }
+        
+        .kb-tip-text {
+            color: #fbbf24;
+            font-size: 14px;
+        }
+        
+        /* FAQ */
+        .kb-faq {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .kb-faq-item {
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .kb-faq-question {
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+        
+        .kb-faq-question:hover {
+            background: #334155;
+        }
+        
+        .kb-faq-arrow {
+            transition: transform 0.2s;
+        }
+        
+        .kb-faq-item.open .kb-faq-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .kb-faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .kb-faq-item.open .kb-faq-answer {
+            padding: 0 20px 16px;
+            max-height: 200px;
+        }
+        
+        .kb-faq-answer p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* Navigation */
+        .kb-nav {
+            position: sticky;
+            top: 80px;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .kb-nav-title {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        
+        .kb-nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .kb-nav-link {
+            padding: 8px 16px;
+            background: #334155;
+            border-radius: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .kb-nav-link:hover {
+            background: #6366f1;
+        }
+        
+        /* Back to top */
+        .kb-back-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: #6366f1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .kb-back-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .kb-back-top:hover {
+            transform: translateY(-4px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .kb-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kb-video-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .kb-video-thumb {
+                width: 100%;
+                height: 100px;
+            }
+            
+            .kb-button-row {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .kb-button-name {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="kb-header">
+        <div class="kb-header-inner">
+            <a href="dashboard.html" class="kb-logo">
+                <span class="kb-logo-icon">📚</span>
+                <span class="kb-logo-text">База знаний CardGift</span>
+            </a>
+            <a href="dashboard.html" class="kb-back-btn">← Назад в панель</a>
+        </div>
+    </header>
+    
+    <!-- Search -->
+    <div class="kb-search">
+        <div class="kb-search-wrapper">
+            <span class="kb-search-icon">🔍</span>
+            <input type="text" class="kb-search-input" placeholder="Поиск по базе знаний..." id="kb-search">
+        </div>
+    </div>
+    
+    <!-- Quick Navigation -->
+    <div class="kb-categories">
+        <div class="kb-nav">
+            <div class="kb-nav-title">Быстрые ссылки:</div>
+            <div class="kb-nav-links">
+                <a href="#generator" class="kb-nav-link">🎁 Генератор</a>
+                <a href="#blog" class="kb-nav-link">📝 Блог</a>
+                <a href="#ai-studio" class="kb-nav-link">🤖 AI Studio</a>
+                <a href="#surveys" class="kb-nav-link">📊 Опросы</a>
+                <a href="#contacts" class="kb-nav-link">👥 Контакты</a>
+                <a href="#crm" class="kb-nav-link">🎯 CRM</a>
+                <a href="#mailings" class="kb-nav-link">📧 Рассылки</a>
+                <a href="#globalstudio" class="kb-nav-link">🎬 GlobalStudio</a>
+                <a href="#referrals" class="kb-nav-link">🌐 Рефералы</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Categories Grid -->
+    <div class="kb-categories" id="kb-main">
+        <h2 class="kb-category-title">🎯 Основные инструменты</h2>
+        <div class="kb-cards-grid">
+            
+            <!-- Генератор -->
+            <div class="kb-card" id="generator">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon">🎁</div>
+                    <div class="kb-card-title">
+                        <h3>Генератор открыток</h3>
+                        <p>Создание и отправка открыток</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#generator-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (3 мин)</span>
+                        </a>
+                        <a href="#generator-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#generator-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Блог -->
+            <div class="kb-card" id="blog">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon" style="background: #10b981;">📝</div>
+                    <div class="kb-card-title">
+                        <h3>Мой блог</h3>
+                        <p>Личная страница и посты</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#blog-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (2 мин)</span>
+                        </a>
+                        <a href="#blog-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#blog-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Studio -->
+            <div class="kb-card" id="ai-studio">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon" style="background: #8b5cf6;">🤖</div>
+                    <div class="kb-card-title">
+                        <h3>AI Studio</h3>
+                        <p>Генерация текста, картинок, голоса</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#ai-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (4 мин)</span>
+                        </a>
+                        <a href="#ai-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#ai-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Опросы -->
+            <div class="kb-card" id="surveys">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon" style="background: #f59e0b;">📊</div>
+                    <div class="kb-card-title">
+                        <h3>Опросы</h3>
+                        <p>Вирусные опросы для сбора контактов</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#surveys-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (3 мин)</span>
+                        </a>
+                        <a href="#surveys-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#surveys-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Контакты -->
+            <div class="kb-card" id="contacts">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon" style="background: #ec4899;">👥</div>
+                    <div class="kb-card-title">
+                        <h3>Контакты</h3>
+                        <p>База контактов и управление</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#contacts-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (2 мин)</span>
+                        </a>
+                        <a href="#contacts-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#contacts-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CRM -->
+            <div class="kb-card" id="crm">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon" style="background: #14b8a6;">🎯</div>
+                    <div class="kb-card-title">
+                        <h3>CRM / Воронка</h3>
+                        <p>Управление продажами</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#crm-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (4 мин)</span>
+                        </a>
+                        <a href="#crm-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#crm-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Рассылки -->
+            <div class="kb-card" id="mailings">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon" style="background: #3b82f6;">📧</div>
+                    <div class="kb-card-title">
+                        <h3>Рассылки</h3>
+                        <p>Массовая отправка сообщений</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#mailings-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (3 мин)</span>
+                        </a>
+                        <a href="#mailings-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#mailings-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- GlobalStudio -->
+            <div class="kb-card" id="globalstudio">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon" style="background: #ef4444;">🎬</div>
+                    <div class="kb-card-title">
+                        <h3>GlobalStudio</h3>
+                        <p>Создание видео</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#globalstudio-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (5 мин)</span>
+                        </a>
+                        <a href="#globalstudio-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#globalstudio-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Рефералы -->
+            <div class="kb-card" id="referrals">
+                <div class="kb-card-header">
+                    <div class="kb-card-icon" style="background: #22c55e;">🌐</div>
+                    <div class="kb-card-title">
+                        <h3>Рефералы / Команда</h3>
+                        <p>Партнёрская структура</p>
+                    </div>
+                </div>
+                <div class="kb-card-content">
+                    <div class="kb-card-links">
+                        <a href="#referrals-video" class="kb-card-link">
+                            <span class="kb-card-link-icon">📹</span>
+                            <span class="kb-card-link-text">Видео-инструкция (3 мин)</span>
+                        </a>
+                        <a href="#referrals-buttons" class="kb-card-link">
+                            <span class="kb-card-link-icon">🔘</span>
+                            <span class="kb-card-link-text">Описание кнопок</span>
+                        </a>
+                        <a href="#referrals-steps" class="kb-card-link">
+                            <span class="kb-card-link-icon">📋</span>
+                            <span class="kb-card-link-text">Пошаговая инструкция</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- Back to top -->
+    <div class="kb-back-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
+    
+    <script>
+        // Показать кнопку "наверх" при скролле
+        window.addEventListener('scroll', () => {
+            const btn = document.querySelector('.kb-back-top');
+            if (window.scrollY > 300) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        });
+        
+        // Поиск
+        document.getElementById('kb-search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.kb-card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        });
+        
+        // Плавный скролл к якорю
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#') {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                }
+            });
+        });
+        
+        // Проверка hash при загрузке
+        if (window.location.hash) {
+            setTimeout(() => {
+                const target = document.querySelector(window.location.hash);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html>
