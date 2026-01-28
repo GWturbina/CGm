@@ -377,6 +377,16 @@
                     color: #666;
                 }
                 
+                .nc-new-badge {
+                    background: #FFD700;
+                    color: #000;
+                    font-size: 10px;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    font-weight: bold;
+                    margin-left: 8px;
+                }
+                
                 .nc-item-body {
                     font-size: 13px;
                     color: #aaa;
@@ -542,9 +552,18 @@
     // ЗАГРУЗКА ДАННЫХ
     // ═══════════════════════════════════════════════════════════════════════
     
+    // Получить клиент Supabase
+    function getSupabase() {
+        return window.supabase || 
+               (window.SupabaseClient && window.SupabaseClient.client) || 
+               null;
+    }
+    
     async function loadAllNotifications() {
         const gwId = window.userGwId || window.displayId;
-        if (!gwId || !window.supabase) {
+        const sb = getSupabase();
+        
+        if (!gwId || !sb) {
             console.log('🔔 No user or supabase, skipping notifications load');
             return;
         }
@@ -560,11 +579,12 @@
     
     // Загрузка новостей
     async function loadNews() {
-        const gwId = window.userGwId || window.displayId;
+        const sb = getSupabase();
+        if (!sb) return;
         
         try {
             // Получаем активные новости
-            const { data: news, error } = await supabase
+            const { data: news, error } = await sb
                 .from('news')
                 .select('*')
                 .eq('is_active', true)
@@ -573,20 +593,17 @@
             
             if (error) throw error;
             
-            // Получаем статусы прочтения
-            const { data: readStatus } = await supabase
-                .from('news_read_status')
-                .select('news_id')
-                .eq('user_gw_id', gwId);
-            
-            const readIds = new Set((readStatus || []).map(r => r.news_id));
+            // Получаем прочитанные из localStorage (как в оригинале)
+            const readIds = JSON.parse(localStorage.getItem('readNewsIds') || '[]');
             
             state.data.news = (news || []).map(n => ({
                 ...n,
-                isRead: readIds.has(n.id)
+                isRead: readIds.includes(n.id)
             }));
             
             state.counts.news = state.data.news.filter(n => !n.isRead).length;
+            
+            console.log('🔔 News loaded:', state.data.news.length, 'items,', state.counts.news, 'unread');
             
         } catch (e) {
             console.log('Error loading news:', e.message);
@@ -598,9 +615,11 @@
     // Загрузка сообщений от спонсора
     async function loadMessages() {
         const gwId = window.userGwId || window.displayId;
+        const sb = getSupabase();
+        if (!sb) return;
         
         try {
-            const { data: messages, error } = await supabase
+            const { data: messages, error } = await sb
                 .from('internal_messages')
                 .select('*')
                 .eq('to_gw_id', gwId)
@@ -622,10 +641,12 @@
     // Загрузка системных уведомлений
     async function loadSystemNotifications() {
         const gwId = window.userGwId || window.displayId;
+        const sb = getSupabase();
+        if (!sb) return;
         
         try {
             // Пробуем загрузить из таблицы notifications (если есть)
-            const { data: notifications, error } = await supabase
+            const { data: notifications, error } = await sb
                 .from('notifications')
                 .select('*')
                 .eq('user_gw_id', gwId)
@@ -699,20 +720,40 @@
         const date = formatDate(news.created_at);
         const isUnread = !news.isRead;
         
+        // Иконки по типу новости
+        const typeIcons = { 
+            'info': 'ℹ️', 
+            'update': '🔄', 
+            'promo': '🎁', 
+            'warning': '⚠️', 
+            'urgent': '🚨',
+            'default': '📰'
+        };
+        const icon = typeIcons[news.type] || typeIcons.default;
+        
         return `
             <div class="nc-item ${isUnread ? 'unread' : ''}" onclick="NotificationCenter.markNewsRead('${news.id}')">
                 <div class="nc-item-header">
                     <div class="nc-item-title">
-                        <span class="nc-item-icon">📰</span>
-                        ${news.title || 'Новость'}
+                        <span class="nc-item-icon">${icon}</span>
+                        ${escapeHtml(news.title || 'Новость')}
+                        ${isUnread ? '<span class="nc-new-badge">NEW</span>' : ''}
                     </div>
                     <div class="nc-item-time">${date}</div>
                 </div>
                 <div class="nc-item-body">
-                    ${news.content || news.message || ''}
+                    ${escapeHtml(news.content || '')}
                 </div>
             </div>
         `;
+    }
+    
+    // Функция экранирования HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
     
     function renderMessageItem(msg) {
@@ -948,31 +989,22 @@
     }
     
     async function markNewsRead(newsId) {
-        const gwId = window.userGwId || window.displayId;
-        if (!gwId) return;
-        
-        try {
-            await supabase
-                .from('news_read_status')
-                .upsert({
-                    user_gw_id: gwId,
-                    news_id: newsId,
-                    read_at: new Date().toISOString()
-                }, { onConflict: 'user_gw_id,news_id' });
-            
-            // Обновляем локальное состояние
-            const news = state.data.news.find(n => n.id === newsId);
-            if (news) {
-                news.isRead = true;
-                state.counts.news = Math.max(0, state.counts.news - 1);
-            }
-            
-            updateBellBadge();
-            renderTab('news');
-            
-        } catch (e) {
-            console.error('Error marking news as read:', e);
+        // Сохраняем в localStorage (как в оригинале)
+        const readIds = JSON.parse(localStorage.getItem('readNewsIds') || '[]');
+        if (!readIds.includes(newsId)) {
+            readIds.push(newsId);
+            localStorage.setItem('readNewsIds', JSON.stringify(readIds));
         }
+        
+        // Обновляем локальное состояние
+        const news = state.data.news.find(n => n.id === newsId);
+        if (news && !news.isRead) {
+            news.isRead = true;
+            state.counts.news = Math.max(0, state.counts.news - 1);
+        }
+        
+        updateBellBadge();
+        renderTab('news');
     }
     
     async function markMessageRead(msgId) {
