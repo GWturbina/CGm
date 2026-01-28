@@ -552,18 +552,23 @@
     // ЗАГРУЗКА ДАННЫХ
     // ═══════════════════════════════════════════════════════════════════════
     
-    // Получить клиент Supabase
+    // Получить клиент Supabase (ПРАВИЛЬНЫЙ СПОСОБ!)
     function getSupabase() {
-        return window.supabase || 
-               (window.SupabaseClient && window.SupabaseClient.client) || 
-               null;
+        // Правильный клиент - это SupabaseClient.client
+        if (window.SupabaseClient && window.SupabaseClient.client) {
+            return window.SupabaseClient.client;
+        }
+        return null;
     }
     
-    // Получить GW ID пользователя
+    // Получить GW ID пользователя (ВСЕ ВОЗМОЖНЫЕ ИСТОЧНИКИ)
     function getUserGwId() {
         return window.userGwId || 
                window.displayId || 
-               window.currentUserGwId ||
+               window.currentGwId ||
+               window.currentDisplayId ||
+               localStorage.getItem('cardgift_display_id') ||
+               localStorage.getItem('cardgift_cg_id') ||
                localStorage.getItem('userGwId') ||
                null;
     }
@@ -572,11 +577,13 @@
         const gwId = getUserGwId();
         const sb = getSupabase();
         
-        console.log('🔔 Loading notifications...', { gwId: gwId ? 'found' : 'not found', supabase: sb ? 'found' : 'not found' });
+        console.log('🔔 Loading notifications...', { 
+            gwId: gwId || 'not found', 
+            supabase: sb ? 'found' : 'not found' 
+        });
         
         if (!sb) {
             console.log('🔔 Supabase not ready, retrying in 500ms...');
-            // Повторяем попытку через 500мс
             return new Promise(resolve => {
                 setTimeout(async () => {
                     const sb2 = getSupabase();
