@@ -23,7 +23,7 @@ const AssistantInit = {
         theme: 'light',
         language: 'ru',
         assistantName: 'Помощник',
-        avatarUrl: null,
+        avatarUrl: 'images/assistant-avatar.png',
         
         // Callbacks
         onReady: null,
