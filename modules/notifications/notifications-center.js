@@ -559,13 +559,35 @@
                null;
     }
     
+    // Получить GW ID пользователя
+    function getUserGwId() {
+        return window.userGwId || 
+               window.displayId || 
+               window.currentUserGwId ||
+               localStorage.getItem('userGwId') ||
+               null;
+    }
+    
     async function loadAllNotifications() {
-        const gwId = window.userGwId || window.displayId;
+        const gwId = getUserGwId();
         const sb = getSupabase();
         
-        if (!gwId || !sb) {
-            console.log('🔔 No user or supabase, skipping notifications load');
-            return;
+        console.log('🔔 Loading notifications...', { gwId: gwId ? 'found' : 'not found', supabase: sb ? 'found' : 'not found' });
+        
+        if (!sb) {
+            console.log('🔔 Supabase not ready, retrying in 500ms...');
+            // Повторяем попытку через 500мс
+            return new Promise(resolve => {
+                setTimeout(async () => {
+                    const sb2 = getSupabase();
+                    if (sb2) {
+                        await loadNews();
+                        await loadMessages();
+                        await loadSystemNotifications();
+                    }
+                    resolve();
+                }, 500);
+            });
         }
         
         await Promise.all([
@@ -614,9 +636,12 @@
     
     // Загрузка сообщений от спонсора
     async function loadMessages() {
-        const gwId = window.userGwId || window.displayId;
+        const gwId = getUserGwId();
         const sb = getSupabase();
-        if (!sb) return;
+        if (!sb || !gwId) {
+            console.log('🔔 Cannot load messages - no supabase or gwId');
+            return;
+        }
         
         try {
             const { data: messages, error } = await sb
@@ -631,6 +656,8 @@
             state.data.messages = messages || [];
             state.counts.messages = state.data.messages.filter(m => !m.is_read).length;
             
+            console.log('🔔 Messages loaded:', state.data.messages.length, 'items');
+            
         } catch (e) {
             console.log('Error loading messages:', e.message);
             state.data.messages = [];
@@ -640,9 +667,12 @@
     
     // Загрузка системных уведомлений
     async function loadSystemNotifications() {
-        const gwId = window.userGwId || window.displayId;
+        const gwId = getUserGwId();
         const sb = getSupabase();
-        if (!sb) return;
+        if (!sb || !gwId) {
+            console.log('🔔 Cannot load system notifications - no supabase or gwId');
+            return;
+        }
         
         try {
             // Пробуем загрузить из таблицы notifications (если есть)
@@ -655,7 +685,7 @@
             
             if (error) {
                 // Таблица может не существовать - это нормально
-                console.log('Notifications table may not exist yet');
+                console.log('🔔 Notifications table may not exist yet');
                 state.data.notifications = [];
                 state.counts.notifications = 0;
                 return;
@@ -663,6 +693,8 @@
             
             state.data.notifications = notifications || [];
             state.counts.notifications = state.data.notifications.filter(n => !n.is_read).length;
+            
+            console.log('🔔 System notifications loaded:', state.data.notifications.length, 'items');
             
         } catch (e) {
             console.log('Error loading notifications:', e.message);
@@ -906,8 +938,22 @@
         center.style.display = 'flex';
         state.isOpen = true;
         
-        // Рендерим активную вкладку
-        renderTab(state.activeTab);
+        // Показываем загрузку
+        const activeContent = document.getElementById(`nc-content-${state.activeTab}`);
+        if (activeContent) {
+            activeContent.innerHTML = '<div class="nc-loading">⏳ Загрузка...</div>';
+        }
+        
+        // ВАЖНО: Загружаем данные при каждом открытии!
+        loadAllNotifications().then(() => {
+            updateBellBadge();
+            renderTab(state.activeTab);
+        }).catch(e => {
+            console.error('Error loading notifications:', e);
+            if (activeContent) {
+                activeContent.innerHTML = '<div class="nc-empty"><div class="nc-empty-icon">⚠️</div><div class="nc-empty-text">Ошибка загрузки</div></div>';
+            }
+        });
         
         console.log('🔔 Notification Center opened');
     }
