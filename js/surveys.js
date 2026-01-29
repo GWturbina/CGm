@@ -76,56 +76,43 @@ const BUILT_IN_TEMPLATES = {
         ]
     },
     
-    // 🎯 СТАРТОВЫЙ ОПРОСНИК - Квалификация лидов
+    // 🎯 СТАРТОВЫЙ ОПРОСНИК - Квалификация лидов (РЕКОМЕНДУЕМЫЙ)
     starter: {
         id: 'starter',
         title: '🎯 Узнай свой потенциал',
-        description: 'Тест за 2 минуты — узнай, подходит ли тебе заработок в интернете',
+        description: 'Лучший опрос для первого касания! Квалифицирует лидов автоматически.',
         icon: '🎯',
         category: 'lead_qualification',
         reward_text: 'Набор инструментов на $700',
         referral_reward: 'Бонус за каждого друга',
         is_global: true,
-        is_starter: true, // Флаг стартового опросника
-        external_url: 'survey-starter.html', // Ссылка на отдельную страницу
+        is_recommended: true, // Рекомендуемый шаблон
         questions: [
             { 
                 text: 'Почему тебе интересна тема заработка в интернете?', 
-                options: ['Хочу дополнительный доход', 'Ищу основной источник дохода', 'Хочу финансовую свободу', 'Просто интересно'],
-                scores: [8, 10, 10, 3]
+                options: ['Хочу дополнительный доход', 'Ищу основной источник дохода', 'Хочу финансовую свободу', 'Просто интересно']
             },
             { 
                 text: 'Есть ли у тебя опыт заработка в интернете?', 
-                options: ['Да, уже зарабатываю', 'Пробовал, не получилось', 'Нет, но хочу начать', 'Не верю что работает'],
-                scores: [10, 8, 9, 2]
+                options: ['Да, уже зарабатываю', 'Пробовал, не получилось', 'Нет, но хочу начать', 'Не верю что работает']
             },
             { 
                 text: 'Сколько времени готов уделять в день?', 
-                options: ['30 минут', '1 час', '2-3 часа', 'Полный день'],
-                scores: [5, 8, 10, 10]
+                options: ['30 минут', '1 час', '2-3 часа', 'Полный день']
             },
             { 
                 text: 'Что для тебя важнее всего?', 
-                options: ['Стабильный доход', 'Свобода локации', 'Больше времени с семьёй', 'Свой бизнес'],
-                scores: [8, 9, 9, 10]
+                options: ['Стабильный доход', 'Свобода локации', 'Больше времени с семьёй', 'Свой бизнес']
             },
             { 
                 text: 'Какой доход тебя интересует?', 
-                options: ['$300-500/мес', '$500-1000/мес', '$1000-3000/мес', 'Больше $3000/мес'],
-                scores: [6, 8, 9, 10]
+                options: ['$300-500/мес', '$500-1000/мес', '$1000-3000/мес', 'Больше $3000/мес']
             },
             { 
                 text: 'Готов ли инвестировать в себя?', 
-                options: ['Да, если увижу результаты', 'Только с гарантией возврата', 'Сначала бесплатно', 'Нет, только бесплатное'],
-                scores: [10, 8, 6, 3]
+                options: ['Да, если увижу результаты', 'Только с гарантией возврата', 'Сначала бесплатно', 'Нет, только бесплатное']
             }
-        ],
-        // Квалификация по баллам
-        qualification: {
-            hot: { minScore: 45, label: '🔥 Горячий лид' },
-            warm: { minScore: 30, label: '👍 Тёплый лид' },
-            cold: { minScore: 0, label: '❄️ Холодный лид' }
-        }
+        ]
     }
 };
 
@@ -215,6 +202,7 @@ function renderTemplatesList(filter = 'all') {
     const categories = {
         all: '📁 Все',
         global: '🌐 Глобальные',
+        lead_qualification: '🎯 Стартовые',
         business: '💼 Бизнес',
         feedback: '⭐ Отзывы',
         education: '🎓 Образование',
@@ -250,12 +238,22 @@ function renderTemplatesList(filter = 'all') {
             </div>
         `;
     } else {
+        // Сортируем: рекомендованные первыми, потом глобальные
+        filtered.sort((a, b) => {
+            if (a.is_recommended && !b.is_recommended) return -1;
+            if (!a.is_recommended && b.is_recommended) return 1;
+            if (a.is_global && !b.is_global) return -1;
+            if (!a.is_global && b.is_global) return 1;
+            return 0;
+        });
+        
         html += filtered.map(t => `
-            <div class="template-card" style="background: var(--bg-card); border: 1px solid ${t.is_global ? 'var(--gold)' : 'var(--border)'}; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; position: relative;"
+            <div class="template-card" style="background: ${t.is_recommended ? 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1))' : 'var(--bg-card)'}; border: 2px solid ${t.is_recommended ? '#10B981' : t.is_global ? 'var(--gold)' : 'var(--border)'}; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; position: relative;"
                  onclick="useSurveyTemplate('${t.id}')">
-                ${t.is_global ? '<div style="position: absolute; top: 8px; right: 8px; background: var(--gold); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;">🌐 GLOBAL</div>' : ''}
+                ${t.is_recommended ? '<div style="position: absolute; top: 8px; right: 8px; background: #10B981; color: #fff; padding: 2px 10px; border-radius: 10px; font-size: 10px; font-weight: 600;">⭐ РЕКОМЕНДУЕМ</div>' : 
+                  t.is_global ? '<div style="position: absolute; top: 8px; right: 8px; background: var(--gold); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;">🌐 GLOBAL</div>' : ''}
                 <div style="font-size: 40px; margin-bottom: 10px;">${t.icon || '📋'}</div>
-                <div style="font-weight: 600; margin-bottom: 5px;">${t.title}</div>
+                <div style="font-weight: 600; margin-bottom: 5px; ${t.is_recommended ? 'color: #10B981;' : ''}">${t.title}</div>
                 <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">${t.description || ''}</div>
                 <div style="font-size: 11px; color: var(--text-muted);">
                     ${t.questions?.length || 0} вопросов
