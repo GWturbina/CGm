@@ -607,9 +607,6 @@ function showAddContactModal() {
                         <button onclick="addLinkToMessage()" style="padding: 8px 12px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #FFD700; border-radius: 6px; cursor: pointer; font-size: 11px;">
                             🔗 + Ссылка на генератор
                         </button>
-                        <button onclick="addClubCardLink()" style="padding: 8px 12px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10B981; border-radius: 6px; cursor: pointer; font-size: 11px;">
-                            🎁 + Открытка от клуба
-                        </button>
                         <button onclick="addEmojiToMessage()" style="padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: #888; border-radius: 6px; cursor: pointer; font-size: 11px;">
                             😊 + Эмодзи
                         </button>
@@ -1091,7 +1088,7 @@ function addEmojiToMessage() {
 function showInviteGuide() {
     const guideModal = document.createElement('div');
     guideModal.id = 'inviteGuideModal';
-    guideModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 15px;';
+    guideModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.98); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 15px; overflow-y: auto;';
     guideModal.onclick = (e) => { if (e.target === guideModal) guideModal.remove(); };
     
     guideModal.innerHTML = `
