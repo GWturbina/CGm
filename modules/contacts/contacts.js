@@ -847,10 +847,13 @@ function renderTemplateButtons(type) {
 function renderInviteCards(category) {
     const templates = inviteTemplates[category] || [];
     return templates.map((t, i) => `
-        <div class="invite-card ${i === 0 ? 'selected' : ''}" onclick="selectInviteCard('${category}', ${i})" data-index="${i}">
-            <div class="card-preview">${t.preview || '📝'}</div>
-            <div class="card-title">${t.title}</div>
-            <div class="card-subtitle">${t.subtitle || ''}</div>
+        <div class="invite-card ${i === 0 ? 'selected' : ''}" 
+             onclick="selectInviteCard('${category}', ${i})" 
+             data-index="${i}"
+             style="background: ${i === 0 ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.03)'}; border: 2px solid ${i === 0 ? '#FFD700' : '#333'}; border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.25s ease;">
+            <div class="card-preview" style="font-size: 32px; margin-bottom: 8px;">${t.preview || '📝'}</div>
+            <div class="card-title" style="font-size: 12px; font-weight: 600; color: #fff; margin-bottom: 3px;">${t.title}</div>
+            <div class="card-subtitle" style="font-size: 10px; color: #888;">${t.subtitle || ''}</div>
         </div>
     `).join('');
 }
