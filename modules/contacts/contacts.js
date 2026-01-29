@@ -285,7 +285,7 @@ const inviteTemplates = {
 
 Помнишь я искал способ заработка в интернете? Так вот — нашёл кое-что реально работающее.
 
-Это не очередной курс за 100500₽. Это набор инструментов + программа на 21 день.
+Это не очередной курс за бешеные деньги. Это набор инструментов на $700 + программа на 21 день.
 
 Самое крутое — есть гарантия: $100 за 21 день или возврат денег.
 
@@ -937,19 +937,143 @@ function addLinkToMessage() {
 
 // Добавить ссылку на готовую открытку от клуба
 function addClubCardLink() {
-    const textarea = document.getElementById('inviteText');
-    if (textarea) {
-        const userId = window.currentDisplayId || window.currentGwId || 'XXXXXXX';
-        const baseUrl = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000' 
-            : 'https://cgm-brown.vercel.app';
+    // Показываем модалку с выбором корпоративных открыток
+    showClubCardsModal();
+}
+
+// Модалка выбора корпоративных открыток
+async function showClubCardsModal() {
+    const modal = document.createElement('div');
+    modal.id = 'clubCardsModal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 10002; display: flex; align-items: center; justify-content: center; padding: 15px; overflow-y: auto;';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+        <div style="max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; background: linear-gradient(145deg, #1a1a2e, #16213e); border-radius: 20px; border: 2px solid #10B981;">
+            <div style="padding: 20px; border-bottom: 1px solid rgba(16,185,129,0.3); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #10B981; margin: 0; font-size: 20px;">🏢 Корпоративные открытки</h3>
+                <button onclick="this.closest('#clubCardsModal').remove()" style="background: rgba(255,255,255,0.1); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;">✕</button>
+            </div>
+            
+            <div style="padding: 15px 20px; background: rgba(16,185,129,0.1); border-bottom: 1px solid rgba(16,185,129,0.2);">
+                <p style="color: #aaa; margin: 0; font-size: 13px;">📋 Выберите открытку — ссылка на неё (с ВАШИМ ID!) добавится в сообщение</p>
+            </div>
+            
+            <div id="clubCardsGrid" style="padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; min-height: 200px;">
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">
+                    <div style="font-size: 36px; margin-bottom: 15px;">⏳</div>
+                    <div>Загрузка открыток...</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Загружаем корпоративные открытки
+    await loadClubCards();
+}
+
+// Загрузка корпоративных открыток
+async function loadClubCards() {
+    const grid = document.getElementById('clubCardsGrid');
+    if (!grid) return;
+    
+    let cards = [];
+    
+    try {
+        // Способ 1: Из Supabase - таблица cards с флагом is_corporate
+        if (window.SupabaseClient && SupabaseClient.client) {
+            const { data, error } = await SupabaseClient.client
+                .from('cards')
+                .select('*')
+                .or('card_data->>isCorporate.eq.true,card_data->>is_corporate.eq.true')
+                .order('created_at', { ascending: false })
+                .limit(20);
+            
+            if (!error && data && data.length > 0) {
+                cards = data.map(c => ({
+                    code: c.short_code,
+                    title: c.card_data?.title || c.card_data?.greetingText?.substring(0, 30) || 'Корпоративная открытка',
+                    image: c.card_data?.image_url || c.card_data?.mediaUrl || c.card_data?.media?.url,
+                    card_data: c.card_data
+                }));
+                console.log('✅ Loaded', cards.length, 'corporate cards from Supabase');
+            }
+        }
         
-        // Ссылка на готовую открытку от клуба (можно настроить ID)
-        const linkText = `\n\n🎁 Специально для тебя — открытка с подарком внутри:\n👉 ${baseUrl}/card.html?ref=${userId}`;
+        // Способ 2: Из localStorage
+        if (cards.length === 0) {
+            const archiveCards = JSON.parse(localStorage.getItem('cardgift_cards') || '[]');
+            cards = archiveCards.filter(c => c.isCorporate || c.is_corporate).map(c => ({
+                code: c.shortCode || c.short_code,
+                title: c.title || c.greetingText?.substring(0, 30) || 'Корпоративная открытка',
+                image: c.mediaUrl || c.preview || c.imageUrl,
+                card_data: c
+            }));
+        }
+        
+    } catch (err) {
+        console.error('Error loading club cards:', err);
+    }
+    
+    // Отображаем
+    if (cards.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">
+                <div style="font-size: 50px; margin-bottom: 15px;">📭</div>
+                <p style="margin: 0 0 10px 0;">Корпоративных открыток пока нет</p>
+                <p style="font-size: 12px; color: #666;">Создайте открытку в Генераторе и отметьте как "Корпоративная"</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const userId = window.currentDisplayId || window.currentGwId || 'XXXXXXX';
+    const baseUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : 'https://cgm-brown.vercel.app';
+    
+    grid.innerHTML = cards.map(card => `
+        <div class="club-card-item" onclick="insertClubCardLink('${card.code}', '${card.title.replace(/'/g, "\\'")}', '${baseUrl}')" 
+             style="background: rgba(255,255,255,0.03); border: 2px solid #333; border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.3s;">
+            <div style="aspect-ratio: 3/4; background: #0d1b2a; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                ${card.image 
+                    ? `<img src="${card.image}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<div style=\\'font-size:50px;\\'>🎁</div>'">` 
+                    : '<div style="font-size: 50px;">🎁</div>'}
+            </div>
+            <div style="padding: 12px;">
+                <div style="font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${card.title}</div>
+                <button style="width: 100%; padding: 10px; background: linear-gradient(135deg, #10B981, #059669); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; font-size: 12px;">
+                    ✨ Выбрать
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    // Добавляем hover эффект
+    document.querySelectorAll('.club-card-item').forEach(item => {
+        item.onmouseenter = () => { item.style.borderColor = '#10B981'; item.style.transform = 'translateY(-3px)'; };
+        item.onmouseleave = () => { item.style.borderColor = '#333'; item.style.transform = 'none'; };
+    });
+}
+
+// Вставить ссылку на выбранную открытку
+function insertClubCardLink(cardCode, cardTitle, baseUrl) {
+    const textarea = document.getElementById('inviteText');
+    const userId = window.currentDisplayId || window.currentGwId || 'XXXXXXX';
+    
+    if (textarea) {
+        // Ссылка на генератор с автооткрытием выбора шаблонов
+        const linkText = `\n\n🎁 Специально для тебя — выбери открытку с подарком:\n👉 ${baseUrl}/generator.html?ref=${userId}&templates=corporate`;
         textarea.value += linkText;
         updateMessagePreview();
-        showToast('Ссылка на открытку добавлена!', 'success');
+        showToast && showToast('Ссылка добавлена!', 'success');
     }
+    
+    // Закрываем модалку
+    const modal = document.getElementById('clubCardsModal');
+    if (modal) modal.remove();
 }
 
 // Добавить эмодзи
@@ -2241,5 +2365,8 @@ window.selectInviteCard = selectInviteCard;
 window.updateMessagePreview = updateMessagePreview;
 window.showInviteGuide = showInviteGuide;
 window.renderInviteCards = renderInviteCards;
+window.showClubCardsModal = showClubCardsModal;
+window.loadClubCards = loadClubCards;
+window.insertClubCardLink = insertClubCardLink;
 
 console.log('📋 Contacts Module v14.0 loaded - Beautiful invite system');
