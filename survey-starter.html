@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Узнай свой потенциал | CardGift</title>
+    <meta name="description" content="Пройди тест за 2 минуты и узнай, подходит ли тебе заработок в интернете">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="🎯 Тест: Узнай свой потенциал заработка">
+    <meta property="og:description" content="2 минуты — и ты поймёшь свои возможности">
+    <meta property="og:type" content="website">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .survey-container {
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        /* Прогресс бар */
+        .progress-container {
+            margin-bottom: 30px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #888;
+            font-size: 14px;
+        }
+        
+        /* Карточка вопроса */
+        .question-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .question-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .question-number {
+            text-align: center;
+            color: #FFD700;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .question-text {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+        
+        /* Варианты ответов */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .option-btn {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 18px 20px;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .option-btn:hover {
+            border-color: #FFD700;
+            background: rgba(255, 215, 0, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .option-btn.selected {
+            border-color: #FFD700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        .option-letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .option-btn:hover .option-letter,
+        .option-btn.selected .option-letter {
+            background: #FFD700;
+            color: #000;
+        }
+        
+        /* Экран приветствия */
+        .welcome-screen {
+            text-align: center;
+        }
+        
+        .welcome-screen h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+        
+        .welcome-screen p {
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .welcome-features {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 12px;
+            padding: 18px 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        /* Экран формы контакта */
+        .contact-screen {
+            text-align: center;
+        }
+        
+        .contact-screen h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .contact-screen p {
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        
+        .form-group input::placeholder {
+            color: #666;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 12px;
+            padding: 18px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Экран результата */
+        .result-screen {
+            text-align: center;
+        }
+        
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .result-title {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .result-title.hot { color: #10B981; }
+        .result-title.warm { color: #FFD700; }
+        .result-title.cold { color: #6B7280; }
+        
+        .result-score {
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            padding: 10px 25px;
+            border-radius: 30px;
+            margin-bottom: 25px;
+        }
+        
+        .result-description {
+            color: #aaa;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+        
+        .result-benefits {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        
+        .result-benefits h3 {
+            margin-bottom: 15px;
+            color: #FFD700;
+        }
+        
+        .result-benefits ul {
+            list-style: none;
+        }
+        
+        .result-benefits li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .result-benefits li:last-child {
+            border: none;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .cta-primary {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 12px;
+            padding: 18px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .cta-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .cta-secondary {
+            background: transparent;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1rem;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .cta-secondary:hover {
+            border-color: #FFD700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        /* Скрытые экраны */
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* Брендинг */
+        .branding {
+            text-align: center;
+            margin-top: 30px;
+            color: #555;
+            font-size: 12px;
+        }
+        
+        .branding a {
+            color: #FFD700;
+            text-decoration: none;
+        }
+        
+        /* Адаптив */
+        @media (max-width: 500px) {
+            .question-text {
+                font-size: 1.2rem;
+            }
+            
+            .question-card {
+                padding: 30px 20px;
+            }
+            
+            .welcome-features {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="survey-container">
+        
+        <!-- Прогресс -->
+        <div class="progress-container" id="progressContainer" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Вопрос 1 из 6</div>
+        </div>
+        
+        <!-- Экран приветствия -->
+        <div class="screen active" id="welcomeScreen">
+            <div class="question-card welcome-screen">
+                <div class="question-icon">🎯</div>
+                <h1>Узнай свой потенциал заработка в интернете</h1>
+                <p>Ответь на 6 вопросов за 2 минуты — и узнай, подходит ли тебе онлайн-бизнес и какой доход ты можешь получать.</p>
+                
+                <div class="welcome-features">
+                    <div class="feature">⏱️ 2 минуты</div>
+                    <div class="feature">🎁 Подарок в конце</div>
+                    <div class="feature">📊 Личный результат</div>
+                </div>
+                
+                <button class="start-btn" onclick="startSurvey()">
+                    Начать тест →
+                </button>
+            </div>
+        </div>
+        
+        <!-- Экран вопросов -->
+        <div class="screen" id="questionScreen">
+            <div class="question-card">
+                <div class="question-number" id="questionNumber">Вопрос 1</div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options-list" id="optionsList"></div>
+            </div>
+        </div>
+        
+        <!-- Экран формы -->
+        <div class="screen" id="contactScreen">
+            <div class="question-card contact-screen">
+                <div class="question-icon">📬</div>
+                <h2>Отлично! Куда отправить результат?</h2>
+                <p>Укажи контакт — получишь персональный анализ и подарок</p>
+                
+                <form id="contactForm" onsubmit="submitContact(event)">
+                    <div class="form-group">
+                        <label>Твоё имя</label>
+                        <input type="text" id="userName" placeholder="Как тебя зовут?" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Куда отправить результат?</label>
+                        <select id="contactType">
+                            <option value="telegram">Telegram</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label id="contactLabel">Telegram (@username или номер)</label>
+                        <input type="text" id="contactValue" placeholder="@username" required>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        Узнать результат 🎁
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Экран результата -->
+        <div class="screen" id="resultScreen">
+            <div class="question-card result-screen">
+                <div class="result-icon" id="resultIcon">🔥</div>
+                <h2 class="result-title" id="resultTitle">Твой потенциал: ВЫСОКИЙ!</h2>
+                <div class="result-score" id="resultScore">85 из 100 баллов</div>
+                
+                <p class="result-description" id="resultDescription">
+                    Судя по твоим ответам, у тебя отличные шансы на успех в онлайн-бизнесе!
+                </p>
+                
+                <div class="result-benefits">
+                    <h3>🎁 Что ты можешь получить:</h3>
+                    <ul>
+                        <li>✅ Набор AI-инструментов стоимостью $700</li>
+                        <li>✅ 21-дневная программа с наставником</li>
+                        <li>✅ Гарантия: $100 за 21 день или возврат</li>
+                        <li>✅ Поддержка на каждом шаге</li>
+                    </ul>
+                </div>
+                
+                <div class="cta-buttons">
+                    <a href="#" class="cta-primary" id="ctaMain">
+                        🚀 Получить доступ бесплатно
+                    </a>
+                    <a href="#" class="cta-secondary" id="ctaSecondary">
+                        💬 Задать вопрос в Telegram
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Брендинг -->
+        <div class="branding">
+            Создано в <a href="https://cardgift.io">CardGift</a>
+        </div>
+    </div>
+    
+    <script>
+        // =============================================
+        // КОНФИГУРАЦИЯ ОПРОСА
+        // =============================================
+        
+        const SURVEY_CONFIG = {
+            title: "Узнай свой потенциал",
+            totalQuestions: 6,
+            
+            // Вопросы с весами для квалификации
+            questions: [
+                {
+                    id: 1,
+                    icon: "🤔",
+                    text: "Почему тебе интересна тема заработка в интернете?",
+                    options: [
+                        { text: "Хочу дополнительный доход (не бросая работу)", score: 8 },
+                        { text: "Ищу основной источник дохода", score: 10 },
+                        { text: "Хочу финансовую свободу и больше времени", score: 10 },
+                        { text: "Просто интересно посмотреть", score: 3 }
+                    ]
+                },
+                {
+                    id: 2,
+                    icon: "💼",
+                    text: "Есть ли у тебя опыт заработка в интернете?",
+                    options: [
+                        { text: "Да, уже зарабатываю онлайн", score: 10 },
+                        { text: "Пробовал, но пока не получилось", score: 8 },
+                        { text: "Нет опыта, но очень хочу начать", score: 9 },
+                        { text: "Не верю что это реально работает", score: 2 }
+                    ]
+                },
+                {
+                    id: 3,
+                    icon: "⏰",
+                    text: "Сколько времени ты готов уделять в день?",
+                    options: [
+                        { text: "30 минут", score: 5 },
+                        { text: "1 час", score: 8 },
+                        { text: "2-3 часа", score: 10 },
+                        { text: "Полный рабочий день", score: 10 }
+                    ]
+                },
+                {
+                    id: 4,
+                    icon: "🎯",
+                    text: "Что для тебя важнее всего?",
+                    options: [
+                        { text: "Стабильный доход каждый месяц", score: 8 },
+                        { text: "Свобода — работать откуда хочу", score: 9 },
+                        { text: "Больше времени с семьёй", score: 9 },
+                        { text: "Построить свой бизнес", score: 10 }
+                    ]
+                },
+                {
+                    id: 5,
+                    icon: "💰",
+                    text: "Какой доход тебя интересует?",
+                    options: [
+                        { text: "$300-500 в месяц", score: 6 },
+                        { text: "$500-1000 в месяц", score: 8 },
+                        { text: "$1000-3000 в месяц", score: 9 },
+                        { text: "Больше $3000 в месяц", score: 10 }
+                    ]
+                },
+                {
+                    id: 6,
+                    icon: "🚀",
+                    text: "Готов ли ты инвестировать в себя?",
+                    options: [
+                        { text: "Да, если увижу реальные результаты", score: 10 },
+                        { text: "Только если есть гарантия возврата", score: 8 },
+                        { text: "Хочу сначала попробовать бесплатно", score: 6 },
+                        { text: "Нет, ищу только бесплатное", score: 3 }
+                    ]
+                }
+            ],
+            
+            // Результаты по баллам
+            results: {
+                hot: {
+                    minScore: 45,
+                    icon: "🔥",
+                    title: "Твой потенциал: ВЫСОКИЙ!",
+                    titleClass: "hot",
+                    description: "Судя по твоим ответам, ты готов к серьёзным результатам! У тебя есть мотивация, время и правильный настрой. Таким людям система подходит идеально."
+                },
+                warm: {
+                    minScore: 30,
+                    icon: "👍",
+                    title: "У тебя есть потенциал!",
+                    titleClass: "warm",
+                    description: "Ты на правильном пути! Возможно, есть небольшие сомнения — это нормально. Многие успешные партнёры начинали именно с такими мыслями."
+                },
+                cold: {
+                    minScore: 0,
+                    icon: "🤔",
+                    title: "Возможно, сейчас не лучшее время",
+                    titleClass: "cold",
+                    description: "Судя по ответам, ты пока не готов к активным действиям. Но это не значит, что возможность закрыта — сохрани контакт и вернись когда будешь готов."
+                }
+            }
+        };
+        
+        // =============================================
+        // СОСТОЯНИЕ
+        // =============================================
+        
+        let currentQuestion = 0;
+        let answers = [];
+        let totalScore = 0;
+        let userData = {};
+        
+        // Получаем referrer из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const referrerId = urlParams.get('ref') || urlParams.get('r') || 'direct';
+        
+        // =============================================
+        // ФУНКЦИИ
+        // =============================================
+        
+        function startSurvey() {
+            document.getElementById('welcomeScreen').classList.remove('active');
+            document.getElementById('questionScreen').classList.add('active');
+            document.getElementById('progressContainer').style.display = 'block';
+            showQuestion(0);
+        }
+        
+        function showQuestion(index) {
+            const question = SURVEY_CONFIG.questions[index];
+            
+            document.getElementById('questionNumber').textContent = `Вопрос ${index + 1}`;
+            document.getElementById('questionText').innerHTML = `
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">${question.icon}</div>
+                ${question.text}
+            `;
+            
+            const optionsList = document.getElementById('optionsList');
+            const letters = ['A', 'B', 'C', 'D'];
+            
+            optionsList.innerHTML = question.options.map((opt, i) => `
+                <button class="option-btn" onclick="selectOption(${index}, ${i}, ${opt.score})">
+                    <span class="option-letter">${letters[i]}</span>
+                    <span>${opt.text}</span>
+                </button>
+            `).join('');
+            
+            updateProgress(index);
+        }
+        
+        function selectOption(questionIndex, optionIndex, score) {
+            // Сохраняем ответ
+            answers[questionIndex] = {
+                question: SURVEY_CONFIG.questions[questionIndex].text,
+                answer: SURVEY_CONFIG.questions[questionIndex].options[optionIndex].text,
+                score: score
+            };
+            
+            totalScore += score;
+            
+            // Визуальный фидбек
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            buttons[optionIndex].classList.add('selected');
+            
+            // Переход к следующему вопросу
+            setTimeout(() => {
+                if (questionIndex < SURVEY_CONFIG.questions.length - 1) {
+                    currentQuestion++;
+                    showQuestion(currentQuestion);
+                } else {
+                    showContactForm();
+                }
+            }, 300);
+        }
+        
+        function updateProgress(index) {
+            const progress = ((index + 1) / SURVEY_CONFIG.questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = 
+                `Вопрос ${index + 1} из ${SURVEY_CONFIG.questions.length}`;
+        }
+        
+        function showContactForm() {
+            document.getElementById('questionScreen').classList.remove('active');
+            document.getElementById('contactScreen').classList.add('active');
+            document.getElementById('progressContainer').style.display = 'none';
+            
+            // Обновляем label при смене типа контакта
+            document.getElementById('contactType').addEventListener('change', function() {
+                const labels = {
+                    telegram: 'Telegram (@username или номер)',
+                    whatsapp: 'WhatsApp (номер телефона)',
+                    email: 'Email адрес'
+                };
+                const placeholders = {
+                    telegram: '@username',
+                    whatsapp: '+7...',
+                    email: 'email@example.com'
+                };
+                document.getElementById('contactLabel').textContent = labels[this.value];
+                document.getElementById('contactValue').placeholder = placeholders[this.value];
+            });
+        }
+        
+        function submitContact(event) {
+            event.preventDefault();
+            
+            userData = {
+                name: document.getElementById('userName').value,
+                contactType: document.getElementById('contactType').value,
+                contactValue: document.getElementById('contactValue').value,
+                referrer: referrerId,
+                answers: answers,
+                totalScore: totalScore,
+                maxScore: SURVEY_CONFIG.questions.length * 10,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Отключаем кнопку
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Обрабатываем...';
+            
+            // Здесь можно отправить данные на сервер
+            saveLead(userData).then(() => {
+                showResult();
+            }).catch(err => {
+                console.error('Error saving lead:', err);
+                showResult(); // Показываем результат даже при ошибке
+            });
+        }
+        
+        async function saveLead(data) {
+            // Попытка сохранить в Supabase (если доступен)
+            if (typeof window.supabase !== 'undefined') {
+                try {
+                    await window.supabase.from('survey_leads').insert([{
+                        name: data.name,
+                        contact_type: data.contactType,
+                        contact_value: data.contactValue,
+                        referrer_id: data.referrer,
+                        score: data.totalScore,
+                        answers: JSON.stringify(data.answers),
+                        created_at: data.timestamp
+                    }]);
+                } catch (e) {
+                    console.log('Supabase save failed, continuing...');
+                }
+            }
+            
+            // Можно добавить отправку в Telegram бота или webhook
+            console.log('Lead data:', data);
+            
+            return Promise.resolve();
+        }
+        
+        function showResult() {
+            document.getElementById('contactScreen').classList.remove('active');
+            document.getElementById('resultScreen').classList.add('active');
+            
+            // Определяем результат
+            let result;
+            if (totalScore >= SURVEY_CONFIG.results.hot.minScore) {
+                result = SURVEY_CONFIG.results.hot;
+            } else if (totalScore >= SURVEY_CONFIG.results.warm.minScore) {
+                result = SURVEY_CONFIG.results.warm;
+            } else {
+                result = SURVEY_CONFIG.results.cold;
+            }
+            
+            // Отображаем
+            document.getElementById('resultIcon').textContent = result.icon;
+            document.getElementById('resultTitle').textContent = result.title;
+            document.getElementById('resultTitle').className = 'result-title ' + result.titleClass;
+            document.getElementById('resultScore').textContent = 
+                `${totalScore} из ${SURVEY_CONFIG.questions.length * 10} баллов`;
+            document.getElementById('resultDescription').textContent = result.description;
+            
+            // Настраиваем CTA кнопки
+            // Замени на свои реальные ссылки
+            document.getElementById('ctaMain').href = 
+                `registration.html?ref=${referrerId}&name=${encodeURIComponent(userData.name)}`;
+            document.getElementById('ctaSecondary').href = 
+                `https://t.me/your_bot?start=survey_${referrerId}`;
+        }
+        
+        // =============================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // =============================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Если нужно — можно сразу начать опрос
+            // startSurvey();
+        });
+    </script>
+    
+    <!-- Supabase (опционально) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+</body>
+</html>
