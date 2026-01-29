@@ -2314,4 +2314,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 window.LessonsDataV2 = LessonsDataV2;
 
+// Совместимость со старым кодом (для Assistant)
+window.LessonsData = LessonsDataV2;
+
 console.log('📚 LessonsData v2.0 loaded - Full 21-day program');
