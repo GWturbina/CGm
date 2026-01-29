@@ -603,9 +603,12 @@ function showAddContactModal() {
                               oninput="updateMessagePreview()"
                               placeholder="Выберите шаблон выше...">${inviteTemplates.initial[0].text}</textarea>
                     
-                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
                         <button onclick="addLinkToMessage()" style="padding: 8px 12px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #FFD700; border-radius: 6px; cursor: pointer; font-size: 11px;">
-                            🔗 + Ссылка на карту
+                            🔗 + Ссылка на генератор
+                        </button>
+                        <button onclick="addClubCardLink()" style="padding: 8px 12px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10B981; border-radius: 6px; cursor: pointer; font-size: 11px;">
+                            🎁 + Открытка от клуба
                         </button>
                         <button onclick="addEmojiToMessage()" style="padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: #888; border-radius: 6px; cursor: pointer; font-size: 11px;">
                             😊 + Эмодзи
@@ -915,15 +918,37 @@ function updateMessagePreview() {
     }
 }
 
-// Добавить ссылку на открытку
+// Добавить ссылку на генератор (бесплатный доступ)
 function addLinkToMessage() {
     const textarea = document.getElementById('inviteText');
     if (textarea) {
         const userId = window.currentDisplayId || window.currentGwId || 'XXXXXXX';
-        const link = `\n\n🔗 https://cardgift.io/card?ref=${userId}`;
-        textarea.value += link;
+        // Правильная ссылка на генератор
+        const baseUrl = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://cgm-brown.vercel.app';
+        
+        const linkText = `\n\n🎁 Дарю тебе бесплатный доступ — посмотри и попробуй как работает:\n👉 ${baseUrl}/generator.html?ref=${userId}`;
+        textarea.value += linkText;
         updateMessagePreview();
-        showToast('Ссылка добавлена!', 'success');
+        showToast('Ссылка на генератор добавлена!', 'success');
+    }
+}
+
+// Добавить ссылку на готовую открытку от клуба
+function addClubCardLink() {
+    const textarea = document.getElementById('inviteText');
+    if (textarea) {
+        const userId = window.currentDisplayId || window.currentGwId || 'XXXXXXX';
+        const baseUrl = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://cgm-brown.vercel.app';
+        
+        // Ссылка на готовую открытку от клуба (можно настроить ID)
+        const linkText = `\n\n🎁 Специально для тебя — открытка с подарком внутри:\n👉 ${baseUrl}/card.html?ref=${userId}`;
+        textarea.value += linkText;
+        updateMessagePreview();
+        showToast('Ссылка на открытку добавлена!', 'success');
     }
 }
 
@@ -2207,4 +2232,14 @@ window.showImportExportModal = showImportExportModal;
 window.exportContacts = exportContacts;
 window.importContacts = importContacts;
 
-console.log('📋 Contacts Module v13.0 loaded - Real messenger share');
+// Новые функции v2.0
+window.addLinkToMessage = addLinkToMessage;
+window.addClubCardLink = addClubCardLink;
+window.addEmojiToMessage = addEmojiToMessage;
+window.switchInviteCategory = switchInviteCategory;
+window.selectInviteCard = selectInviteCard;
+window.updateMessagePreview = updateMessagePreview;
+window.showInviteGuide = showInviteGuide;
+window.renderInviteCards = renderInviteCards;
+
+console.log('📋 Contacts Module v14.0 loaded - Beautiful invite system');
