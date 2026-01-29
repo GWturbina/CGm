@@ -1016,6 +1016,16 @@ async function initializeGeneratorApp() {
         // Загружаем шаблон если есть в URL
         await loadTemplateFromUrl();
         
+        // Проверяем параметр templates для автооткрытия модалки выбора
+        const templatesParam = urlParams.get('templates');
+        if (templatesParam === 'corporate') {
+            console.log('📂 Auto-opening corporate templates from URL');
+            setTimeout(() => openCorporateTemplates(), 500);
+        } else if (templatesParam === 'leader') {
+            console.log('📂 Auto-opening leader templates from URL');
+            setTimeout(() => openLeaderTemplates(), 500);
+        }
+        
         // Показываем баннер SafePal если нужно
         setTimeout(showOpenInWalletBanner, 1000);
         
