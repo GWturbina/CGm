@@ -126,128 +126,331 @@
         </div>
     </div>
 
-    <!-- INSTRUCTIONS MODAL -->
+    <!-- INSTRUCTIONS MODAL - ПОШАГОВАЯ ИНСТРУКЦИЯ -->
     <div id="instructionsModal" class="instructions-modal">
         <div class="instructions-content">
-            <div class="instructions-header">📋 <span id="instructionsTitle">Руководство CardGift</span></div>
+            <div class="instructions-header">🎨 Создай открытку за 5 шагов</div>
             
             <div class="instructions-body">
-                <h3>🚀 <span id="quickStartTitle">Быстрый старт</span></h3>
                 
-                <div class="instruction-block">
-                    <strong>1. 📸 <span id="addPhotoTitle">Добавление фото</span></strong>
-                    <ul class="instructions-list">
-                        <li id="instruction1">Нажмите на область '📸 Фото'</li>
-                        <li id="instruction2">Выберите изображение с устройства</li>
-                        <li id="instruction3"><em>Важно: Используйте вертикальные фото для мобильных (пропорции 9:16)</em></li>
-                        <li id="instruction4"><em>Избегайте: Горизонтальные фото — они плохо смотрятся на мобильных открытках</em></li>
-                    </ul>
+                <!-- ШАГ 1: КАРТИНКА -->
+                <div class="instruction-step">
+                    <div class="step-badge">1</div>
+                    <div class="step-content">
+                        <h3>🖼️ Создай картинку</h3>
+                        <p>Используй <a href="ai-studio.html" target="_blank" style="color: #FFD700;">AI Studio</a> или загрузи свою</p>
+                        
+                        <div class="examples-box">
+                            <strong>📝 Примеры промптов для AI Studio:</strong>
+                            <div class="prompt-examples">
+                                <div class="prompt-item" onclick="copyToClipboard('Beautiful golden gift box with red ribbon, sparkling particles, dark purple background, vertical 9:16')">
+                                    <span class="prompt-icon">🎁</span>
+                                    <span class="prompt-name">Подарок</span>
+                                    <span class="prompt-copy">📋</span>
+                                </div>
+                                <div class="prompt-item" onclick="copyToClipboard('Gold coins falling, money rain, person catching coins, celebration mood, vertical 9:16')">
+                                    <span class="prompt-icon">💰</span>
+                                    <span class="prompt-name">Деньги</span>
+                                    <span class="prompt-copy">📋</span>
+                                </div>
+                                <div class="prompt-item" onclick="copyToClipboard('Rocket launching into golden sky, stars, inspirational mood, vertical 9:16')">
+                                    <span class="prompt-icon">🚀</span>
+                                    <span class="prompt-name">Возможность</span>
+                                    <span class="prompt-copy">📋</span>
+                                </div>
+                                <div class="prompt-item" onclick="copyToClipboard('Birthday cake with candles, confetti, balloons, warm golden light, vertical 9:16')">
+                                    <span class="prompt-icon">🎂</span>
+                                    <span class="prompt-name">День рождения</span>
+                                    <span class="prompt-copy">📋</span>
+                                </div>
+                                <div class="prompt-item" onclick="copyToClipboard('Person on beach with laptop, palm trees, ocean sunset, freedom lifestyle, vertical 9:16')">
+                                    <span class="prompt-icon">🏝️</span>
+                                    <span class="prompt-name">Свобода</span>
+                                    <span class="prompt-copy">📋</span>
+                                </div>
+                            </div>
+                            <small style="color: #888;">👆 Нажми чтобы скопировать промпт</small>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="instruction-block">
-                    <strong>2. ✍️ <span id="addTextTitle">Добавление текста</span></strong>
-                    <ul class="instructions-list">
-                        <li id="instruction5">Введите поздравление в поле текста</li>
-                        <li id="instruction6">Добавьте персональное сообщение (появляется по таймеру)</li>
-                        <li id="instruction7">Можете использовать эмодзи 🎉💕🎂</li>
-                    </ul>
+                <!-- ШАГ 2: ТЕКСТ НА ОТКРЫТКЕ -->
+                <div class="instruction-step">
+                    <div class="step-badge">2</div>
+                    <div class="step-content">
+                        <h3>✍️ Напиши короткий текст</h3>
+                        <p>2-3 строки максимум! Интрига — не раскрывай всё сразу</p>
+                        
+                        <div class="examples-box">
+                            <strong>💬 Примеры текста НА открытке:</strong>
+                            <div class="text-examples">
+                                <div class="text-item" onclick="copyToClipboard('🎁 У меня для тебя подарок!\nПосмотри до конца 👇')">
+                                    <span class="text-style">Подарок:</span>
+                                    <span class="text-content">"🎁 У меня для тебя подарок! Посмотри до конца 👇"</span>
+                                </div>
+                                <div class="text-item" onclick="copyToClipboard('💰 А что если через 21 день\nты начнёшь зарабатывать?')">
+                                    <span class="text-style">Вопрос:</span>
+                                    <span class="text-content">"💰 А что если через 21 день ты начнёшь зарабатывать?"</span>
+                                </div>
+                                <div class="text-item" onclick="copyToClipboard('🚀 Нашёл кое-что крутое!\nХочу поделиться с тобой')">
+                                    <span class="text-style">Личное:</span>
+                                    <span class="text-content">"🚀 Нашёл кое-что крутое! Хочу поделиться с тобой"</span>
+                                </div>
+                                <div class="text-item" onclick="copyToClipboard('🎂 С Праздником!\nВнутри — мой подарок тебе 🎁')">
+                                    <span class="text-style">Праздник:</span>
+                                    <span class="text-content">"🎂 С Праздником! Внутри — мой подарок тебе 🎁"</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="instruction-block">
-                    <strong>3. ⏱️ <span id="timersTitle">Настройка таймеров</span></strong>
-                    <ul class="instructions-list">
-                        <li id="instruction8">Таймер личного сообщения: Когда появляется персональный текст (1–30 сек)</li>
-                        <li id="instruction9">Таймер кнопки предложения: Когда показывается кнопка 'Получить генератор' (1–60 сек)</li>
-                        <li id="instruction10">Таймер баннера: Когда появляется рекламный баннер (если включен)</li>
-                    </ul>
+                <!-- ШАГ 3: КНОПКА -->
+                <div class="instruction-step">
+                    <div class="step-badge">3</div>
+                    <div class="step-content">
+                        <h3>🔘 Напиши призыв на кнопку</h3>
+                        <p>Кнопка должна обещать ценность!</p>
+                        
+                        <div class="examples-box">
+                            <strong>⚡ Примеры текста кнопки:</strong>
+                            <div class="button-examples">
+                                <span class="btn-example">🎁 Получить подарок</span>
+                                <span class="btn-example">👇 Узнать секрет</span>
+                                <span class="btn-example">🚀 Попробовать бесплатно</span>
+                                <span class="btn-example">💰 Забрать $700</span>
+                                <span class="btn-example">✨ Открыть возможность</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="instruction-block">
-                    <strong>4. 📍 <span id="positionTitle">Позиционирование кнопки</span></strong>
-                    <ul class="instructions-list">
-                        <li id="instruction11">Выберите из 9 позиций для кнопки 'Понравилась открытка?'</li>
-                        <li id="instruction12">Избегайте позиций, которые закрывают важный контент</li>
-                        <li id="instruction13">Кнопка составляет 1/3 ширины экрана для аккуратного вида</li>
-                    </ul>
+                <!-- ШАГ 4: POPUP -->
+                <div class="instruction-step">
+                    <div class="step-badge">4</div>
+                    <div class="step-content">
+                        <h3>⚡ Настрой вирусный Popup</h3>
+                        <p>Появляется когда человек хочет уйти — собирает контакты!</p>
+                        
+                        <div class="examples-box">
+                            <strong>🎯 Пример popup:</strong>
+                            <div class="popup-example-box">
+                                <div class="popup-title-ex">⏳ Подожди!</div>
+                                <div class="popup-text-ex">
+                                    Не уходи без подарка!<br><br>
+                                    🎁 Внутри:<br>
+                                    • AI-инструменты ($700)<br>
+                                    • Обучение с наставником<br>
+                                    • Гарантия результата
+                                </div>
+                                <div class="popup-btn-ex">Забрать подарок! 🎁</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="instruction-block">
-                    <strong>5. 🎨 <span id="styleTitle">Выбор стиля</span></strong>
-                    <ul class="instructions-list">
-                        <li>✨ Золото (классический)</li>
-                        <li>🌅 Закат (романтичный)</li>
-                        <li>🌊 Океан (свежий)</li>
-                        <li>🌌 Космос (современный)</li>
-                    </ul>
+                <!-- ШАГ 5: ОТПРАВЬ -->
+                <div class="instruction-step">
+                    <div class="step-badge">5</div>
+                    <div class="step-content">
+                        <h3>📤 Отправь 5 друзьям</h3>
+                        <p>Сделай доброе дело — поделись возможностью!</p>
+                        
+                        <div class="examples-box">
+                            <strong>💬 Что написать в сообщении:</strong>
+                            <div class="message-examples">
+                                <div class="msg-item" onclick="copyToClipboard('Привет! 👋 Сделал для тебя открытку, посмотри:')">
+                                    <span class="msg-style">Личное:</span> "Привет! 👋 Сделал для тебя открытку, посмотри:"
+                                </div>
+                                <div class="msg-item" onclick="copyToClipboard('Эй! Нашёл кое-что интересное. Глянь: 🎁')">
+                                    <span class="msg-style">Интрига:</span> "Эй! Нашёл кое-что интересное. Глянь: 🎁"
+                                </div>
+                                <div class="msg-item" onclick="copyToClipboard('Привет! Думаю тебе пригодится. Там подарок внутри!')">
+                                    <span class="msg-style">Польза:</span> "Привет! Думаю тебе пригодится. Там подарок внутри!"
+                                </div>
+                            </div>
+                            <small style="color: #888;">👆 Нажми чтобы скопировать + добавь ссылку на открытку</small>
+                        </div>
+                    </div>
                 </div>
                 
-                <h3>📢 <span id="extraFeaturesTitle">Дополнительные функции</span></h3>
-                <ul class="instructions-list">
-                    <li id="instruction14">🎨 Демо-шаблоны: Готовые тексты для разных случаев. Отлично подходят для вдохновения.</li>
-                    <li id="instruction15">📢 Рекламный баннер: Добавьте HTML-код для своего баннера. Идеально для рекламы бизнеса или мероприятий.</li>
-                    <li id="instruction16">🔗 Реферальная система: Ваш уникальный 7-значный ID. Делитесь реферальной ссылкой.</li>
-                </ul>
-                
-                <h3>🎯 <span id="mobileOptTitle">Советы для мобильной оптимизации</span></h3>
-                <div id="photoFormatsTitle"><strong>Лучшие форматы фото:</strong></div>
-                <ul class="instructions-list">
-                    <li id="instruction17">Вертикальные фото → идеальны для мобильных открыток</li>
-                    <li id="instruction18">Квадратные фото → покажутся с фоном</li>
-                    <li id="instruction19">Избегайте горизонтальных → плохо работают на мобильных</li>
-                </ul>
-                
-                <div class="instruction-important">
-                    📱 <span id="mainRule">Главное правило: Всегда думайте о мобильных! Ваши открытки будут просматривать на телефонах.</span> ✨
+                <!-- ВАЖНО -->
+                <div class="instruction-important" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1)); border-color: #10B981; margin-top: 20px;">
+                    💡 <strong>Совет для новичков:</strong> Начни с готовых карт от лидера или клуба! Они уже проверены и работают. Свои создашь позже.
                 </div>
                 
-                <h3>🚀 <span id="viralMarketingTitle">Viral Marketing - Ready Templates</span></h3>
-                
-                <div class="instruction-block" style="background: rgba(255, 215, 0, 0.1); padding: 15px; border-radius: 10px; border-left: 4px solid #FFD700; margin-bottom: 20px;">
-                    <strong style="color: #FFD700;">📂 Use ready-made cards!</strong>
-                    <p style="margin: 10px 0 0 0; color: #CCC; line-height: 1.6;">
-                        No need to create cards from scratch! Use ready templates marked by team members or corporate cards.
-                    </p>
-                </div>
-                
-                <div class="instruction-block">
-                    <strong>📂 How to use ready templates:</strong>
-                    <ul class="instructions-list">
-                        <li><strong>Open templates:</strong> Click "📂 Open Ready Templates" button at the top</li>
-                        <li><strong>Choose card:</strong> Browse templates with badges:
-                            <ul style="margin-top: 5px;">
-                                <li>📋 <strong>TEMPLATE</strong> - Regular team templates</li>
-                                <li>🏢 <strong>CORPORATE</strong> - Official company templates</li>
-                            </ul>
-                        </li>
-                        <li><strong>Click to load:</strong> Card loads into generator with all settings</li>
-                        <li><strong>Edit if needed:</strong> Change text, photo, or keep as is</li>
-                        <li><strong>Save:</strong> YOUR referral link is automatically inserted! 🎯</li>
-                        <li><strong>Share:</strong> Send to friends - they get YOUR link!</li>
-                    </ul>
-                </div>
-                
-                <div class="instruction-block" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.05) 100%); padding: 15px; border-radius: 10px; border: 2px solid #4CAF50;">
-                    <strong style="color: #4CAF50; font-size: 16px;">🎯 How viral marketing works:</strong>
-                    <ol style="margin: 10px 0 0 20px; color: #CCC; line-height: 1.8;">
-                        <li>Take a ready template (from team or corporate)</li>
-                        <li>Edit to your needs (or keep as is)</li>
-                        <li>Save → YOUR referral link is auto-inserted</li>
-                        <li>Send to friends/clients via messengers</li>
-                        <li>They receive beautiful card with YOUR link!</li>
-                        <li>They click → Register via YOUR link</li>
-                        <li>You get referrals → They take your cards too</li>
-                        <li><strong style="color: #FFD700;">Chain grows exponentially! 🚀</strong></li>
-                    </ol>
-                </div>
-                
-                <div class="instruction-important" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%); border-color: #FFD700;">
-                    💡 <strong>Tip:</strong> Beginners should use ready templates! They are tested and work well. Create your own later. ✨
-                </div>
             </div>
             
-            <button class="close-instructions" onclick="hideInstructions()" id="closeInstructionsBtn">Close</button>
+            <button class="close-instructions" onclick="hideInstructions()" id="closeInstructionsBtn">Понятно, начать! 🚀</button>
         </div>
     </div>
+    
+    <style>
+    /* Стили для новой инструкции */
+    .instruction-step {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 25px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .instruction-step:last-of-type {
+        border-bottom: none;
+    }
+    .step-badge {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 18px;
+        color: #000;
+    }
+    .step-content h3 {
+        margin: 0 0 5px 0;
+        color: #FFD700;
+        font-size: 16px;
+    }
+    .step-content p {
+        margin: 0 0 12px 0;
+        color: #AAA;
+        font-size: 13px;
+    }
+    .examples-box {
+        background: rgba(0,0,0,0.3);
+        border-radius: 10px;
+        padding: 15px;
+    }
+    .examples-box strong {
+        display: block;
+        margin-bottom: 10px;
+        color: #CCC;
+        font-size: 13px;
+    }
+    
+    /* Prompt examples */
+    .prompt-examples {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .prompt-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,215,0,0.1);
+        border: 1px solid rgba(255,215,0,0.3);
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .prompt-item:hover {
+        background: rgba(255,215,0,0.2);
+        border-color: #FFD700;
+    }
+    .prompt-icon { font-size: 16px; }
+    .prompt-name { font-size: 12px; color: #FFF; }
+    .prompt-copy { font-size: 10px; color: #888; }
+    
+    /* Text examples */
+    .text-examples {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .text-item {
+        background: rgba(255,255,255,0.05);
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .text-item:hover {
+        background: rgba(255,215,0,0.1);
+    }
+    .text-style {
+        color: #FFD700;
+        font-weight: bold;
+        font-size: 12px;
+        margin-right: 8px;
+    }
+    .text-content {
+        color: #CCC;
+        font-size: 12px;
+    }
+    
+    /* Button examples */
+    .button-examples {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .btn-example {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #000;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    /* Popup example */
+    .popup-example-box {
+        background: rgba(255,255,255,0.95);
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        max-width: 280px;
+    }
+    .popup-title-ex {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    .popup-text-ex {
+        font-size: 12px;
+        color: #555;
+        text-align: left;
+        margin-bottom: 12px;
+        line-height: 1.5;
+    }
+    .popup-btn-ex {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #000;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 13px;
+    }
+    
+    /* Message examples */
+    .message-examples {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .msg-item {
+        background: rgba(255,255,255,0.05);
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #CCC;
+        cursor: pointer;
+    }
+    .msg-item:hover {
+        background: rgba(255,215,0,0.1);
+    }
+    .msg-style {
+        color: #FFD700;
+        font-weight: bold;
+    }
+    </style>
 
     <!-- MEDIA UPLOAD -->
     <div class="section">
@@ -827,6 +1030,30 @@ window.previewBonusPopup = previewBonusPopup;
     <script src="/js/common.js?v=3"></script>
     <script src="/js/generator.js?v=9"></script>
     <script src="/js/cloudinary.js?v=3"></script>
+    
+    <!-- Функция копирования для инструкций -->
+    <script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            // Показываем уведомление
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#10B981;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:10000;animation:fadeIn 0.3s';
+            toast.textContent = '✅ Скопировано!';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }).catch(err => {
+            console.error('Copy failed:', err);
+            // Fallback для старых браузеров
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+            alert('Скопировано!');
+        });
+    }
+    </script>
     
     <!-- PWA Auto Update (включает регистрацию SW) -->
     <script src="/js/pwa-updater.js"></script>
