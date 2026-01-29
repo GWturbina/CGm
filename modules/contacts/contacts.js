@@ -228,94 +228,275 @@ function updateContactsCounts() {
 // ═══════════════════════════════════════════════════════════
 // ШАБЛОНЫ ПРИГЛАШЕНИЙ
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// ШАБЛОНЫ ПРИГЛАШЕНИЙ v2.0 - Красивые и по этапам
+// ═══════════════════════════════════════════════════════════
+
 const inviteTemplates = {
+    // 🎯 ПЕРВОЕ КАСАНИЕ - первое сообщение человеку
     initial: [
         {
-            title: '🔹 Универсальный',
-            text: `Привет! Сразу скажу — это не спам.
-Я нашёл инструмент, который сегодня реально необходим тем, кто работает или планирует работать в интернете: для бизнеса, блога или развития любой идеи.
-Он помогает кратно расширять круг контактов и возможностей — без навязчивости и лишнего шума.
-Если тебе интересно — напиши, куда удобнее отправить краткую информацию, и я перешлю.`
+            id: 'gift',
+            title: '🎁 Подарок',
+            subtitle: 'Интрига + ценность',
+            preview: '🎁',
+            aiPrompt: 'Golden gift box with ribbon, sparkling, dark background',
+            text: `Привет! 👋
+
+У меня есть кое-что интересное для тебя — набор инструментов, которые реально помогают в работе и жизни.
+
+Это не курсы и не марафоны. Это конкретные инструменты:
+• AI для текстов и картинок
+• Генератор вирусного контента  
+• Система для контактов и продаж
+
+Стоимость пакета $700, но есть способ получить бесплатно 🎁
+
+Интересно узнать как?`
         },
         {
-            title: '🔹 Уверенный',
-            text: `Привет! Пишу точечно, не массово.
-Есть один индивидуальный онлайн-инструмент, который сейчас закрывает сразу несколько задач: развитие проекта, рост аудитории и системная работа в сети.
-Я уверен, что ты искал именно такое решение. Если откликается — скажи, куда прислать краткое описание, и я отправлю.`
+            id: 'question',
+            title: '🤔 Вопрос',
+            subtitle: 'Заставляет задуматься',
+            preview: '🤔',
+            aiPrompt: 'Person thinking with question marks, lightbulb moment, inspirational',
+            text: `Привет! 👋
+
+Вот интересный вопрос: а что если через 21 день ты начнёшь зарабатывать в интернете?
+
+Даже если сейчас:
+• нет опыта
+• нет времени
+• нет идей что делать
+
+Я нашёл систему, которая даёт инструменты + обучение + гарантию результата.
+
+Хочешь покажу как это работает?`
         },
         {
-            title: '🔹 Короткий',
-            text: `Привет! Не спам.
-Нашёл инструмент, который сегодня реально нужен для работы и роста в интернете. Он даёт возможности, которые раньше были доступны только большим командам.
-Если интересно — напиши, куда отправить короткую информацию.`
+            id: 'personal',
+            title: '💬 Личное',
+            subtitle: 'Для друзей и знакомых',
+            preview: '💬',
+            aiPrompt: 'Two friends talking, coffee shop, warm atmosphere, friendly',
+            text: `Привет! 👋
+
+Давно хотел поделиться...
+
+Помнишь я искал способ заработка в интернете? Так вот — нашёл кое-что реально работающее.
+
+Это не очередной курс за 100500₽. Это набор инструментов + программа на 21 день.
+
+Самое крутое — есть гарантия: $100 за 21 день или возврат денег.
+
+Я уже попробовал. Хочу показать тебе — думаю тебе зайдёт!`
         },
         {
-            title: '🔹 Тёплый',
-            text: `Привет 🙂 Не спам, пишу по ощущению.
-Есть инструмент, который сильно упрощает работу в интернете и при этом расширяет возможности в разы — для бизнеса, личного бренда или проектов.
-Если хочешь узнать подробнее — скажи, куда отправить краткую инфо, я перешлю.`
+            id: 'business',
+            title: '💼 Деловой',
+            subtitle: 'Для бизнес-контактов',
+            preview: '💼',
+            aiPrompt: 'Business tools, laptop, growth charts, professional',
+            text: `Добрый день!
+
+Хочу поделиться находкой которая может быть полезна.
+
+Обнаружил платформу с инструментами для цифрового бизнеса:
+• AI-генерация контента
+• CRM и автоматизация
+• Вирусный маркетинг
+• Партнёрская программа
+
+Пакет оценивается в $700, но есть способ получить бесплатно.
+
+Если интересно — могу отправить короткую презентацию.`
+        },
+        {
+            id: 'short',
+            title: '⚡ Короткий',
+            subtitle: 'Для занятых людей',
+            preview: '⚡',
+            aiPrompt: 'Lightning bolt, speed, efficiency, bright yellow',
+            text: `Привет! 👋
+
+Коротко: нашёл инструменты для заработка в интернете на $700 — бесплатно.
+
+Есть 2 минуты посмотреть?`
         }
     ],
+    
+    // ✅ ПОСЛЕ СОГЛАСИЯ - человек заинтересовался
     followup: [
         {
-            title: '🔹 Стандартный',
-            text: `Супер, тогда кратко объясняю 👇
-Это инструмент нового формата для работы в интернете. Он объединяет в себе:
-• рост и систематизацию контактов,
-• автоматизацию рекомендаций,
-• понятную модель взаимодействия без хаоса и догадок.
+            id: 'details',
+            title: '📋 Подробности',
+            subtitle: 'Объясняем что внутри',
+            preview: '📋',
+            text: `Супер! Рад что откликнулось 🙂
 
-Инструмент подходит:
-• для бизнеса,
-• для блогеров,
-• для команд и онлайн-проектов,
-• и для тех, кто хочет зарабатывать в сети системно.
+Вот что ты получаешь:
 
-Я вскоре отправлю тебе инструкцию, и ты получишь доступ к краткой презентации и следующим шагам с чего начать`
+🎁 Инструменты ($700 ценности):
+• AI Studio — тексты, картинки, голос
+• Генератор открыток — вирусный контент
+• CRM — управление контактами
+• Система опросов — сбор лидов
+
+📚 21-дневная программа:
+• День за днём — понятные шаги
+• Наставник помогает
+• Чат поддержки
+
+💰 Гарантия:
+$100 за 21 день или возврат денег!
+
+Готов начать? Отправляю ссылку 👇`
         },
         {
-            title: '🔹 Про ценность',
-            text: `Отлично 👍
-Это не хайп и не шаблонное решение. Мы создаём экосистему инструментов, которые:
-• реально работают,
-• масштабируются,
-• и дают понятный результат.
+            id: 'simple',
+            title: '🎯 Просто о главном',
+            subtitle: 'Без воды',
+            preview: '🎯',
+            text: `Отлично! 👍
 
-Ты увидишь:
-• как всё устроено изнутри,
-• какие возможности открываются,
-• и как можно использовать это именно под свои цели.
+Если коротко:
+1. Регистрация — 2 минуты
+2. Активация — $2.25 (один раз)
+3. Получаешь инструменты на $700
+4. 21 день обучения с поддержкой
+5. Гарантия результата
 
-Я вскоре отправлю тебе инструкцию, и ты получишь доступ к краткой презентации и следующим шагам с чего начать`
+Никаких подписок, скрытых платежей.
+Инструменты остаются навсегда.
+
+Отправить ссылку для регистрации?`
         },
         {
-            title: '🔹 Динамичный',
-            text: `Отлично!
-Ниже форма — заполни её. После этого ты:
-• увидишь сам инструмент,
-• поймёшь, как он работает,
-• и решишь, подходит ли он тебе.
+            id: 'video',
+            title: '🎬 Видео-объяснение',
+            subtitle: 'Лучше один раз увидеть',
+            preview: '🎬',
+            text: `Круто что заинтересовало! 🔥
 
-Без обязательств — только факты и возможности 👇`
+Записал короткое видео (3 мин) где показываю:
+• Как выглядит система внутри
+• Какие инструменты получаешь
+• Как работает партнёрка
+
+Посмотри и напиши что думаешь 👇
+
+[ССЫЛКА НА ВИДЕО]`
+        }
+    ],
+    
+    // 🤔 ЕСЛИ МОЛЧИТ - человек не отвечает
+    reminder: [
+        {
+            id: 'soft',
+            title: '😊 Мягкое напоминание',
+            subtitle: 'Без давления',
+            preview: '😊',
+            text: `Привет! 👋
+
+Писал тебе про инструменты для заработка — может пропустил сообщение?
+
+Если сейчас не актуально — ничего страшного, просто скажи.
+Если интересно — с удовольствием расскажу подробнее 🙂`
         },
         {
-            title: '🔹 Доверительный',
-            text: `Рад, что откликнулось 🙂
-Это проект про удобство, системность и реальные возможности, без спешки и давления.
+            id: 'value',
+            title: '💎 Напоминание с ценностью',
+            subtitle: 'Добавляем пользу',
+            preview: '💎',
+            text: `Привет! 👋
 
-Вскоре отправлю краткое объяснение и доступ к инструментам. Дальше сам решишь, насколько тебе это интересно 👇`
+Кстати, пока ты думаешь — вот интересный факт:
+
+Те кто начал 21-дневную программу в среднем:
+• День 7 — первые результаты
+• День 14 — первые заработки  
+• День 21 — система работает
+
+А ещё есть гарантия возврата если не получится.
+
+Что скажешь, попробуем? 🚀`
         },
         {
-            title: '🔹 Для лидеров',
-            text: `Отлично, тогда по делу.
-Это инфраструктурный инструмент, который можно:
-• встроить в существующий бизнес,
-• использовать для масштабирования,
-• или развивать как отдельное направление.
+            id: 'question2',
+            title: '❓ Вопрос',
+            subtitle: 'Вовлекаем в диалог',
+            preview: '❓',
+            text: `Привет! 👋
 
-Очень скоро я покажу архитектуру решения и возможные сценарии использования.`
+Хотел спросить — ты вообще рассматриваешь тему дополнительного заработка в интернете?
+
+Если да — у меня есть что показать.
+Если нет — тоже ок, просто хочу понять чтобы не надоедать 🙂`
+        }
+    ],
+    
+    // 💔 ЕСЛИ ОТКАЗАЛ - мягкий возврат через время
+    rejected: [
+        {
+            id: 'respect',
+            title: '🤝 С уважением',
+            subtitle: 'Оставляем дверь открытой',
+            preview: '🤝',
+            text: `Привет! 👋
+
+Помню что раньше не зашла тема — всё ок, без проблем.
+
+Просто хотел сказать: если что-то изменится или захочешь попробовать — я здесь. 
+
+Всегда рад помочь разобраться! 🙂`
+        },
+        {
+            id: 'news',
+            title: '📰 Новости проекта',
+            subtitle: 'Что нового',
+            preview: '📰',
+            text: `Привет! 👋
+
+Давно не писал. У нас тут обновления в проекте:
+• Добавили новые AI-инструменты
+• Улучшили программу обучения
+• Появились новые истории успеха
+
+Если станет интересно — дай знать!
+Всегда рад показать что нового 🚀`
+        }
+    ],
+    
+    // 🔥 ГОРЯЧЕЕ ПРЕДЛОЖЕНИЕ - ограниченное время
+    hot: [
+        {
+            id: 'limited',
+            title: '⏰ Ограниченное предложение',
+            subtitle: 'Срочность',
+            preview: '⏰',
+            text: `Привет! 👋
+
+Быстрое сообщение — сейчас есть особое предложение:
+
+🔥 До конца недели:
+• Бонус при регистрации
+• Дополнительные материалы
+• Приоритетная поддержка
+
+Если думал попробовать — сейчас лучший момент!
+
+Интересно? 🚀`
         }
     ]
+};
+
+// Категории для отображения
+const inviteCategories = {
+    initial: { name: '🎯 Первое касание', desc: 'Первое сообщение человеку' },
+    followup: { name: '✅ После согласия', desc: 'Когда заинтересовался' },
+    reminder: { name: '🔔 Напоминание', desc: 'Если не отвечает' },
+    rejected: { name: '💔 Возврат', desc: 'Если отказал раньше' },
+    hot: { name: '🔥 Горячее', desc: 'Срочные предложения' }
 };
 
 function showAddContactModal() {
@@ -329,114 +510,165 @@ function showAddContactModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.id = 'addContactModal';
-    modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
-    console.log('🔵 Modal style:', modal.style.cssText);
+    modal.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 10000; padding: 15px;';
+    
     modal.innerHTML = `
-        <div class="modal" style="display: block !important; max-width: 600px; max-height: 90vh; overflow-y: auto; background: #1a1a2e; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
-            <div class="modal-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
-                <h3 style="color: #FFD700; margin: 0; font-size: 18px;">➕ Добавить контакт</h3>
-                <button class="modal-close" onclick="closeContactsModal()" style="color: #fff; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+        <div class="modal" style="display: block !important; max-width: 700px; width: 100%; max-height: 95vh; overflow-y: auto; background: linear-gradient(145deg, #1a1a2e, #16213e); border-radius: 20px; box-shadow: 0 25px 80px rgba(0,0,0,0.6); border: 1px solid rgba(255,215,0,0.2);">
+            
+            <!-- Header -->
+            <div class="modal-header" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,215,0,0.2); background: rgba(255,215,0,0.05);">
+                <div>
+                    <h3 style="color: #FFD700; margin: 0; font-size: 20px;">📨 Пригласить человека</h3>
+                    <p style="color: #888; margin: 5px 0 0 0; font-size: 12px;">Выбери шаблон → Отредактируй → Отправь</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button onclick="showInviteGuide()" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #FFD700; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px;">
+                        📋 Инструкция
+                    </button>
+                    <button class="modal-close" onclick="closeContactsModal()" style="color: #fff; background: rgba(255,255,255,0.1); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer;">✕</button>
+                </div>
             </div>
             
             <!-- Вкладки -->
-            <div style="display: flex; border-bottom: 2px solid #333; margin-bottom: 20px;">
+            <div style="display: flex; border-bottom: 1px solid #333;">
                 <button id="tabInvite" onclick="switchContactTab('invite')" 
-                        style="flex: 1; padding: 12px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 8px 8px 0 0;">
+                        style="flex: 1; padding: 14px; background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1)); color: #FFD700; border: none; font-weight: bold; cursor: pointer; font-size: 14px; border-bottom: 2px solid #FFD700;">
                     📨 Пригласить
                 </button>
                 <button id="tabManual" onclick="switchContactTab('manual')" 
-                        style="flex: 1; padding: 12px; background: #333; color: #888; border: none; cursor: pointer; border-radius: 8px 8px 0 0;">
+                        style="flex: 1; padding: 14px; background: transparent; color: #666; border: none; cursor: pointer; font-size: 14px; border-bottom: 2px solid transparent;">
                     ✏️ Добавить вручную
                 </button>
             </div>
             
             <!-- Вкладка: Пригласить -->
-            <div id="inviteTab" class="modal-body" style="padding: 15px;">
+            <div id="inviteTab" class="modal-body" style="padding: 20px;">
                 
-                <!-- Шаг 1: Выбор шаблона -->
-                <div style="margin-bottom: 15px;">
-                    <label style="color: #FFD700; font-weight: bold; display: block; margin-bottom: 10px;">
-                        1️⃣ Выберите текст приглашения:
-                    </label>
-                    
-                    <!-- Тип шаблона -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                        <button id="btnInitialTemplates" onclick="showTemplateType('initial')" 
-                                style="flex: 1; padding: 8px; background: #FFD700; color: #000; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;">
-                            📝 Первое касание
-                        </button>
-                        <button id="btnFollowupTemplates" onclick="showTemplateType('followup')" 
-                                style="flex: 1; padding: 8px; background: #333; color: #888; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;">
-                            📋 После согласия
-                        </button>
+                <!-- Шаг 1: Этап воронки -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">1</span>
+                        <span style="color: #FFD700; font-weight: bold; font-size: 14px;">Выбери этап</span>
+                        <span style="color: #666; font-size: 12px;">— на каком шаге этот человек?</span>
                     </div>
                     
-                    <!-- Шаблоны -->
-                    <div id="templatesContainer" style="max-height: 120px; overflow-y: auto;">
-                        ${renderTemplateButtons('initial')}
+                    <div id="categoryTabs" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button class="cat-btn active" data-cat="initial" onclick="switchInviteCategory('initial')" style="padding: 10px 16px; border-radius: 20px; border: 1px solid #FFD700; background: rgba(255,215,0,0.2); color: #FFD700; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">
+                            🎯 Первое касание
+                        </button>
+                        <button class="cat-btn" data-cat="followup" onclick="switchInviteCategory('followup')" style="padding: 10px 16px; border-radius: 20px; border: 1px solid #444; background: transparent; color: #888; cursor: pointer; font-size: 12px; transition: all 0.2s;">
+                            ✅ После согласия
+                        </button>
+                        <button class="cat-btn" data-cat="reminder" onclick="switchInviteCategory('reminder')" style="padding: 10px 16px; border-radius: 20px; border: 1px solid #444; background: transparent; color: #888; cursor: pointer; font-size: 12px; transition: all 0.2s;">
+                            🔔 Напоминание
+                        </button>
+                        <button class="cat-btn" data-cat="rejected" onclick="switchInviteCategory('rejected')" style="padding: 10px 16px; border-radius: 20px; border: 1px solid #444; background: transparent; color: #888; cursor: pointer; font-size: 12px; transition: all 0.2s;">
+                            💔 Возврат
+                        </button>
+                        <button class="cat-btn" data-cat="hot" onclick="switchInviteCategory('hot')" style="padding: 10px 16px; border-radius: 20px; border: 1px solid #444; background: transparent; color: #888; cursor: pointer; font-size: 12px; transition: all 0.2s;">
+                            🔥 Горячее
+                        </button>
                     </div>
                 </div>
                 
-                <!-- Шаг 2: Текст (можно редактировать) -->
-                <div style="margin-bottom: 15px;">
-                    <label style="color: #FFD700; font-weight: bold; display: block; margin-bottom: 8px;">
-                        2️⃣ Текст (можно редактировать):
-                    </label>
-                    <textarea id="inviteText" rows="4" 
-                              style="width: 100%; background: #1a1a2e; border: 1px solid #444; border-radius: 8px; color: #fff; padding: 10px; font-size: 13px; resize: none;"
+                <!-- Шаг 2: Выбор шаблона (карточки) -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">2</span>
+                        <span style="color: #FFD700; font-weight: bold; font-size: 14px;">Выбери стиль сообщения</span>
+                    </div>
+                    
+                    <div id="templatesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: 200px; overflow-y: auto; padding: 5px;">
+                        ${renderInviteCards('initial')}
+                    </div>
+                </div>
+                
+                <!-- Шаг 3: Текст -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">3</span>
+                        <span style="color: #FFD700; font-weight: bold; font-size: 14px;">Проверь и отредактируй</span>
+                    </div>
+                    
+                    <!-- Превью как в мессенджере -->
+                    <div style="background: #e5ddd5; border-radius: 12px; padding: 15px; margin-bottom: 10px;">
+                        <div style="background: #dcf8c6; border-radius: 8px; padding: 12px; max-width: 90%; margin-left: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                            <div id="messagePreview" style="color: #111; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${inviteTemplates.initial[0].text}</div>
+                            <div style="text-align: right; color: #888; font-size: 11px; margin-top: 5px;">✓✓</div>
+                        </div>
+                    </div>
+                    
+                    <textarea id="inviteText" rows="5" 
+                              style="width: 100%; background: #0d1b2a; border: 1px solid #333; border-radius: 10px; color: #fff; padding: 12px; font-size: 13px; resize: vertical; line-height: 1.5;"
+                              oninput="updateMessagePreview()"
                               placeholder="Выберите шаблон выше...">${inviteTemplates.initial[0].text}</textarea>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button onclick="addLinkToMessage()" style="padding: 8px 12px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #FFD700; border-radius: 6px; cursor: pointer; font-size: 11px;">
+                            🔗 + Ссылка на карту
+                        </button>
+                        <button onclick="addEmojiToMessage()" style="padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; color: #888; border-radius: 6px; cursor: pointer; font-size: 11px;">
+                            😊 + Эмодзи
+                        </button>
+                    </div>
                 </div>
                 
-                <!-- Шаг 3: Выбор мессенджера и отправка -->
+                <!-- Шаг 4: Отправка -->
                 <div>
-                    <label style="color: #FFD700; font-weight: bold; display: block; margin-bottom: 10px;">
-                        3️⃣ Отправить в мессенджер:
-                    </label>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">4</span>
+                        <span style="color: #FFD700; font-weight: bold; font-size: 14px;">Отправь в мессенджер</span>
+                    </div>
+                    
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                        <button onclick="sendToMessenger('telegram')" 
-                                style="background: #0088cc; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <span style="font-size: 20px;">📱</span>
-                            <span style="font-size: 10px;">Telegram</span>
+                        <button onclick="sendToMessenger('telegram')" class="messenger-btn" style="background: linear-gradient(135deg, #0088cc, #0077b5); color: #fff; border: none; padding: 14px 8px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: transform 0.2s;">
+                            <span style="font-size: 24px;">✈️</span>
+                            <span style="font-size: 11px; font-weight: 500;">Telegram</span>
                         </button>
-                        <button onclick="sendToMessenger('whatsapp')" 
-                                style="background: #25D366; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <span style="font-size: 20px;">💬</span>
-                            <span style="font-size: 10px;">WhatsApp</span>
+                        <button onclick="sendToMessenger('whatsapp')" class="messenger-btn" style="background: linear-gradient(135deg, #25D366, #128C7E); color: #fff; border: none; padding: 14px 8px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: transform 0.2s;">
+                            <span style="font-size: 24px;">💬</span>
+                            <span style="font-size: 11px; font-weight: 500;">WhatsApp</span>
                         </button>
-                        <button onclick="sendToMessenger('viber')" 
-                                style="background: #7360F2; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <span style="font-size: 20px;">📞</span>
-                            <span style="font-size: 10px;">Viber</span>
+                        <button onclick="sendToMessenger('viber')" class="messenger-btn" style="background: linear-gradient(135deg, #7360F2, #665CAC); color: #fff; border: none; padding: 14px 8px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: transform 0.2s;">
+                            <span style="font-size: 24px;">📞</span>
+                            <span style="font-size: 11px; font-weight: 500;">Viber</span>
                         </button>
-                        <button onclick="sendToMessenger('facebook')" 
-                                style="background: #1877F2; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <span style="font-size: 20px;">📘</span>
-                            <span style="font-size: 10px;">Facebook</span>
+                        <button onclick="copyInviteText()" class="messenger-btn" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; border: none; padding: 14px 8px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: transform 0.2s; font-weight: bold;">
+                            <span style="font-size: 24px;">📋</span>
+                            <span style="font-size: 11px; font-weight: 600;">Копировать</span>
                         </button>
-                        <button onclick="sendToMessenger('instagram')" 
-                                style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743); color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px;">
+                        <button onclick="sendToMessenger('instagram')" class="messenger-btn" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #bc1888); color: #fff; border: none; padding: 12px 8px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
                             <span style="font-size: 20px;">📷</span>
                             <span style="font-size: 10px;">Instagram</span>
                         </button>
-                        <button onclick="sendToMessenger('tiktok')" 
-                                style="background: #000; color: #fff; border: 1px solid #444; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <span style="font-size: 20px;">🎵</span>
-                            <span style="font-size: 10px;">TikTok</span>
+                        <button onclick="sendToMessenger('facebook')" class="messenger-btn" style="background: #1877F2; color: #fff; border: none; padding: 12px 8px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">📘</span>
+                            <span style="font-size: 10px;">Facebook</span>
                         </button>
-                        <button onclick="sendToMessenger('email')" 
-                                style="background: #EA4335; color: #fff; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                        <button onclick="sendToMessenger('email')" class="messenger-btn" style="background: #EA4335; color: #fff; border: none; padding: 12px 8px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
                             <span style="font-size: 20px;">📧</span>
                             <span style="font-size: 10px;">Email</span>
                         </button>
-                        <button onclick="copyInviteText()" 
-                                style="background: #FFD700; color: #000; border: none; padding: 12px 8px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <span style="font-size: 20px;">📋</span>
-                            <span style="font-size: 10px;">Копировать</span>
+                        <button onclick="sendToMessenger('sms')" class="messenger-btn" style="background: #333; color: #fff; border: 1px solid #444; padding: 12px 8px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 20px;">💌</span>
+                            <span style="font-size: 10px;">SMS</span>
                         </button>
                     </div>
                 </div>
                 
-                <p style="color: #666; font-size: 10px; text-align: center; margin-top: 10px;">
+                <!-- Подсказка -->
+                <div style="margin-top: 15px; padding: 12px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px;">
+                    <p style="color: #10B981; font-size: 12px; margin: 0;">
+                        💡 <strong>Совет:</strong> Для лучшего эффекта сначала отправь открытку через Генератор, а потом это сообщение. Человек получит красивую картинку + текст!
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Вкладка: Добавить вручную -->
+            <div id="manualTab" class="modal-body" style="display: none; padding: 20px;">`
                     💡 Нажмите на мессенджер — текст скопируется и откроется приложение
                 </p>
             </div>
@@ -504,6 +736,10 @@ function showAddContactModal() {
             box-shadow: 0 0 0 3px #FFD700 !important;
             transform: scale(1.05);
         }
+        .messenger-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
         .template-btn {
             width: 100%;
             padding: 10px 15px;
@@ -524,6 +760,72 @@ function showAddContactModal() {
             background: rgba(255, 215, 0, 0.2);
             border-color: #FFD700;
         }
+        
+        /* Новые стили для карточек v2.0 */
+        .invite-card {
+            background: rgba(255,255,255,0.03);
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .invite-card:hover {
+            border-color: #FFD700;
+            background: rgba(255,215,0,0.1);
+            transform: translateY(-3px);
+        }
+        .invite-card.selected {
+            border-color: #FFD700;
+            background: rgba(255,215,0,0.15);
+            box-shadow: 0 0 20px rgba(255,215,0,0.2);
+        }
+        .card-preview {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .card-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 3px;
+        }
+        .card-subtitle {
+            font-size: 10px;
+            color: #888;
+        }
+        
+        .cat-btn {
+            transition: all 0.2s ease;
+        }
+        .cat-btn:hover {
+            border-color: #FFD700 !important;
+            color: #FFD700 !important;
+        }
+        .cat-btn.active {
+            background: rgba(255,215,0,0.2) !important;
+            border-color: #FFD700 !important;
+            color: #FFD700 !important;
+        }
+        
+        /* Анимация для превью */
+        #messagePreview {
+            transition: all 0.3s ease;
+        }
+        
+        /* Скроллбар для карточек */
+        #templatesGrid::-webkit-scrollbar {
+            width: 6px;
+        }
+        #templatesGrid::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+        }
+        #templatesGrid::-webkit-scrollbar-thumb {
+            background: rgba(255,215,0,0.3);
+            border-radius: 3px;
+        }
     `;
     document.head.appendChild(style);
 }
@@ -535,6 +837,239 @@ function renderTemplateButtons(type) {
             ${t.title}
         </button>
     `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// НОВЫЕ ФУНКЦИИ v2.0 - Красивые карточки
+// ═══════════════════════════════════════════════════════════
+
+// Рендер карточек шаблонов
+function renderInviteCards(category) {
+    const templates = inviteTemplates[category] || [];
+    return templates.map((t, i) => `
+        <div class="invite-card ${i === 0 ? 'selected' : ''}" onclick="selectInviteCard('${category}', ${i})" data-index="${i}">
+            <div class="card-preview">${t.preview || '📝'}</div>
+            <div class="card-title">${t.title}</div>
+            <div class="card-subtitle">${t.subtitle || ''}</div>
+        </div>
+    `).join('');
+}
+
+// Переключение категории
+function switchInviteCategory(category) {
+    // Обновляем кнопки категорий
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.dataset.cat === category) {
+            btn.style.background = 'rgba(255,215,0,0.2)';
+            btn.style.borderColor = '#FFD700';
+            btn.style.color = '#FFD700';
+            btn.classList.add('active');
+        } else {
+            btn.style.background = 'transparent';
+            btn.style.borderColor = '#444';
+            btn.style.color = '#888';
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Обновляем карточки
+    const grid = document.getElementById('templatesGrid');
+    if (grid) {
+        grid.innerHTML = renderInviteCards(category);
+        // Выбираем первый шаблон
+        selectInviteCard(category, 0);
+    }
+}
+
+// Выбор карточки
+function selectInviteCard(category, index) {
+    const templates = inviteTemplates[category] || [];
+    const template = templates[index];
+    
+    if (template) {
+        // Обновляем текст
+        const textarea = document.getElementById('inviteText');
+        if (textarea) {
+            textarea.value = template.text;
+            updateMessagePreview();
+        }
+        
+        // Подсвечиваем выбранную карточку
+        document.querySelectorAll('.invite-card').forEach((card, i) => {
+            if (i === index) {
+                card.classList.add('selected');
+                card.style.borderColor = '#FFD700';
+                card.style.background = 'rgba(255,215,0,0.15)';
+            } else {
+                card.classList.remove('selected');
+                card.style.borderColor = '#333';
+                card.style.background = 'rgba(255,255,255,0.03)';
+            }
+        });
+    }
+}
+
+// Обновление превью сообщения
+function updateMessagePreview() {
+    const textarea = document.getElementById('inviteText');
+    const preview = document.getElementById('messagePreview');
+    if (textarea && preview) {
+        preview.textContent = textarea.value;
+    }
+}
+
+// Добавить ссылку на открытку
+function addLinkToMessage() {
+    const textarea = document.getElementById('inviteText');
+    if (textarea) {
+        const userId = window.currentDisplayId || window.currentGwId || 'XXXXXXX';
+        const link = `\n\n🔗 https://cardgift.io/card?ref=${userId}`;
+        textarea.value += link;
+        updateMessagePreview();
+        showToast('Ссылка добавлена!', 'success');
+    }
+}
+
+// Добавить эмодзи
+function addEmojiToMessage() {
+    const emojis = ['🎁', '💰', '🚀', '🔥', '💡', '✨', '👋', '🎯', '💪', '🏆'];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const textarea = document.getElementById('inviteText');
+    if (textarea) {
+        textarea.value += ' ' + randomEmoji;
+        updateMessagePreview();
+    }
+}
+
+// Показать инструкцию
+function showInviteGuide() {
+    const guideModal = document.createElement('div');
+    guideModal.id = 'inviteGuideModal';
+    guideModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 15px;';
+    guideModal.onclick = (e) => { if (e.target === guideModal) guideModal.remove(); };
+    
+    guideModal.innerHTML = `
+        <div style="max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; background: linear-gradient(145deg, #1a1a2e, #16213e); border-radius: 20px; border: 1px solid rgba(255,215,0,0.3);">
+            <div style="padding: 20px; border-bottom: 1px solid rgba(255,215,0,0.2); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #FFD700; margin: 0;">📋 Как приглашать людей</h3>
+                <button onclick="this.closest('#inviteGuideModal').remove()" style="background: rgba(255,255,255,0.1); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;">✕</button>
+            </div>
+            
+            <div style="padding: 20px;">
+                
+                <!-- Шаг 1 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div style="width: 40px; height: 40px; min-width: 40px; background: linear-gradient(135deg, #FFD700, #FFA500); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">1</div>
+                    <div>
+                        <h4 style="color: #FFD700; margin: 0 0 8px 0;">🎯 Выбери этап</h4>
+                        <p style="color: #aaa; margin: 0; font-size: 13px; line-height: 1.5;">
+                            Определи на каком шаге этот человек:<br>
+                            • <strong style="color: #fff;">Первое касание</strong> — незнакомый человек<br>
+                            • <strong style="color: #fff;">После согласия</strong> — заинтересовался<br>
+                            • <strong style="color: #fff;">Напоминание</strong> — если молчит<br>
+                            • <strong style="color: #fff;">Возврат</strong> — если отказал раньше<br>
+                            • <strong style="color: #fff;">Горячее</strong> — срочное предложение
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Шаг 2 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div style="width: 40px; height: 40px; min-width: 40px; background: linear-gradient(135deg, #FFD700, #FFA500); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">2</div>
+                    <div>
+                        <h4 style="color: #FFD700; margin: 0 0 8px 0;">💬 Выбери стиль</h4>
+                        <p style="color: #aaa; margin: 0; font-size: 13px; line-height: 1.5;">
+                            Разные люди — разные подходы:<br>
+                            • 🎁 <strong style="color: #fff;">Подарок</strong> — интрига + ценность<br>
+                            • 🤔 <strong style="color: #fff;">Вопрос</strong> — заставляет задуматься<br>
+                            • 💬 <strong style="color: #fff;">Личное</strong> — для друзей<br>
+                            • 💼 <strong style="color: #fff;">Деловой</strong> — для бизнес-контактов<br>
+                            • ⚡ <strong style="color: #fff;">Короткий</strong> — для занятых людей
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Шаг 3 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div style="width: 40px; height: 40px; min-width: 40px; background: linear-gradient(135deg, #FFD700, #FFA500); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">3</div>
+                    <div>
+                        <h4 style="color: #FFD700; margin: 0 0 8px 0;">✏️ Отредактируй</h4>
+                        <p style="color: #aaa; margin: 0; font-size: 13px; line-height: 1.5;">
+                            Сделай текст своим:<br>
+                            • Добавь имя человека<br>
+                            • Измени под свой стиль<br>
+                            • Добавь ссылку на открытку 🔗<br>
+                            • Проверь в превью как выглядит
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Шаг 4 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div style="width: 40px; height: 40px; min-width: 40px; background: linear-gradient(135deg, #FFD700, #FFA500); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000;">4</div>
+                    <div>
+                        <h4 style="color: #FFD700; margin: 0 0 8px 0;">📤 Отправь</h4>
+                        <p style="color: #aaa; margin: 0; font-size: 13px; line-height: 1.5;">
+                            Нажми на мессенджер — текст скопируется и откроется приложение.<br>
+                            Или нажми "Копировать" и вставь куда нужно.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Совет -->
+                <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 15px;">
+                    <h4 style="color: #10B981; margin: 0 0 10px 0;">💡 Совет: Комбинируй!</h4>
+                    <p style="color: #aaa; margin: 0; font-size: 13px; line-height: 1.5;">
+                        <strong style="color: #fff;">Лучшая связка:</strong><br>
+                        1. Создай красивую открытку в Генераторе<br>
+                        2. Отправь сначала открытку (визуал)<br>
+                        3. Потом отправь это сообщение (текст)<br>
+                        <br>
+                        Человек получает: картинку 🖼️ + текст 💬 = WOW-эффект!
+                    </p>
+                </div>
+                
+                <!-- AI Studio -->
+                <div style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; padding: 15px; margin-top: 15px;">
+                    <h4 style="color: #FFD700; margin: 0 0 10px 0;">🎨 Хочешь красивое превью?</h4>
+                    <p style="color: #aaa; margin: 0 0 10px 0; font-size: 13px;">
+                        Создай картинку в AI Studio и прикрепи к сообщению!
+                    </p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <span style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 6px; font-size: 11px; color: #ccc; cursor: pointer;" onclick="copyToClipboard('Golden gift box with sparkling ribbon, dark background')">🎁 Подарок</span>
+                        <span style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 6px; font-size: 11px; color: #ccc; cursor: pointer;" onclick="copyToClipboard('Rocket launching to golden sky, success concept')">🚀 Ракета</span>
+                        <span style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 6px; font-size: 11px; color: #ccc; cursor: pointer;" onclick="copyToClipboard('Person on beach with laptop, freedom lifestyle')">🏝️ Свобода</span>
+                    </div>
+                    <small style="color: #666; display: block; margin-top: 8px;">👆 Нажми чтобы скопировать промпт</small>
+                </div>
+            </div>
+            
+            <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button onclick="this.closest('#inviteGuideModal').remove()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #FFD700, #FFA500); border: none; border-radius: 10px; color: #000; font-weight: bold; cursor: pointer; font-size: 15px;">
+                    Понятно, начать! 🚀
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(guideModal);
+}
+
+// Копирование в буфер (если ещё нет)
+if (typeof copyToClipboard === 'undefined') {
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast && showToast('✅ Скопировано!', 'success');
+        }).catch(() => {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+            showToast && showToast('✅ Скопировано!', 'success');
+        });
+    }
 }
 
 function switchContactTab(tab) {
