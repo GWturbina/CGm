@@ -668,13 +668,7 @@ function showAddContactModal() {
             </div>
             
             <!-- Вкладка: Добавить вручную -->
-            <div id="manualTab" class="modal-body" style="display: none; padding: 20px;">`
-                    💡 Нажмите на мессенджер — текст скопируется и откроется приложение
-                </p>
-            </div>
-            
-            <!-- Вкладка: Добавить вручную -->
-            <div id="manualTab" class="modal-body" style="display: none;">
+            <div id="manualTab" class="modal-body" style="display: none; padding: 20px;">
                 <div class="form-group">
                     <label style="color: #FFD700;">Имя:</label>
                     <input type="text" id="contactName" class="form-input" placeholder="Имя контакта" 
