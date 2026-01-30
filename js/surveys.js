@@ -155,12 +155,17 @@ function closeTemplatesModal() {
     document.getElementById('templates-modal').style.cssText = 'display: none !important;';
 }
 
-// Загрузка шаблонов из базы
+// Загрузка шаблонов из базы + встроенные
 async function loadSurveyTemplates() {
     const currentGwId = window.currentGwId || window.currentDisplayId || '';
     
+    // ВСЕГДА начинаем со встроенных шаблонов
+    const builtInArray = Object.values(BUILT_IN_TEMPLATES);
+    surveyTemplatesData = [...builtInArray];
+    console.log('📋 Built-in templates loaded:', builtInArray.length);
+    
     try {
-        // Загружаем шаблоны из survey_templates
+        // Загружаем дополнительные шаблоны из survey_templates
         const { data, error } = await SupabaseClient.client
             .from('survey_templates')
             .select('*')
@@ -169,16 +174,14 @@ async function loadSurveyTemplates() {
             .order('created_at', { ascending: false });
         
         if (data && data.length > 0) {
-            surveyTemplatesData = data;
-            console.log('📋 Loaded templates from DB:', data.length);
-        } else {
-            // Fallback на встроенные шаблоны
-            surveyTemplatesData = Object.values(BUILT_IN_TEMPLATES);
-            console.log('📋 Using built-in templates');
+            // Добавляем шаблоны из БД, избегая дубликатов по id
+            const existingIds = new Set(surveyTemplatesData.map(t => t.id));
+            const newTemplates = data.filter(t => !existingIds.has(t.id));
+            surveyTemplatesData = [...surveyTemplatesData, ...newTemplates];
+            console.log('📋 + DB templates:', newTemplates.length, 'Total:', surveyTemplatesData.length);
         }
     } catch (e) {
-        console.log('📋 Templates table not ready, using built-in:', e.message);
-        surveyTemplatesData = Object.values(BUILT_IN_TEMPLATES);
+        console.log('📋 DB not available, using built-in only:', e.message);
     }
 }
 
