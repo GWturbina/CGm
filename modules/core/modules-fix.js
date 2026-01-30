@@ -12,13 +12,14 @@ console.log('🔧 Loading Modules Fix v2.0...');
 window.walletAddress = window.walletAddress || null;
 window.walletConnected = window.walletConnected || false;
 window.currentUserLevel = window.currentUserLevel || 0;
+window.currentEffectiveLevel = window.currentEffectiveLevel || 0; // С учётом триала
 window.currentSection = window.currentSection || 'panel';
 
 // ============ CONSTANTS ============
 var SECTION_ACCESS = {
     'panel': 1, 'archive': 1, 'contacts': 2, 'analytics': 2,
     'referrals': 3, 'crm': 4, 'surveys': 5, 'blog': 5,
-    'mailings': 6, 'studio': 7, 'mlm': 8, 'organizer': 9,
+    'mailings': 6, 'studio': 7, 'ai-studio': 7, 'mlm': 8, 'organizer': 9,
     'wallet': 0, 'settings': 0
 };
 
@@ -28,6 +29,38 @@ var LEVEL_NAMES = {
     8: 'Предприниматель', 9: 'Организатор', 10: 'Организатор',
     11: 'Организатор', 12: 'Максимум'
 };
+
+// ============ TRIAL ACCESS INTEGRATION ============
+async function initTrialAccess(userLevel, userId, registrationDate) {
+    if (typeof TrialAccess !== 'undefined') {
+        const trialState = TrialAccess.init(userLevel, userId, registrationDate);
+        window.currentEffectiveLevel = trialState.effectiveLevel;
+        console.log('🎫 Trial initialized. Effective level:', window.currentEffectiveLevel);
+        
+        // Показываем триал-бейдж если активен
+        if (trialState.isTrialActive) {
+            showTrialBadge(trialState);
+        }
+        
+        return trialState;
+    } else {
+        window.currentEffectiveLevel = userLevel;
+        return null;
+    }
+}
+
+function showTrialBadge(trialState) {
+    // Добавляем бейдж в header если триал активен
+    const badge = document.createElement('div');
+    badge.id = 'trialBadge';
+    badge.innerHTML = TrialAccess.getTrialBadgeHTML();
+    badge.style.cssText = 'position: fixed; top: 70px; right: 20px; z-index: 1000;';
+    
+    const existing = document.getElementById('trialBadge');
+    if (existing) existing.remove();
+    
+    document.body.appendChild(badge);
+}
 
 // ============ ГЛАВНОЕ: КНОПКА TOGGLE ============
 // Переопределяем connectWallet() из wallet.js!
