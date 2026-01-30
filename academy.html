@@ -39,431 +39,7 @@
             line-height: 1.6;
         }
         
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, #1a1a3e 0%, #0a0a1a 50%, #1a0a2e 100%);
-            padding: 60px 20px;
-            text-align: center;
-            border-bottom: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,215,0,0.03) 0%, transparent 50%);
-            animation: rotate 30s linear infinite;
-        }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .hero-content {
-            position: relative;
-            z-index: 1;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .hero-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .hero h1 {
-            font-size: clamp(28px, 5vw, 42px);
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, var(--gold), #FFA500);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .hero p {
-            font-size: 18px;
-            color: var(--text-muted);
-            margin-bottom: 30px;
-        }
-        
-        .hero-stats {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: var(--gold);
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        
-        /* Progress Bar */
-        .progress-section {
-            background: var(--bg-card);
-            padding: 20px;
-            margin: 20px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-        }
-        
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .progress-title {
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        .progress-percent {
-            color: var(--gold);
-            font-weight: bold;
-        }
-        
-        .progress-bar {
-            height: 12px;
-            background: var(--border);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--gold), var(--orange));
-            border-radius: 6px;
-            transition: width 0.5s ease;
-        }
-        
-        .progress-modules {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-            gap: 5px;
-        }
-        
-        .progress-dot {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .progress-dot.completed {
-            background: var(--green);
-            color: #fff;
-        }
-        
-        .progress-dot.current {
-            background: var(--gold);
-            color: #000;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(255,215,0,0); }
-        }
-        
-        /* Modules Grid */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .section-title {
-            font-size: 24px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .modules-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-        
-        .module-card {
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 25px;
-            border: 2px solid var(--border);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .module-card:hover {
-            border-color: var(--gold);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 40px rgba(255,215,0,0.1);
-        }
-        
-        .module-card.locked {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .module-card.completed {
-            border-color: var(--green);
-        }
-        
-        .module-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        
-        .badge-new {
-            background: var(--gold);
-            color: #000;
-        }
-        
-        .badge-progress {
-            background: var(--blue);
-            color: #fff;
-        }
-        
-        .badge-completed {
-            background: var(--green);
-            color: #fff;
-        }
-        
-        .badge-locked {
-            background: var(--border);
-            color: var(--text-muted);
-        }
-        
-        .module-icon {
-            font-size: 50px;
-            margin-bottom: 15px;
-        }
-        
-        .module-number {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-        }
-        
-        .module-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        
-        .module-desc {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 15px;
-        }
-        
-        .module-meta {
-            display: flex;
-            gap: 15px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        
-        .module-meta span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .module-progress {
-            margin-top: 15px;
-            height: 6px;
-            background: var(--border);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        
-        .module-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--green), var(--blue));
-            transition: width 0.3s;
-        }
-        
-        /* Rewards Section */
-        .rewards-section {
-            background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.05));
-            border: 1px solid rgba(255,215,0,0.2);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 40px;
-        }
-        
-        .rewards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .reward-item {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-        }
-        
-        .reward-item.earned {
-            border-color: var(--gold);
-            background: rgba(255,215,0,0.1);
-        }
-        
-        .reward-item.locked {
-            opacity: 0.5;
-        }
-        
-        .reward-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-        
-        .reward-name {
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .reward-points {
-            font-size: 11px;
-            color: var(--gold);
-            margin-top: 5px;
-        }
-        
-        /* CTA Section */
-        .cta-section {
-            text-align: center;
-            padding: 40px 20px;
-            background: var(--bg-card);
-            border-radius: 20px;
-            margin-bottom: 40px;
-        }
-        
-        .cta-section h2 {
-            font-size: 28px;
-            margin-bottom: 15px;
-        }
-        
-        .cta-section p {
-            color: var(--text-muted);
-            margin-bottom: 25px;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn-gold {
-            background: linear-gradient(135deg, var(--gold), var(--orange));
-            color: #000;
-        }
-        
-        .btn-gold:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255,215,0,0.3);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--gold);
-            color: var(--gold);
-        }
-        
-        .btn-outline:hover {
-            background: rgba(255,215,0,0.1);
-        }
-        
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 30px;
-            color: var(--text-muted);
-            font-size: 14px;
-            border-top: 1px solid var(--border);
-        }
-        
-        .footer a {
-            color: var(--gold);
-            text-decoration: none;
-        }
-        
-        /* Mobile */
-        @media (max-width: 600px) {
-            .hero { padding: 40px 15px; }
-            .hero-icon { font-size: 60px; }
-            .hero-stats { gap: 20px; }
-            .modules-grid { grid-template-columns: 1fr; }
-            .rewards-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-        
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.5s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* ═══════════════════════════════════════════════════════════
-           ЗАЩИТА - OVERLAY ДЛЯ НЕАВТОРИЗОВАННЫХ
-           ═══════════════════════════════════════════════════════════ */
-        
+        /* Access Overlay */
         #accessOverlay {
             position: fixed;
             top: 0;
@@ -491,32 +67,13 @@
             width: 90%;
             text-align: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            animation: modalAppear 0.5s ease;
         }
         
-        @keyframes modalAppear {
-            from { opacity: 0; transform: scale(0.9) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
+        .access-modal-icon { font-size: 70px; margin-bottom: 20px; }
+        .access-modal h2 { font-size: 26px; margin-bottom: 15px; color: var(--gold); }
+        .access-modal p { color: var(--text-muted); margin-bottom: 25px; line-height: 1.7; }
         
-        .access-modal-icon {
-            font-size: 70px;
-            margin-bottom: 20px;
-        }
-        
-        .access-modal h2 {
-            font-size: 26px;
-            margin-bottom: 15px;
-            color: var(--gold);
-        }
-        
-        .access-modal p {
-            color: var(--text-muted);
-            margin-bottom: 25px;
-            line-height: 1.7;
-        }
-        
-        .btn-connect-wallet {
+        .btn-action {
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -528,109 +85,220 @@
             font-size: 18px;
             font-weight: 700;
             cursor: pointer;
+            text-decoration: none;
             transition: all 0.3s;
-            box-shadow: 0 8px 30px rgba(255,215,0,0.3);
         }
         
-        .btn-connect-wallet:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(255,215,0,0.4);
-        }
+        .btn-action:hover { transform: translateY(-2px); }
+        .btn-action:disabled { opacity: 0.6; cursor: not-allowed; }
         
-        .btn-connect-wallet:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .btn-register {
+        .btn-secondary {
             display: inline-block;
-            margin-top: 20px;
+            margin-top: 15px;
             color: var(--blue);
             text-decoration: none;
             font-size: 14px;
         }
         
-        .btn-register:hover {
-            text-decoration: underline;
+        .status-message {
+            margin-top: 20px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
         }
         
-        .access-features {
+        .status-loading { background: rgba(59,130,246,0.1); border: 1px solid #3B82F6; color: #3B82F6; }
+        .status-error { background: rgba(239,68,68,0.1); border: 1px solid #EF4444; color: #EF4444; }
+        .status-success { background: rgba(16,185,129,0.1); border: 1px solid #10B981; color: #10B981; }
+        
+        .features-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 25px 0;
-            text-align: left;
+            gap: 12px;
+            margin: 20px 0;
         }
         
-        .access-feature {
+        .feature-item {
             display: flex;
             align-items: center;
             gap: 10px;
             padding: 12px;
             background: rgba(255,255,255,0.05);
             border-radius: 10px;
-            font-size: 13px;
-        }
-        
-        .access-feature-icon {
-            font-size: 20px;
-        }
-        
-        .connection-status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 12px;
             font-size: 14px;
         }
         
-        .connection-status.loading {
-            background: rgba(59,130,246,0.1);
-            border: 1px solid #3B82F6;
-            color: #3B82F6;
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #1a1a3e 0%, #0a0a1a 50%, #1a0a2e 100%);
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
         }
         
-        .connection-status.error {
-            background: rgba(239,68,68,0.1);
-            border: 1px solid #EF4444;
-            color: #EF4444;
+        .hero-icon { font-size: 80px; margin-bottom: 20px; }
+        .hero h1 { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, var(--gold), var(--orange)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; }
+        .hero p { font-size: 18px; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
+        
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 30px;
+            flex-wrap: wrap;
         }
         
-        .connection-status.success {
-            background: rgba(16,185,129,0.1);
-            border: 1px solid #10B981;
-            color: #10B981;
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 28px; font-weight: 800; color: var(--gold); }
+        .stat-label { font-size: 12px; color: var(--text-muted); }
+        
+        /* Container */
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        
+        /* Trial Banner */
+        .trial-banner {
+            background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1));
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
-        /* Блокировка контента */
-        .content-locked {
-            pointer-events: none;
-            user-select: none;
-            filter: blur(5px);
+        .trial-info { display: flex; align-items: center; gap: 15px; }
+        .trial-icon { font-size: 40px; }
+        .trial-text h3 { color: var(--green); margin-bottom: 5px; }
+        .trial-text p { color: var(--text-muted); font-size: 13px; margin: 0; }
+        .trial-days { text-align: center; }
+        .trial-days-value { font-size: 32px; font-weight: bold; color: var(--green); }
+        .trial-days-label { font-size: 12px; color: var(--text-muted); }
+        
+        /* Progress Section */
+        .progress-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .progress-title { font-weight: 600; }
+        .progress-percent { color: var(--gold); font-weight: 700; }
+        .progress-bar { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--orange)); border-radius: 5px; transition: width 0.5s; }
+        
+        .progress-modules { display: flex; justify-content: space-between; margin-top: 15px; }
+        .progress-dot { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-dark); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+        .progress-dot.completed { background: var(--green); border-color: var(--green); color: #fff; }
+        .progress-dot.current { border-color: var(--gold); color: var(--gold); }
+        
+        /* Modules Grid */
+        .section-title { font-size: 24px; font-weight: 700; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        
+        .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        
+        .module-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .module-card:hover { transform: translateY(-5px); border-color: var(--gold); background: var(--bg-card-hover); }
+        .module-card.locked { opacity: 0.6; cursor: not-allowed; }
+        .module-card.locked:hover { transform: none; border-color: transparent; }
+        
+        .module-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .badge-new { background: var(--gold); color: #000; }
+        .badge-progress { background: var(--blue); color: #fff; }
+        .badge-done { background: var(--green); color: #fff; }
+        .badge-locked { background: var(--border); color: var(--text-muted); }
+        
+        .module-icon { font-size: 48px; margin-bottom: 15px; }
+        .module-number { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .module-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+        .module-desc { color: var(--text-muted); font-size: 14px; margin-bottom: 15px; line-height: 1.6; }
+        
+        .module-meta { display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); margin-bottom: 15px; }
+        
+        .module-progress { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+        .module-progress-fill { height: 100%; background: var(--green); border-radius: 2px; }
+        
+        /* Guarantee Banner */
+        .guarantee-banner {
+            background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1));
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 40px 0;
+            text-align: center;
+        }
+        
+        .guarantee-banner h3 { color: var(--green); margin-bottom: 10px; }
+        .guarantee-banner p { color: var(--text-muted); font-size: 14px; }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        
+        .footer a { color: var(--blue); text-decoration: none; margin: 0 10px; }
+        .footer a:hover { text-decoration: underline; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 28px; }
+            .hero-stats { gap: 20px; }
+            .modules-grid { grid-template-columns: 1fr; }
+            .features-grid { grid-template-columns: 1fr; }
+            .trial-banner { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 <body>
     <!-- ═══════════════════════════════════════════════════════════
-         OVERLAY ЗАЩИТЫ - БЛОКИРУЕТ КОНТЕНТ БЕЗ АВТОРИЗАЦИИ
+         ACCESS OVERLAY - Показывается пока не проверен доступ
          ═══════════════════════════════════════════════════════════ -->
     <div id="accessOverlay">
         <div class="access-modal">
             <div class="access-modal-icon" id="modalIcon">🎓</div>
             <h2 id="modalTitle">Академия CardGift</h2>
-            <p id="modalText">Загрузка...</p>
+            <p id="modalText">Проверка доступа...</p>
             <div id="modalContent"></div>
-            <div id="connectionStatus" class="connection-status" style="display: none;"></div>
+            <div id="statusMessage" class="status-message status-loading" style="display: none;"></div>
         </div>
     </div>
     
-    <!-- Контент страницы (будет разблокирован после авторизации) -->
-    <div id="mainContent">
-    <!-- Hero -->
-    <section class="hero">
-        <div class="hero-content">
+    <!-- ═══════════════════════════════════════════════════════════
+         MAIN CONTENT - Скрыт до проверки доступа
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="mainContent" style="display: none;">
+        
+        <!-- Hero -->
+        <section class="hero">
             <div class="hero-icon">🎓</div>
             <h1>Академия CardGift</h1>
-            <p>Обучение на $1700+ — <strong style="color: var(--gold);">БЕСПЛАТНО!</strong><br>
+            <p>Обучение на <strong style="color: var(--gold);">$1700</strong> — БЕСПЛАТНО!<br>
             И тебе ещё <strong style="color: var(--green);">ПЛАТЯТ за обучение!</strong></p>
             
             <div class="hero-stats">
@@ -651,696 +319,603 @@
                     <div class="stat-label">Пенсия через год</div>
                 </div>
             </div>
-            
-            <!-- Guarantee Banner -->
-            <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1)); border: 2px solid var(--green); border-radius: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <div style="font-size: 20px; margin-bottom: 10px;">🛡️ ГАРАНТИЯ АКАДЕМИИ</div>
-                <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px;">
-                    Выполни все задания за 21 день и заработай минимум <strong style="color: var(--green);">$1000</strong>
-                </p>
-                <p style="font-size: 13px; color: var(--text-muted);">
-                    Если не получится — вернём твои 0.0225 opBNB<br>
-                    <strong style="color: var(--gold);">+ инструменты на $1700 останутся у тебя в подарок!</strong>
-                </p>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Progress -->
-    <div class="container">
-        <!-- Статус доступа / Триал -->
-        <div id="accessStatusContainer"></div>
+        </section>
         
-        <div class="progress-section fade-in">
-            <div class="progress-header">
-                <span class="progress-title">📊 Твой прогресс</span>
-                <span class="progress-percent" id="totalProgress">0%</span>
+        <!-- Content -->
+        <div class="container">
+            
+            <!-- Trial Banner (показывается если триал активен) -->
+            <div id="trialBanner" class="trial-banner" style="display: none;">
+                <div class="trial-info">
+                    <div class="trial-icon">🎉</div>
+                    <div class="trial-text">
+                        <h3>Полный доступ активен!</h3>
+                        <p>Все инструменты до AI Studio включены</p>
+                    </div>
+                </div>
+                <div class="trial-days">
+                    <div class="trial-days-value" id="trialDaysLeft">30</div>
+                    <div class="trial-days-label">дней осталось</div>
+                </div>
             </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            
+            <!-- Start Trial Button (показывается если триал не начат) -->
+            <div id="startTrialBlock" style="display: none;">
+                <div class="guarantee-banner">
+                    <h3>🎁 Добро пожаловать в Академию!</h3>
+                    <p style="margin-bottom: 20px;">Нажми кнопку и получи <strong style="color: var(--gold);">30 дней полного доступа</strong> ко всем инструментам!</p>
+                    <button onclick="startTrial()" class="btn-action">🚀 НАЧАТЬ ОБУЧЕНИЕ</button>
+                </div>
             </div>
-            <div class="progress-modules">
-                <div class="progress-dot current" title="Модуль 1">1</div>
-                <div class="progress-dot" title="Модуль 2">2</div>
-                <div class="progress-dot" title="Модуль 3">3</div>
-                <div class="progress-dot" title="Модуль 4">4</div>
-                <div class="progress-dot" title="Модуль 5">5</div>
-                <div class="progress-dot" title="Модуль 6">6</div>
+            
+            <!-- Progress -->
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span class="progress-title">📊 Твой прогресс</span>
+                    <span class="progress-percent" id="totalProgress">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-modules">
+                    <div class="progress-dot current" title="Модуль 1">1</div>
+                    <div class="progress-dot" title="Модуль 2">2</div>
+                    <div class="progress-dot" title="Модуль 3">3</div>
+                    <div class="progress-dot" title="Модуль 4">4</div>
+                    <div class="progress-dot" title="Модуль 5">5</div>
+                    <div class="progress-dot" title="Модуль 6">6</div>
+                </div>
+            </div>
+            
+            <!-- Modules -->
+            <h2 class="section-title">📚 Модули обучения</h2>
+            
+            <div class="modules-grid">
+                <!-- Модуль 1 -->
+                <div class="module-card" onclick="openModule('quickstart')">
+                    <span class="module-badge badge-new">🔥 НАЧНИ</span>
+                    <div class="module-icon">🚀</div>
+                    <div class="module-number">МОДУЛЬ 1</div>
+                    <div class="module-title">Быстрый старт</div>
+                    <div class="module-desc">Создай первую открытку и отправь другу. Получи первый результат за 10 минут!</div>
+                    <div class="module-meta">
+                        <span>⏱️ 15 мин</span>
+                        <span>📝 3 задания</span>
+                        <span>🎁 +50 баллов</span>
+                    </div>
+                    <div class="module-progress"><div class="module-progress-fill" style="width: 0%"></div></div>
+                </div>
+                
+                <!-- Модуль 2 -->
+                <div class="module-card" onclick="openModule('generator')">
+                    <span class="module-badge badge-progress">В процессе</span>
+                    <div class="module-icon">🎨</div>
+                    <div class="module-number">МОДУЛЬ 2</div>
+                    <div class="module-title">Генератор открыток</div>
+                    <div class="module-desc">Освой все возможности генератора: AI, голос, дизайн. Создавай вирусный контент!</div>
+                    <div class="module-meta">
+                        <span>⏱️ 30 мин</span>
+                        <span>📝 5 заданий</span>
+                        <span>🎁 +100 баллов</span>
+                    </div>
+                    <div class="module-progress"><div class="module-progress-fill" style="width: 0%"></div></div>
+                </div>
+                
+                <!-- Модуль 3 -->
+                <div class="module-card" onclick="openModule('crm')">
+                    <div class="module-icon">📇</div>
+                    <div class="module-number">МОДУЛЬ 3</div>
+                    <div class="module-title">CRM: Контакты</div>
+                    <div class="module-desc">Научись собирать и сегментировать базу. Превращай просмотры в партнёров!</div>
+                    <div class="module-meta">
+                        <span>⏱️ 25 мин</span>
+                        <span>📝 4 задания</span>
+                        <span>🎁 +80 баллов</span>
+                    </div>
+                    <div class="module-progress"><div class="module-progress-fill" style="width: 0%"></div></div>
+                </div>
+                
+                <!-- Модуль 4 -->
+                <div class="module-card" onclick="openModule('surveys')">
+                    <div class="module-icon">📊</div>
+                    <div class="module-number">МОДУЛЬ 4</div>
+                    <div class="module-title">Опросы</div>
+                    <div class="module-desc">Создавай опросы для квалификации лидов. Узнай потребности аудитории!</div>
+                    <div class="module-meta">
+                        <span>⏱️ 20 мин</span>
+                        <span>📝 3 задания</span>
+                        <span>🎁 +70 баллов</span>
+                    </div>
+                    <div class="module-progress"><div class="module-progress-fill" style="width: 0%"></div></div>
+                </div>
+                
+                <!-- Модуль 5 -->
+                <div class="module-card" onclick="openModule('mailings')">
+                    <div class="module-icon">📨</div>
+                    <div class="module-number">МОДУЛЬ 5</div>
+                    <div class="module-title">Рассыльщик</div>
+                    <div class="module-desc">Автоматизируй рассылки по базе. Массовые касания без спама!</div>
+                    <div class="module-meta">
+                        <span>⏱️ 25 мин</span>
+                        <span>📝 4 задания</span>
+                        <span>🎁 +90 баллов</span>
+                    </div>
+                    <div class="module-progress"><div class="module-progress-fill" style="width: 0%"></div></div>
+                </div>
+                
+                <!-- Модуль 6 -->
+                <div class="module-card locked" onclick="openModule('scale')">
+                    <span class="module-badge badge-locked">🔒 Скоро</span>
+                    <div class="module-icon">🏆</div>
+                    <div class="module-number">МОДУЛЬ 6</div>
+                    <div class="module-title">Масштабирование</div>
+                    <div class="module-desc">Построй команду и автоматизируй доход. Путь к $100K за 90 дней!</div>
+                    <div class="module-meta">
+                        <span>⏱️ 40 мин</span>
+                        <span>📝 6 заданий</span>
+                        <span>🎁 +150 баллов</span>
+                    </div>
+                    <div class="module-progress"><div class="module-progress-fill" style="width: 0%"></div></div>
+                </div>
+            </div>
+            
+            <!-- Guarantee -->
+            <div class="guarantee-banner">
+                <h3>🛡️ ГАРАНТИЯ АКАДЕМИИ</h3>
+                <p>Выполни все задания за 21 день и заработай минимум <strong style="color: var(--green);">$1000</strong></p>
+                <p style="margin-top: 10px;">Не получится — вернём твои 0.0225 opBNB<br><strong style="color: var(--gold);">+ инструменты на $1700 останутся в подарок!</strong></p>
             </div>
         </div>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                🎓 Академия CardGift — Построй свой бренд<br>
+                <a href="dashboard.html">Кабинет</a> • 
+                <a href="generator.html">Генератор</a> • 
+                <a href="https://t.me/cardgift_support">Поддержка</a>
+            </p>
+        </footer>
     </div>
     
-    <!-- Modules -->
-    <div class="container">
-        <h2 class="section-title">📚 Модули обучения</h2>
-        
-        <div class="modules-grid">
-            <!-- Модуль 1: Быстрый старт -->
-            <div class="module-card" onclick="openModule('quickstart')">
-                <span class="module-badge badge-new">🔥 НАЧНИ</span>
-                <div class="module-icon">🚀</div>
-                <div class="module-number">МОДУЛЬ 1</div>
-                <div class="module-title">Быстрый старт</div>
-                <div class="module-desc">Создай первую открытку и отправь другу. Получи первый результат за 10 минут!</div>
-                <div class="module-meta">
-                    <span>⏱️ 15 мин</span>
-                    <span>📝 3 задания</span>
-                    <span>🎁 +50 баллов</span>
-                </div>
-                <div class="module-progress">
-                    <div class="module-progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <!-- Модуль 2: Генератор открыток -->
-            <div class="module-card" onclick="openModule('generator')">
-                <span class="module-badge badge-progress">В процессе</span>
-                <div class="module-icon">🎨</div>
-                <div class="module-number">МОДУЛЬ 2</div>
-                <div class="module-title">Генератор открыток</div>
-                <div class="module-desc">Освой все возможности генератора: AI, голос, дизайн. Создавай вирусный контент!</div>
-                <div class="module-meta">
-                    <span>⏱️ 30 мин</span>
-                    <span>📝 5 заданий</span>
-                    <span>🎁 +100 баллов</span>
-                </div>
-                <div class="module-progress">
-                    <div class="module-progress-fill" style="width: 40%"></div>
-                </div>
-            </div>
-            
-            <!-- Модуль 3: CRM и Контакты -->
-            <div class="module-card" onclick="openModule('crm')">
-                <div class="module-icon">📇</div>
-                <div class="module-number">МОДУЛЬ 3</div>
-                <div class="module-title">CRM: Управляй контактами</div>
-                <div class="module-desc">Научись работать с людьми системно. Воронка продаж, follow-up, конверсия.</div>
-                <div class="module-meta">
-                    <span>⏱️ 25 мин</span>
-                    <span>📝 4 задания</span>
-                    <span>🎁 +80 баллов</span>
-                </div>
-                <div class="module-progress">
-                    <div class="module-progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <!-- Модуль 4: Опросы -->
-            <div class="module-card" onclick="openModule('surveys')">
-                <div class="module-icon">📊</div>
-                <div class="module-number">МОДУЛЬ 4</div>
-                <div class="module-title">Опросы: Собирай лидов</div>
-                <div class="module-desc">Создавай вирусные опросы, квалифицируй людей автоматически, собирай контакты.</div>
-                <div class="module-meta">
-                    <span>⏱️ 20 мин</span>
-                    <span>📝 3 задания</span>
-                    <span>🎁 +70 баллов</span>
-                </div>
-                <div class="module-progress">
-                    <div class="module-progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <!-- Модуль 5: Рассыльщик -->
-            <div class="module-card" onclick="openModule('mailings')">
-                <div class="module-icon">📨</div>
-                <div class="module-number">МОДУЛЬ 5</div>
-                <div class="module-title">Рассыльщик: Автоматизируй</div>
-                <div class="module-desc">Настрой автоматические цепочки сообщений. Работай пока спишь!</div>
-                <div class="module-meta">
-                    <span>⏱️ 30 мин</span>
-                    <span>📝 4 задания</span>
-                    <span>🎁 +90 баллов</span>
-                </div>
-                <div class="module-progress">
-                    <div class="module-progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <!-- Модуль 6: Масштабирование -->
-            <div class="module-card" onclick="openModule('scale')">
-                <span class="module-badge badge-locked">🔒</span>
-                <div class="module-icon">🏆</div>
-                <div class="module-number">МОДУЛЬ 6</div>
-                <div class="module-title">Масштабирование</div>
-                <div class="module-desc">Построй команду, создай свой клуб, масштабируй доход. Стань лидером!</div>
-                <div class="module-meta">
-                    <span>⏱️ 45 мин</span>
-                    <span>📝 6 заданий</span>
-                    <span>🎁 +150 баллов</span>
-                </div>
-                <div class="module-progress">
-                    <div class="module-progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Rewards -->
-        <div class="rewards-section fade-in">
-            <h2 class="section-title">🏅 Твои награды</h2>
-            <p style="color: var(--text-muted);">Выполняй задания и получай награды. Каждая награда — новая возможность!</p>
-            
-            <div class="rewards-grid">
-                <div class="reward-item earned">
-                    <div class="reward-icon">🌟</div>
-                    <div class="reward-name">Первый шаг</div>
-                    <div class="reward-points">+10 баллов</div>
-                </div>
-                <div class="reward-item">
-                    <div class="reward-icon">🎨</div>
-                    <div class="reward-name">Дизайнер</div>
-                    <div class="reward-points">+25 баллов</div>
-                </div>
-                <div class="reward-item">
-                    <div class="reward-icon">📇</div>
-                    <div class="reward-name">Нетворкер</div>
-                    <div class="reward-points">+50 баллов</div>
-                </div>
-                <div class="reward-item locked">
-                    <div class="reward-icon">📊</div>
-                    <div class="reward-name">Аналитик</div>
-                    <div class="reward-points">+75 баллов</div>
-                </div>
-                <div class="reward-item locked">
-                    <div class="reward-icon">🚀</div>
-                    <div class="reward-name">Маркетолог</div>
-                    <div class="reward-points">+100 баллов</div>
-                </div>
-                <div class="reward-item locked">
-                    <div class="reward-icon">🏆</div>
-                    <div class="reward-name">Лидер</div>
-                    <div class="reward-points">+200 баллов</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- CTA -->
-        <div class="cta-section fade-in">
-            <h2>Готов начать? 🚀</h2>
-            <p>Выбери первый модуль и пройди его за 15 минут.<br>Результат гарантирован!</p>
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <a href="#" onclick="openModule('quickstart')" class="btn btn-gold">
-                    🚀 Начать обучение
-                </a>
-                <a href="dashboard.html" class="btn btn-outline">
-                    ← Вернуться в кабинет
-                </a>
-            </div>
-        </div>
-    </div>
+    <!-- ═══════════════════════════════════════════════════════════
+         SCRIPTS
+         ═══════════════════════════════════════════════════════════ -->
     
-    </div><!-- END mainContent -->
-    
-    <!-- Footer -->
-    <footer class="footer">
-        <p>
-            🎓 Академия CardGift — Построй свой бренд<br>
-            <a href="dashboard.html">Кабинет</a> • 
-            <a href="generator.html">Генератор</a> • 
-            <a href="https://t.me/cardgift_support">Поддержка</a>
-        </p>
-    </footer>
+    <!-- GlobalWay Bridge для проверки уровня -->
+    <script src="js/globalway-bridge.js"></script>
     
     <script>
         // ═══════════════════════════════════════════════════════════
-        // АКАДЕМИЯ CARDGIFT - ЗАЩИЩЁННАЯ ВЕРСИЯ
+        // ACADEMY v2.0 - По образцу AI Studio
         // ═══════════════════════════════════════════════════════════
         
-        // Конфигурация opBNB
-        const OPBNB_CHAIN = {
-            chainId: '0xCC',
-            chainName: 'opBNB Mainnet',
-            nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-            rpcUrls: ['https://opbnb-mainnet-rpc.bnbchain.org'],
-            blockExplorerUrls: ['https://opbnbscan.com']
-        };
-        
-        // Состояние
-        let isConnected = false;
-        let walletAddress = null;
-        let userLevel = 0;
-        let refId = null;
-        
-        // ═══════════════════════════════════════════════════════════
-        // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
-        // ═══════════════════════════════════════════════════════════
-        
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Получаем ref из URL
-            const urlParams = new URLSearchParams(window.location.search);
-            refId = urlParams.get('ref');
-            if (refId) {
-                localStorage.setItem('cardgift_referrer', refId);
-            } else {
-                refId = localStorage.getItem('cardgift_referrer');
-            }
+        const Academy = {
+            // Конфигурация
+            config: {
+                MIN_LEVEL: 4,           // Минимальный уровень для доступа
+                TRIAL_DAYS: 30,         // Дней триала
+                DEV_WALLETS: [
+                    '0x7bcd1753868895971e12448412cb3216d47884c8',
+                    '0x9b49bd9c9458615e11c051afd1ebe983563b67ee'
+                ]
+            },
             
-            // ГЛАВНОЕ: Сначала проверяем СОХРАНЁННУЮ авторизацию в localStorage
-            const savedWallet = localStorage.getItem('walletAddress');
-            const savedConnected = localStorage.getItem('walletConnected') === 'true';
-            const savedUserId = localStorage.getItem('cardgift_user_id');
-            const savedLevel = parseInt(localStorage.getItem('cardgift_user_level') || '0');
+            // Состояние
+            state: {
+                walletAddress: null,
+                level: 0,
+                cgId: null,
+                hasAccess: false,
+                trialStarted: false,
+                trialDaysLeft: 0
+            },
             
-            console.log('🔍 Checking auth:', { savedWallet, savedConnected, savedUserId, savedLevel });
+            // Модули
+            MODULES: {
+                quickstart: { url: 'academy-quickstart.html', locked: false },
+                generator: { url: 'cards-guide.html', locked: false },
+                crm: { url: 'academy-crm.html', locked: false },
+                surveys: { url: 'academy-surveys.html', locked: false },
+                mailings: { url: 'academy-mailings.html', locked: false },
+                scale: { url: 'academy-scale.html', locked: true }
+            },
             
-            // Если пользователь УЖЕ авторизован в dashboard - не требуем повторного подключения!
-            if (savedConnected && savedUserId && savedLevel >= 4) {
-                // Всё ОК - пользователь уже авторизован с нужным уровнем
-                isConnected = true;
-                walletAddress = savedWallet;
-                userLevel = savedLevel;
-                showStatus('success', '✅ Добро пожаловать!');
-                setTimeout(() => unlockContent(), 500);
-                return;
-            }
+            // ═══════════════════════════════════════════════════════════
+            // ИНИЦИАЛИЗАЦИЯ
+            // ═══════════════════════════════════════════════════════════
             
-            if (savedConnected && savedUserId && savedLevel >= 1 && savedLevel < 4) {
-                // Авторизован, но уровень меньше 4
-                showLevelTooLowScreen(savedLevel);
-                return;
-            }
+            async init() {
+                console.log('🎓 Academy v2.0 initializing...');
+                
+                // Сохраняем ref
+                this.saveReferrer();
+                
+                // Показываем статус загрузки
+                this.showStatus('loading', '🔄 Подключение кошелька...');
+                
+                // Автоподключение кошелька
+                await this.autoConnectWallet();
+                
+                // Если нет кошелька - показываем экран
+                if (!this.state.walletAddress) {
+                    this.showNoWalletScreen();
+                    return;
+                }
+                
+                // Загружаем данные пользователя
+                this.showStatus('loading', '🔄 Проверка уровня...');
+                await this.loadUserData();
+                
+                // Проверяем доступ
+                await this.checkAccess();
+                
+                // Обновляем UI
+                this.updateUI();
+                
+                console.log('✅ Academy initialized:', this.state);
+            },
             
-            if (savedConnected && savedWallet && !savedUserId) {
-                // Кошелёк подключён, но нет регистрации
-                showNeedRegistrationScreen();
-                return;
-            }
+            // ═══════════════════════════════════════════════════════════
+            // РАБОТА С КОШЕЛЬКОМ
+            // ═══════════════════════════════════════════════════════════
             
-            // Не авторизован - показываем экран подключения
-            showAccessScreen();
-        });
-        
-        // ═══════════════════════════════════════════════════════════
-        // ЭКРАНЫ ДЛЯ РАЗНЫХ СИТУАЦИЙ
-        // ═══════════════════════════════════════════════════════════
-        
-        function showLevelTooLowScreen(currentLevel) {
-            const modalIcon = document.getElementById('modalIcon');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalText = document.getElementById('modalText');
-            const modalContent = document.getElementById('modalContent');
+            async autoConnectWallet() {
+                if (typeof window.ethereum === 'undefined') {
+                    console.log('❌ No Web3 provider');
+                    return;
+                }
+                
+                try {
+                    // Сначала проверяем уже подключенные
+                    let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    
+                    // Если нет - запрашиваем подключение
+                    if (!accounts || accounts.length === 0) {
+                        console.log('🔄 Requesting wallet connection...');
+                        accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    }
+                    
+                    if (accounts && accounts.length > 0) {
+                        this.state.walletAddress = accounts[0].toLowerCase();
+                        console.log('💳 Wallet connected:', this.state.walletAddress);
+                    }
+                } catch (error) {
+                    console.log('⚠️ Wallet connection error:', error.message);
+                }
+            },
             
-            modalIcon.textContent = '⚡';
-            modalTitle.textContent = 'Активируй уровень 4';
-            modalText.innerHTML = `
-                Твой текущий уровень: <strong style="color: var(--orange);">${currentLevel}</strong><br>
-                Для Академии нужен уровень <strong style="color: var(--gold);">4+</strong>
-            `;
-            modalContent.innerHTML = `
-                <div style="background: rgba(255,215,0,0.1); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                    <p style="color: var(--gold); font-size: 14px; margin: 0;">
-                        💰 Активация = <strong>$22</strong> (0.0225 opBNB)<br>
-                        🎁 Получишь 30 дней полного доступа!
-                    </p>
-                </div>
-                <a href="dashboard.html#wallet" class="btn-connect-wallet" style="text-decoration: none;">
-                    💳 Активировать уровень 4
-                </a>
-            `;
-        }
-        
-        function showNeedRegistrationScreen() {
-            const modalIcon = document.getElementById('modalIcon');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalText = document.getElementById('modalText');
-            const modalContent = document.getElementById('modalContent');
+            // ═══════════════════════════════════════════════════════════
+            // ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ
+            // ═══════════════════════════════════════════════════════════
             
-            modalIcon.textContent = '📝';
-            modalTitle.textContent = 'Завершите регистрацию';
-            modalText.innerHTML = `
-                Кошелёк подключён, но аккаунт не найден.<br>
-                Пройдите регистрацию в личном кабинете.
-            `;
-            modalContent.innerHTML = `
-                <a href="dashboard.html${refId ? '?ref=' + refId : ''}" class="btn-connect-wallet" style="text-decoration: none;">
-                    📊 Перейти в кабинет
-                </a>
-            `;
-        }
-        
-        // ═══════════════════════════════════════════════════════════
-        // ОТОБРАЖЕНИЕ ЭКРАНА ДОСТУПА
-        // ═══════════════════════════════════════════════════════════
-        
-        function showAccessScreen() {
-            const modalIcon = document.getElementById('modalIcon');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalText = document.getElementById('modalText');
-            const modalContent = document.getElementById('modalContent');
+            async loadUserData() {
+                if (!this.state.walletAddress) return;
+                
+                console.log('📋 Loading user data...');
+                
+                // Проверяем DEV WALLET
+                if (this.config.DEV_WALLETS.includes(this.state.walletAddress)) {
+                    console.log('🔧 Dev wallet - full access');
+                    this.state.level = 12;
+                    this.state.cgId = 'DEV';
+                    return;
+                }
+                
+                // Пробуем GlobalWayBridge
+                if (typeof GlobalWayBridge !== 'undefined') {
+                    try {
+                        // Проверяем владельца контракта
+                        const isOwner = await GlobalWayBridge.isOwner(this.state.walletAddress);
+                        if (isOwner) {
+                            console.log('👑 Contract owner - full access');
+                            this.state.level = 12;
+                            this.state.cgId = 'OWNER';
+                            return;
+                        }
+                        
+                        // Получаем уровень
+                        const level = await GlobalWayBridge.getUserMaxLevel(this.state.walletAddress);
+                        this.state.level = level || 0;
+                        
+                        // Получаем ID
+                        const gwId = await GlobalWayBridge.getGlobalWayId(this.state.walletAddress);
+                        this.state.cgId = gwId || null;
+                        
+                        console.log('📊 User data:', { level: this.state.level, cgId: this.state.cgId });
+                    } catch (e) {
+                        console.warn('GlobalWayBridge error:', e);
+                    }
+                }
+                
+                // Fallback - пробуем Supabase
+                if (!this.state.cgId && typeof supabase !== 'undefined') {
+                    try {
+                        const { data } = await supabase
+                            .from('cardgift_users')
+                            .select('cg_id, level')
+                            .eq('wallet_address', this.state.walletAddress)
+                            .single();
+                        
+                        if (data) {
+                            this.state.cgId = data.cg_id;
+                            this.state.level = Math.max(this.state.level, data.level || 0);
+                        }
+                    } catch (e) {
+                        console.warn('Supabase error:', e);
+                    }
+                }
+            },
             
-            if (!refId) {
-                // Нет реферала - нужна ссылка от партнёра
-                modalIcon.textContent = '🔒';
-                modalTitle.textContent = 'Доступ ограничен';
-                modalText.innerHTML = `
-                    Академия доступна только зарегистрированным участникам.<br><br>
-                    <strong style="color: var(--gold);">Получите ссылку от партнёра</strong> для регистрации.
-                `;
-                modalContent.innerHTML = `
-                    <div class="access-features">
-                        <div class="access-feature">
-                            <span class="access-feature-icon">🎓</span>
-                            <span>Обучение $1700</span>
-                        </div>
-                        <div class="access-feature">
-                            <span class="access-feature-icon">💰</span>
-                            <span>$1000 за 21 день</span>
-                        </div>
-                        <div class="access-feature">
-                            <span class="access-feature-icon">📈</span>
-                            <span>$100K за 90 дней</span>
-                        </div>
-                        <div class="access-feature">
-                            <span class="access-feature-icon">🏆</span>
-                            <span>10 BNB пенсия</span>
-                        </div>
+            // ═══════════════════════════════════════════════════════════
+            // ПРОВЕРКА ДОСТУПА
+            // ═══════════════════════════════════════════════════════════
+            
+            async checkAccess() {
+                console.log('🔐 Checking access...');
+                
+                // Нет кошелька
+                if (!this.state.walletAddress) {
+                    this.state.hasAccess = false;
+                    return;
+                }
+                
+                // DEV / OWNER
+                if (this.state.cgId === 'DEV' || this.state.cgId === 'OWNER') {
+                    this.state.hasAccess = true;
+                    return;
+                }
+                
+                // Нет регистрации
+                if (!this.state.cgId) {
+                    console.log('❌ No registration');
+                    this.state.hasAccess = false;
+                    this.showNeedRegistrationScreen();
+                    return;
+                }
+                
+                // Проверяем уровень
+                if (this.state.level >= this.config.MIN_LEVEL) {
+                    console.log('✅ Level OK:', this.state.level);
+                    this.state.hasAccess = true;
+                    this.checkTrial();
+                } else {
+                    console.log('❌ Level too low:', this.state.level);
+                    this.state.hasAccess = false;
+                    this.showLevelRequiredScreen();
+                }
+            },
+            
+            // ═══════════════════════════════════════════════════════════
+            // ТРИАЛ СИСТЕМА
+            // ═══════════════════════════════════════════════════════════
+            
+            checkTrial() {
+                const trialKey = 'cardgift_trial_' + this.state.walletAddress;
+                const saved = localStorage.getItem(trialKey);
+                
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    const startDate = new Date(data.startDate);
+                    const endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + this.config.TRIAL_DAYS);
+                    
+                    const now = new Date();
+                    if (now < endDate) {
+                        this.state.trialStarted = true;
+                        this.state.trialDaysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+                    }
+                }
+            },
+            
+            startTrial() {
+                const trialKey = 'cardgift_trial_' + this.state.walletAddress;
+                const data = {
+                    walletAddress: this.state.walletAddress,
+                    startDate: new Date().toISOString(),
+                    source: 'academy_button'
+                };
+                localStorage.setItem(trialKey, JSON.stringify(data));
+                
+                this.state.trialStarted = true;
+                this.state.trialDaysLeft = this.config.TRIAL_DAYS;
+                
+                alert('🎉 30 дней полного доступа активированы!');
+                this.updateUI();
+            },
+            
+            // ═══════════════════════════════════════════════════════════
+            // ЭКРАНЫ
+            // ═══════════════════════════════════════════════════════════
+            
+            showNoWalletScreen() {
+                const refId = this.getReferrer();
+                
+                document.getElementById('modalIcon').textContent = '🔐';
+                document.getElementById('modalTitle').textContent = 'Подключите кошелёк';
+                document.getElementById('modalText').innerHTML = refId 
+                    ? 'Для доступа к Академии нужно подключить криптокошелёк.'
+                    : 'Академия доступна только зарегистрированным участникам.<br>Получите ссылку от партнёра.';
+                
+                document.getElementById('modalContent').innerHTML = refId ? `
+                    <div class="features-grid">
+                        <div class="feature-item"><span>🎓</span> Обучение $1700</div>
+                        <div class="feature-item"><span>💰</span> $1000 за 21 день</div>
+                        <div class="feature-item"><span>📈</span> $100K за 90 дней</div>
+                        <div class="feature-item"><span>🛡️</span> Гарантия</div>
+                    </div>
+                    <button onclick="Academy.connectWallet()" class="btn-action" id="connectBtn">
+                        🔐 Подключить кошелёк
+                    </button>
+                    <br>
+                    <a href="dashboard.html?ref=${refId}" class="btn-secondary">
+                        Или зарегистрируйтесь через кабинет →
+                    </a>
+                ` : `
+                    <div class="features-grid">
+                        <div class="feature-item"><span>🎓</span> Обучение $1700</div>
+                        <div class="feature-item"><span>💰</span> $1000 за 21 день</div>
+                        <div class="feature-item"><span>📈</span> $100K за 90 дней</div>
+                        <div class="feature-item"><span>🛡️</span> Гарантия</div>
                     </div>
                     <p style="color: var(--text-muted); font-size: 13px;">
                         Попросите партнёра отправить вам ссылку на Академию
                     </p>
                 `;
-            } else {
-                // Есть реферал - направляем на регистрацию
-                modalIcon.textContent = '🎓';
-                modalTitle.textContent = 'Академия CardGift';
-                modalText.innerHTML = `
-                    Обучение на <strong style="color: var(--gold);">$1700</strong> — бесплатно!<br>
-                    За обучение вам <strong style="color: var(--green);">платят $1000</strong>
-                `;
-                modalContent.innerHTML = `
-                    <div class="access-features">
-                        <div class="access-feature">
-                            <span class="access-feature-icon">💰</span>
-                            <span>Старт $22</span>
-                        </div>
-                        <div class="access-feature">
-                            <span class="access-feature-icon">🎓</span>
-                            <span>6 модулей</span>
-                        </div>
-                        <div class="access-feature">
-                            <span class="access-feature-icon">📅</span>
-                            <span>21 день</span>
-                        </div>
-                        <div class="access-feature">
-                            <span class="access-feature-icon">🛡️</span>
-                            <span>Гарантия</span>
-                        </div>
-                    </div>
-                    <a href="dashboard.html?ref=${refId}" class="btn-connect-wallet" style="text-decoration: none;">
-                        🚀 Зарегистрироваться
+                
+                this.hideStatus();
+            },
+            
+            showNeedRegistrationScreen() {
+                const refId = this.getReferrer();
+                
+                document.getElementById('modalIcon').textContent = '📝';
+                document.getElementById('modalTitle').textContent = 'Нужна регистрация';
+                document.getElementById('modalText').innerHTML = 'Кошелёк подключён, но аккаунт не найден.<br>Пройдите регистрацию в личном кабинете.';
+                document.getElementById('modalContent').innerHTML = `
+                    <a href="dashboard.html${refId ? '?ref=' + refId : ''}" class="btn-action">
+                        📊 Перейти в кабинет
                     </a>
-                    <p style="color: var(--text-muted); font-size: 12px; margin-top: 15px;">
-                        Реферальный код: <strong>${refId}</strong>
-                    </p>
                 `;
-            }
-        }
-        
-        // ═══════════════════════════════════════════════════════════
-        // РАБОТА С КОШЕЛЬКОМ
-        // ═══════════════════════════════════════════════════════════
-        
-        function getWeb3Provider() {
-            if (window.safepalProvider) return window.safepalProvider;
-            if (window.safepal && window.safepal.ethereum) return window.safepal.ethereum;
-            if (window.ethereum && window.ethereum.isSafePal) return window.ethereum;
-            if (window.ethereum && window.ethereum.providers) {
-                const safePal = window.ethereum.providers.find(p => p.isSafePal);
-                if (safePal) return safePal;
-            }
-            if (window.ethereum) return window.ethereum;
-            return null;
-        }
-        
-        async function connectWalletAndCheck() {
-            const btn = document.getElementById('connectBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '🔄 Подключение...';
-            }
+                
+                this.hideStatus();
+            },
             
-            showStatus('loading', '🔄 Подключение к кошельку...');
+            showLevelRequiredScreen() {
+                document.getElementById('modalIcon').textContent = '⚡';
+                document.getElementById('modalTitle').textContent = 'Активируй уровень 4';
+                document.getElementById('modalText').innerHTML = `
+                    Твой текущий уровень: <strong style="color: var(--orange);">${this.state.level}</strong><br>
+                    Для Академии нужен уровень <strong style="color: var(--gold);">4+</strong>
+                `;
+                document.getElementById('modalContent').innerHTML = `
+                    <div style="background: rgba(255,215,0,0.1); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                        <p style="color: var(--gold); font-size: 14px; margin: 0;">
+                            💰 Активация = <strong>$22</strong> (0.0225 opBNB)<br>
+                            🎁 Получишь 30 дней полного доступа!
+                        </p>
+                    </div>
+                    <a href="dashboard.html#wallet" class="btn-action">
+                        💳 Активировать уровень 4
+                    </a>
+                `;
+                
+                this.hideStatus();
+            },
             
-            try {
-                const provider = getWeb3Provider();
-                if (!provider) {
-                    throw new Error('Кошелёк не найден');
+            // ═══════════════════════════════════════════════════════════
+            // UI
+            // ═══════════════════════════════════════════════════════════
+            
+            updateUI() {
+                if (!this.state.hasAccess) return;
+                
+                // Скрываем overlay, показываем контент
+                document.getElementById('accessOverlay').classList.add('hidden');
+                document.getElementById('mainContent').style.display = 'block';
+                
+                // Показываем триал баннер или кнопку старта
+                if (this.state.trialStarted) {
+                    document.getElementById('trialBanner').style.display = 'flex';
+                    document.getElementById('trialDaysLeft').textContent = this.state.trialDaysLeft;
+                    document.getElementById('startTrialBlock').style.display = 'none';
+                } else {
+                    document.getElementById('trialBanner').style.display = 'none';
+                    document.getElementById('startTrialBlock').style.display = 'block';
                 }
                 
-                // Запрашиваем подключение
-                let accounts;
+                // Обновляем прогресс
+                this.updateProgress();
+            },
+            
+            updateProgress() {
+                const saved = localStorage.getItem('academy_progress');
+                const progress = saved ? JSON.parse(saved) : { completedModules: [] };
+                
+                const total = Object.keys(this.MODULES).length;
+                const completed = progress.completedModules ? progress.completedModules.length : 0;
+                const percent = Math.round((completed / total) * 100);
+                
+                const progressEl = document.getElementById('totalProgress');
+                const fillEl = document.getElementById('progressFill');
+                
+                if (progressEl) progressEl.textContent = percent + '%';
+                if (fillEl) fillEl.style.width = percent + '%';
+            },
+            
+            showStatus(type, message) {
+                const el = document.getElementById('statusMessage');
+                if (el) {
+                    el.style.display = 'block';
+                    el.className = 'status-message status-' + type;
+                    el.textContent = message;
+                }
+            },
+            
+            hideStatus() {
+                const el = document.getElementById('statusMessage');
+                if (el) el.style.display = 'none';
+            },
+            
+            // ═══════════════════════════════════════════════════════════
+            // HELPERS
+            // ═══════════════════════════════════════════════════════════
+            
+            saveReferrer() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const ref = urlParams.get('ref');
+                if (ref) {
+                    localStorage.setItem('cardgift_referrer', ref);
+                }
+            },
+            
+            getReferrer() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('ref') || localStorage.getItem('cardgift_referrer');
+            },
+            
+            async connectWallet() {
+                const btn = document.getElementById('connectBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = '🔄 Подключение...';
+                }
+                
                 try {
-                    accounts = await provider.request({ method: 'eth_requestAccounts' });
-                } catch (e) {
-                    if (provider.enable) {
-                        accounts = await provider.enable();
-                    } else {
-                        throw e;
+                    if (typeof window.ethereum === 'undefined') {
+                        alert('Установите SafePal или MetaMask');
+                        return;
                     }
-                }
-                
-                if (!accounts || accounts.length === 0) {
-                    throw new Error('Нет доступных аккаунтов');
-                }
-                
-                walletAddress = accounts[0].toLowerCase();
-                
-                // Проверяем сеть
-                try {
-                    const chainId = await provider.request({ method: 'eth_chainId' });
-                    if (parseInt(chainId, 16) !== 204) {
-                        showStatus('loading', '🔄 Переключение на opBNB...');
-                        await switchToOpBNB(provider);
+                    
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    if (accounts && accounts.length > 0) {
+                        this.state.walletAddress = accounts[0].toLowerCase();
+                        
+                        // Перезапускаем проверку
+                        await this.loadUserData();
+                        await this.checkAccess();
+                        this.updateUI();
                     }
-                } catch (e) {
-                    console.warn('Network switch failed:', e);
+                } catch (error) {
+                    console.error('Connection error:', error);
+                    alert('Ошибка подключения: ' + error.message);
                 }
-                
-                // Сохраняем подключение
-                localStorage.setItem('walletAddress', walletAddress);
-                localStorage.setItem('walletConnected', 'true');
-                
-                showStatus('success', '✅ Кошелёк подключён!');
-                
-                // Проверяем уровень пользователя
-                await checkUserAccess();
-                
-            } catch (error) {
-                console.error('Connection error:', error);
-                showStatus('error', '❌ ' + (error.message || 'Ошибка подключения'));
                 
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '🔐 Подключить кошелёк';
+                    btn.textContent = '🔐 Подключить кошелёк';
                 }
             }
-        }
-        
-        async function autoConnect() {
-            try {
-                const provider = getWeb3Provider();
-                if (!provider) {
-                    showAccessScreen();
-                    return;
-                }
-                
-                // Проверяем есть ли уже подключённые аккаунты
-                const accounts = await provider.request({ method: 'eth_accounts' });
-                
-                if (accounts && accounts.length > 0) {
-                    walletAddress = accounts[0].toLowerCase();
-                    const savedWallet = localStorage.getItem('walletAddress');
-                    
-                    if (savedWallet && savedWallet.toLowerCase() === walletAddress) {
-                        showStatus('success', '✅ Автоподключение...');
-                        await checkUserAccess();
-                        return;
-                    }
-                }
-                
-                // Не удалось автоподключиться
-                showAccessScreen();
-                
-            } catch (error) {
-                console.error('Auto-connect error:', error);
-                showAccessScreen();
-            }
-        }
-        
-        async function switchToOpBNB(provider) {
-            try {
-                await provider.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: OPBNB_CHAIN.chainId }]
-                });
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    await provider.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [OPBNB_CHAIN]
-                    });
-                }
-            }
-        }
-        
-        // ═══════════════════════════════════════════════════════════
-        // ПРОВЕРКА ДОСТУПА ПОЛЬЗОВАТЕЛЯ
-        // ═══════════════════════════════════════════════════════════
-        
-        async function checkUserAccess() {
-            showStatus('loading', '🔄 Проверка доступа...');
-            
-            // Получаем уровень из localStorage (устанавливается в dashboard)
-            userLevel = parseInt(localStorage.getItem('cardgift_user_level') || '0');
-            const userId = localStorage.getItem('cardgift_user_id');
-            
-            // Если нет данных о пользователе - направляем на регистрацию
-            if (!userId || userLevel < 1) {
-                showStatus('error', '⚠️ Аккаунт не найден');
-                
-                setTimeout(() => {
-                    const modalTitle = document.getElementById('modalTitle');
-                    const modalText = document.getElementById('modalText');
-                    const modalContent = document.getElementById('modalContent');
-                    
-                    modalTitle.textContent = 'Нужна регистрация';
-                    modalText.innerHTML = `
-                        Кошелёк подключён, но аккаунт не найден.<br>
-                        Пройдите регистрацию в личном кабинете.
-                    `;
-                    modalContent.innerHTML = `
-                        <a href="dashboard.html${refId ? '?ref=' + refId : ''}" class="btn-connect-wallet" style="text-decoration: none;">
-                            📊 Перейти в кабинет
-                        </a>
-                    `;
-                    hideStatus();
-                }, 1500);
-                return;
-            }
-            
-            // Проверяем минимальный уровень для Академии (4+)
-            if (userLevel < 4) {
-                showStatus('error', '⚠️ Нужен уровень 4+');
-                
-                setTimeout(() => {
-                    const modalTitle = document.getElementById('modalTitle');
-                    const modalText = document.getElementById('modalText');
-                    const modalContent = document.getElementById('modalContent');
-                    
-                    modalTitle.textContent = 'Активируй уровень 4';
-                    modalText.innerHTML = `
-                        Твой текущий уровень: <strong style="color: var(--orange);">${userLevel}</strong><br>
-                        Для Академии нужен уровень <strong style="color: var(--gold);">4+</strong>
-                    `;
-                    modalContent.innerHTML = `
-                        <div style="background: rgba(255,215,0,0.1); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                            <p style="color: var(--gold); font-size: 14px; margin: 0;">
-                                💰 Активация = <strong>$22</strong> (0.0225 opBNB)<br>
-                                🎁 Получишь 30 дней полного доступа!
-                            </p>
-                        </div>
-                        <a href="dashboard.html#wallet" class="btn-connect-wallet" style="text-decoration: none;">
-                            💳 Активировать уровень 4
-                        </a>
-                    `;
-                    hideStatus();
-                }, 1500);
-                return;
-            }
-            
-            // Всё ОК - разблокируем контент
-            isConnected = true;
-            showStatus('success', '✅ Добро пожаловать!');
-            
-            setTimeout(() => {
-                unlockContent();
-            }, 1000);
-        }
-        
-        // ═══════════════════════════════════════════════════════════
-        // РАЗБЛОКИРОВКА КОНТЕНТА
-        // ═══════════════════════════════════════════════════════════
-        
-        function unlockContent() {
-            // Скрываем overlay
-            const overlay = document.getElementById('accessOverlay');
-            if (overlay) {
-                overlay.classList.add('hidden');
-            }
-            
-            // Инициализируем Академию
-            initAcademy();
-        }
-        
-        // ═══════════════════════════════════════════════════════════
-        // СТАТУСЫ
-        // ═══════════════════════════════════════════════════════════
-        
-        function showStatus(type, message) {
-            const status = document.getElementById('connectionStatus');
-            if (status) {
-                status.style.display = 'block';
-                status.className = 'connection-status ' + type;
-                status.textContent = message;
-            }
-        }
-        
-        function hideStatus() {
-            const status = document.getElementById('connectionStatus');
-            if (status) {
-                status.style.display = 'none';
-            }
-        }
-        
-        // ═══════════════════════════════════════════════════════════
-        // ЛОГИКА АКАДЕМИИ (после разблокировки)
-        // ═══════════════════════════════════════════════════════════
-        
-        const MODULES = {
-            quickstart: { id: 'quickstart', title: '🚀 Быстрый старт', url: 'academy-quickstart.html', tasks: 3, points: 50 },
-            generator: { id: 'generator', title: '🎨 Генератор открыток', url: 'cards-guide.html', tasks: 5, points: 100 },
-            crm: { id: 'crm', title: '📇 CRM: Контакты', url: 'academy-crm.html', tasks: 4, points: 80 },
-            surveys: { id: 'surveys', title: '📊 Опросы', url: 'academy-surveys.html', tasks: 3, points: 70 },
-            mailings: { id: 'mailings', title: '📨 Рассыльщик', url: 'academy-mailings.html', tasks: 4, points: 90 },
-            scale: { id: 'scale', title: '🏆 Масштабирование', url: 'academy-scale.html', tasks: 6, points: 150, locked: true }
         };
         
-        function initAcademy() {
-            updateProgressUI();
-            checkAndShowTrialStatus();
-            
-            // Анимация карточек
-            const cards = document.querySelectorAll('.module-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 100 * index);
-            });
-        }
-        
-        function loadProgress() {
-            const saved = localStorage.getItem('academy_progress');
-            if (saved) {
-                return JSON.parse(saved);
-            }
-            return { completedModules: [], completedTasks: [], totalPoints: 0, currentModule: 'quickstart' };
-        }
-        
-        function saveProgress(progress) {
-            localStorage.setItem('academy_progress', JSON.stringify(progress));
-        }
-        
+        // Глобальные функции
         function openModule(moduleId) {
-            if (!isConnected) {
+            if (!Academy.state.hasAccess) {
                 alert('🔒 Сначала подключите кошелёк!');
                 return;
             }
             
-            const module = MODULES[moduleId];
+            const module = Academy.MODULES[moduleId];
             if (!module) return;
             
             if (module.locked) {
@@ -1351,140 +926,12 @@
             window.location.href = module.url;
         }
         
-        function updateProgressUI() {
-            const progress = loadProgress();
-            const totalModules = Object.keys(MODULES).length;
-            const completedCount = progress.completedModules.length;
-            const percent = Math.round((completedCount / totalModules) * 100);
-            
-            const totalProgress = document.getElementById('totalProgress');
-            const progressFill = document.getElementById('progressFill');
-            
-            if (totalProgress) totalProgress.textContent = percent + '%';
-            if (progressFill) progressFill.style.width = percent + '%';
-            
-            const dots = document.querySelectorAll('.progress-dot');
-            dots.forEach((dot, index) => {
-                const moduleKeys = Object.keys(MODULES);
-                const moduleId = moduleKeys[index];
-                
-                if (progress.completedModules.includes(moduleId)) {
-                    dot.classList.add('completed');
-                    dot.classList.remove('current');
-                    dot.innerHTML = '✓';
-                } else if (moduleId === progress.currentModule) {
-                    dot.classList.add('current');
-                }
-            });
+        function startTrial() {
+            Academy.startTrial();
         }
         
-        // ═══════════════════════════════════════════════════════════
-        // ТРИАЛ СИСТЕМА
-        // ═══════════════════════════════════════════════════════════
-        
-        function checkAndShowTrialStatus() {
-            const container = document.getElementById('accessStatusContainer');
-            if (!container) return;
-            
-            const trialData = loadTrialData();
-            const academyLaunchDate = new Date('2026-01-30T00:00:00Z');
-            const regDate = localStorage.getItem('cardgift_registration_date');
-            const registrationDate = regDate ? new Date(regDate) : null;
-            const isExistingUser = registrationDate && registrationDate < academyLaunchDate;
-            
-            if (trialData.startDate) {
-                showTrialStatus(trialData, container);
-            } else if (isExistingUser) {
-                showStartTrialButton(container);
-            } else {
-                // Новый пользователь - автостарт триала
-                startTrialAuto();
-                showTrialStatus(loadTrialData(), container);
-            }
-        }
-        
-        function loadTrialData() {
-            const saved = localStorage.getItem('cardgift_trial');
-            if (saved) {
-                try { return JSON.parse(saved); } catch (e) { return {}; }
-            }
-            return {};
-        }
-        
-        function startTrialAuto() {
-            const userId = localStorage.getItem('cardgift_user_id');
-            if (!userId) return;
-            
-            const trial = { userId, startDate: new Date().toISOString(), source: 'auto' };
-            localStorage.setItem('cardgift_trial', JSON.stringify(trial));
-        }
-        
-        function startTrialManual() {
-            const userId = localStorage.getItem('cardgift_user_id');
-            if (!userId) return;
-            
-            const trial = { userId, startDate: new Date().toISOString(), source: 'academy_button' };
-            localStorage.setItem('cardgift_trial', JSON.stringify(trial));
-            
-            alert('🎉 30 дней полного доступа активированы!');
-            location.reload();
-        }
-        
-        function showStartTrialButton(container) {
-            container.innerHTML = `
-                <div style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1)); border: 2px solid #10B981; border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 50px; margin-bottom: 15px;">🎁</div>
-                    <h3 style="color: #10B981; margin-bottom: 10px;">Добро пожаловать в Академию!</h3>
-                    <p style="color: #9CA3AF; margin-bottom: 20px;">
-                        Нажми кнопку и получи <strong style="color: #FFD700;">30 дней полного доступа</strong>!
-                    </p>
-                    <button onclick="startTrialManual()" style="background: linear-gradient(135deg, #10B981, #059669); border: none; border-radius: 14px; padding: 16px 40px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer;">
-                        🚀 НАЧАТЬ ОБУЧЕНИЕ
-                    </button>
-                </div>
-            `;
-        }
-        
-        function showTrialStatus(trialData, container) {
-            if (!trialData.startDate) return;
-            
-            const startDate = new Date(trialData.startDate);
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 30);
-            
-            const now = new Date();
-            const isActive = now < endDate;
-            const daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-            
-            if (isActive) {
-                const barColor = daysRemaining > 14 ? '#10B981' : (daysRemaining > 7 ? '#F59E0B' : '#EF4444');
-                container.innerHTML = `
-                    <div style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1)); border: 2px solid #10B981; border-radius: 16px; padding: 20px; margin-bottom: 30px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 32px;">🎉</span>
-                                <div>
-                                    <strong style="color: #10B981;">Полный доступ активен!</strong>
-                                    <div style="color: #9CA3AF; font-size: 12px;">Все инструменты включены</div>
-                                </div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 28px; font-weight: bold; color: ${barColor};">${daysRemaining}</div>
-                                <div style="font-size: 11px; color: #9CA3AF;">дней</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <div style="background: rgba(239,68,68,0.1); border: 2px solid #EF4444; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 30px;">
-                        <span style="font-size: 32px;">⏰</span>
-                        <p style="color: #EF4444; margin: 10px 0;">30 дней завершились</p>
-                        <a href="dashboard.html#wallet" style="color: #FFD700;">🔓 Открыть уровни</a>
-                    </div>
-                `;
-            }
-        }
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => Academy.init());
     </script>
 </body>
 </html>
