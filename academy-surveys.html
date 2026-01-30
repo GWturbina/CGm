@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Опросы: Собирай лидов | Академия CardGift</title>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-dark: #0a0a1a;
+            --bg-card: #12122a;
+            --gold: #FFD700;
+            --green: #10B981;
+            --blue: #3B82F6;
+            --text: #ffffff;
+            --text-muted: #9CA3AF;
+            --border: #2a2a4a;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        
+        .header {
+            background: var(--bg-card);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        
+        .back-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .module-badge {
+            padding: 5px 12px;
+            background: rgba(16,185,129,0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--green);
+        }
+        
+        .progress-mini { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+        
+        .progress-mini-bar {
+            width: 100px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-mini-fill {
+            height: 100%;
+            background: var(--green);
+            transition: width 0.3s;
+        }
+        
+        .main { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+        
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, rgba(16,185,129,0.1), transparent);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+        
+        .hero-icon { font-size: 60px; margin-bottom: 15px; }
+        
+        .hero h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--green), #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p { font-size: 18px; color: var(--text-muted); }
+        
+        .info-block {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--green);
+        }
+        
+        .info-block h3 { font-size: 18px; margin-bottom: 15px; color: var(--green); }
+        .info-block p { color: var(--text-muted); margin-bottom: 15px; }
+        
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .benefit-item {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .benefit-icon { font-size: 30px; margin-bottom: 10px; }
+        .benefit-text { font-size: 13px; }
+        
+        .task-list { display: flex; flex-direction: column; gap: 25px; }
+        
+        .task-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+        
+        .task-card.active { border-color: var(--green); box-shadow: 0 0 30px rgba(16,185,129,0.1); }
+        .task-card.completed { border-color: var(--green); opacity: 0.8; }
+        
+        .task-header { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 15px; }
+        
+        .task-number {
+            width: 40px;
+            height: 40px;
+            background: var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .task-card.active .task-number { background: var(--green); color: #fff; }
+        .task-card.completed .task-number { background: var(--green); color: #fff; }
+        
+        .task-info h3 { font-size: 18px; margin-bottom: 5px; }
+        .task-info p { font-size: 14px; color: var(--text-muted); }
+        
+        .task-content { margin-left: 55px; }
+        
+        .task-steps {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px; }
+        .step:last-child { margin-bottom: 0; }
+        
+        .step-icon {
+            width: 28px;
+            height: 28px;
+            background: rgba(16,185,129,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .step-text { font-size: 14px; line-height: 1.6; }
+        .step-text strong { color: var(--green); }
+        
+        .task-tip {
+            background: rgba(255,215,0,0.1);
+            border-left: 3px solid var(--gold);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        
+        .task-tip::before { content: '💡 '; }
+        
+        .task-action { display: flex; gap: 15px; flex-wrap: wrap; }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-green {
+            background: linear-gradient(135deg, var(--green), #059669);
+            color: #fff;
+        }
+        
+        .btn-green:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(16,185,129,0.3); }
+        
+        .reward-banner {
+            background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1));
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 40px;
+            display: none;
+        }
+        
+        .reward-icon { font-size: 60px; margin-bottom: 15px; }
+        .reward-banner h2 { font-size: 24px; margin-bottom: 10px; color: var(--green); }
+        .reward-banner p { color: var(--text-muted); margin-bottom: 20px; }
+        
+        .reward-points {
+            display: inline-block;
+            padding: 10px 30px;
+            background: var(--green);
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .footer-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover { background: rgba(16,185,129,0.1); }
+        .nav-btn-next { background: linear-gradient(135deg, var(--green), #059669); color: #fff; }
+        
+        @media (max-width: 600px) {
+            .header-content { flex-direction: column; gap: 10px; }
+            .task-content { margin-left: 0; margin-top: 15px; }
+            .task-header { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="academy.html" class="back-btn">← Академия</a>
+                <span class="module-badge">МОДУЛЬ 4</span>
+            </div>
+            <div class="progress-mini">
+                <span id="taskProgress">0/3</span>
+                <div class="progress-mini-bar">
+                    <div class="progress-mini-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="main">
+        <div class="hero">
+            <div class="hero-icon">📊</div>
+            <h1>Опросы: Собирай лидов</h1>
+            <p>Создавай вирусные опросы которые сами привлекают людей.<br>Квалифицируй лидов автоматически!</p>
+        </div>
+        
+        <div class="info-block">
+            <h3>🤔 Почему опросы работают?</h3>
+            <p>Людям <strong>интересно узнать о себе</strong>. "Узнай свой потенциал", "Подходит ли тебе онлайн-бизнес?" — такие вопросы притягивают!</p>
+            
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <div class="benefit-icon">🎯</div>
+                    <div class="benefit-text">Квалификация: понимаешь кто "горячий"</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">📧</div>
+                    <div class="benefit-text">Сбор контактов: имя + мессенджер</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">🔄</div>
+                    <div class="benefit-text">Вирусность: люди делятся</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">🤖</div>
+                    <div class="benefit-text">Автоматизация: работает 24/7</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="task-list">
+            <div class="task-card active" id="task-1">
+                <div class="task-header">
+                    <div class="task-number">1</div>
+                    <div class="task-info">
+                        <h3>🎯 Используй готовый стартовый опрос</h3>
+                        <p>Займёт 2 минуты</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">Открой <strong>"Опросы"</strong> в кабинете</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Нажми <strong>"Стартовый опрос"</strong> — он уже готов!</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Скопируй ссылку — она уже с твоим реферальным ID</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        "Узнай свой потенциал" — проверенный опрос с высокой конверсией. Начни с него!
+                    </div>
+                    
+                    <div class="task-action">
+                        <a href="dashboard.html#surveys" target="_blank" class="btn btn-green">
+                            📊 Открыть Опросы
+                        </a>
+                        <button onclick="completeTask(1)" class="btn btn-green" style="background: #059669;">
+                            ✅ Открыл!
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-card" id="task-2">
+                <div class="task-header">
+                    <div class="task-number">2</div>
+                    <div class="task-info">
+                        <h3>📤 Поделись опросом</h3>
+                        <p>Займёт 3 минуты</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">Скопируй ссылку на опрос</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Отправь <strong>3 друзьям</strong> с сообщением:<br><em>"Привет! Пройди короткий тест — узнаешь подходит ли тебе онлайн-заработок 😊"</em></div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Запомни: в конце опроса человек видит <strong>твою ссылку</strong>!</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        Опросы — это мягкий способ начать разговор. Человек сам проходит и сам решает интересно ли ему.
+                    </div>
+                    
+                    <div class="task-action">
+                        <button onclick="completeTask(2)" class="btn btn-green" style="background: #059669;">
+                            ✅ Отправил!
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-card" id="task-3">
+                <div class="task-header">
+                    <div class="task-number">3</div>
+                    <div class="task-info">
+                        <h3>📈 Посмотри результаты</h3>
+                        <p>Займёт 2 минуты</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">Открой раздел <strong>"Опросы"</strong></div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Посмотри статистику: сколько прошли, какие ответы</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Найди <strong>"горячих"</strong> — тех кто ответил что готов действовать!</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        Горячие лиды — это те кто: хочет больше $1000/мес, готов уделять 2+ часа в день, готов инвестировать в себя.
+                    </div>
+                    
+                    <div class="task-action">
+                        <button onclick="completeTask(3)" class="btn btn-green" style="background: #059669;">
+                            ✅ Посмотрел!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="reward-banner" id="rewardBanner">
+            <div class="reward-icon">🎉</div>
+            <h2>Отлично! Ты освоил Опросы!</h2>
+            <p>Теперь у тебя есть инструмент для автоматического привлечения и квалификации лидов!</p>
+            <div class="reward-points">+70 баллов</div>
+        </div>
+        
+        <div class="footer-nav">
+            <a href="academy-crm.html" class="nav-btn">← CRM</a>
+            <a href="academy-mailings.html" class="nav-btn nav-btn-next" id="nextBtn" style="display: none;">Рассыльщик →</a>
+        </div>
+    </main>
+    
+    <script>
+        const MODULE_ID = 'surveys';
+        const TOTAL_TASKS = 3;
+        const POINTS_REWARD = 70;
+        
+        function loadModuleProgress() {
+            const saved = localStorage.getItem('academy_module_' + MODULE_ID);
+            return saved ? JSON.parse(saved) : { completedTasks: [], completed: false };
+        }
+        
+        function saveModuleProgress(progress) {
+            localStorage.setItem('academy_module_' + MODULE_ID, JSON.stringify(progress));
+        }
+        
+        function completeTask(taskNum) {
+            const progress = loadModuleProgress();
+            if (!progress.completedTasks.includes(taskNum)) {
+                progress.completedTasks.push(taskNum);
+                saveModuleProgress(progress);
+                
+                const taskCard = document.getElementById('task-' + taskNum);
+                taskCard.classList.remove('active');
+                taskCard.classList.add('completed');
+                taskCard.querySelector('.task-number').innerHTML = '✓';
+                
+                const nextTask = document.getElementById('task-' + (taskNum + 1));
+                if (nextTask) nextTask.classList.add('active');
+                
+                if (progress.completedTasks.length >= TOTAL_TASKS) completeModule();
+                updateUI();
+            }
+        }
+        
+        function completeModule() {
+            const progress = loadModuleProgress();
+            progress.completed = true;
+            saveModuleProgress(progress);
+            
+            const academyProgress = JSON.parse(localStorage.getItem('academy_progress') || '{"completedModules":[],"totalPoints":0}');
+            if (!academyProgress.completedModules.includes(MODULE_ID)) {
+                academyProgress.completedModules.push(MODULE_ID);
+                academyProgress.totalPoints += POINTS_REWARD;
+                academyProgress.currentModule = 'mailings';
+                localStorage.setItem('academy_progress', JSON.stringify(academyProgress));
+            }
+            
+            document.getElementById('rewardBanner').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'flex';
+        }
+        
+        function updateUI() {
+            const progress = loadModuleProgress();
+            const completed = progress.completedTasks.length;
+            const percent = Math.round((completed / TOTAL_TASKS) * 100);
+            
+            document.getElementById('taskProgress').textContent = `${completed}/${TOTAL_TASKS}`;
+            document.getElementById('progressFill').style.width = percent + '%';
+            
+            progress.completedTasks.forEach(taskNum => {
+                const taskCard = document.getElementById('task-' + taskNum);
+                if (taskCard) {
+                    taskCard.classList.remove('active');
+                    taskCard.classList.add('completed');
+                    taskCard.querySelector('.task-number').innerHTML = '✓';
+                }
+            });
+            
+            for (let i = 1; i <= TOTAL_TASKS; i++) {
+                if (!progress.completedTasks.includes(i)) {
+                    const taskCard = document.getElementById('task-' + i);
+                    if (taskCard) taskCard.classList.add('active');
+                    break;
+                }
+            }
+            
+            if (progress.completed) {
+                document.getElementById('rewardBanner').style.display = 'block';
+                document.getElementById('nextBtn').style.display = 'flex';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', updateUI);
+    </script>
+</body>
+</html>
