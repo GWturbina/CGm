@@ -459,9 +459,172 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        /* ═══════════════════════════════════════════════════════════
+           ЗАЩИТА - OVERLAY ДЛЯ НЕАВТОРИЗОВАННЫХ
+           ═══════════════════════════════════════════════════════════ */
+        
+        #accessOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 26, 0.98);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        #accessOverlay.hidden {
+            display: none;
+        }
+        
+        .access-modal {
+            background: linear-gradient(135deg, #12122a, #1a1a3a);
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalAppear 0.5s ease;
+        }
+        
+        @keyframes modalAppear {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        .access-modal-icon {
+            font-size: 70px;
+            margin-bottom: 20px;
+        }
+        
+        .access-modal h2 {
+            font-size: 26px;
+            margin-bottom: 15px;
+            color: var(--gold);
+        }
+        
+        .access-modal p {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
+        
+        .btn-connect-wallet {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #FFD700, #F59E0B);
+            color: #000;
+            border: none;
+            border-radius: 14px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 30px rgba(255,215,0,0.3);
+        }
+        
+        .btn-connect-wallet:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(255,215,0,0.4);
+        }
+        
+        .btn-connect-wallet:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-register {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--blue);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .btn-register:hover {
+            text-decoration: underline;
+        }
+        
+        .access-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+            text-align: left;
+        }
+        
+        .access-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            font-size: 13px;
+        }
+        
+        .access-feature-icon {
+            font-size: 20px;
+        }
+        
+        .connection-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        
+        .connection-status.loading {
+            background: rgba(59,130,246,0.1);
+            border: 1px solid #3B82F6;
+            color: #3B82F6;
+        }
+        
+        .connection-status.error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .connection-status.success {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid #10B981;
+            color: #10B981;
+        }
+        
+        /* Блокировка контента */
+        .content-locked {
+            pointer-events: none;
+            user-select: none;
+            filter: blur(5px);
+        }
     </style>
 </head>
 <body>
+    <!-- ═══════════════════════════════════════════════════════════
+         OVERLAY ЗАЩИТЫ - БЛОКИРУЕТ КОНТЕНТ БЕЗ АВТОРИЗАЦИИ
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="accessOverlay">
+        <div class="access-modal">
+            <div class="access-modal-icon" id="modalIcon">🎓</div>
+            <h2 id="modalTitle">Академия CardGift</h2>
+            <p id="modalText">Загрузка...</p>
+            <div id="modalContent"></div>
+            <div id="connectionStatus" class="connection-status" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Контент страницы (будет разблокирован после авторизации) -->
+    <div id="mainContent">
     <!-- Hero -->
     <section class="hero">
         <div class="hero-content">
@@ -686,6 +849,8 @@
         </div>
     </div>
     
+    </div><!-- END mainContent -->
+    
     <!-- Footer -->
     <footer class="footer">
         <p>
@@ -697,78 +862,439 @@
     </footer>
     
     <script>
-        // =============================================
-        // АКАДЕМИЯ CARDGIFT - Логика
-        // =============================================
+        // ═══════════════════════════════════════════════════════════
+        // АКАДЕМИЯ CARDGIFT - ЗАЩИЩЁННАЯ ВЕРСИЯ
+        // ═══════════════════════════════════════════════════════════
         
-        // Данные модулей
-        const MODULES = {
-            quickstart: {
-                id: 'quickstart',
-                title: '🚀 Быстрый старт',
-                url: 'academy-quickstart.html',
-                tasks: 3,
-                points: 50
-            },
-            generator: {
-                id: 'generator',
-                title: '🎨 Генератор открыток',
-                url: 'cards-guide.html',
-                tasks: 5,
-                points: 100
-            },
-            crm: {
-                id: 'crm',
-                title: '📇 CRM: Контакты',
-                url: 'academy-crm.html',
-                tasks: 4,
-                points: 80
-            },
-            surveys: {
-                id: 'surveys',
-                title: '📊 Опросы',
-                url: 'academy-surveys.html',
-                tasks: 3,
-                points: 70
-            },
-            mailings: {
-                id: 'mailings',
-                title: '📨 Рассыльщик',
-                url: 'academy-mailings.html',
-                tasks: 4,
-                points: 90
-            },
-            scale: {
-                id: 'scale',
-                title: '🏆 Масштабирование',
-                url: 'academy-scale.html',
-                tasks: 6,
-                points: 150,
-                locked: true
-            }
+        // Конфигурация opBNB
+        const OPBNB_CHAIN = {
+            chainId: '0xCC',
+            chainName: 'opBNB Mainnet',
+            nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+            rpcUrls: ['https://opbnb-mainnet-rpc.bnbchain.org'],
+            blockExplorerUrls: ['https://opbnbscan.com']
         };
         
-        // Загрузка прогресса
+        // Состояние
+        let isConnected = false;
+        let walletAddress = null;
+        let userLevel = 0;
+        let refId = null;
+        
+        // ═══════════════════════════════════════════════════════════
+        // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+        // ═══════════════════════════════════════════════════════════
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Получаем ref из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            refId = urlParams.get('ref');
+            if (refId) {
+                localStorage.setItem('cardgift_referrer', refId);
+            } else {
+                refId = localStorage.getItem('cardgift_referrer');
+            }
+            
+            // Проверяем сохранённое состояние кошелька
+            const savedWallet = localStorage.getItem('walletAddress');
+            const savedConnected = localStorage.getItem('walletConnected') === 'true';
+            
+            if (savedConnected && savedWallet) {
+                // Пытаемся автоматически подключиться
+                showStatus('loading', '🔄 Подключение кошелька...');
+                await autoConnect();
+            } else {
+                // Показываем экран подключения
+                showAccessScreen();
+            }
+        });
+        
+        // ═══════════════════════════════════════════════════════════
+        // ОТОБРАЖЕНИЕ ЭКРАНА ДОСТУПА
+        // ═══════════════════════════════════════════════════════════
+        
+        function showAccessScreen() {
+            const modalIcon = document.getElementById('modalIcon');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalText = document.getElementById('modalText');
+            const modalContent = document.getElementById('modalContent');
+            
+            const hasProvider = getWeb3Provider() !== null;
+            
+            if (!hasProvider && !refId) {
+                // Нет кошелька и нет реферала
+                modalIcon.textContent = '🔒';
+                modalTitle.textContent = 'Доступ ограничен';
+                modalText.innerHTML = `
+                    Академия доступна только зарегистрированным участникам.<br><br>
+                    <strong style="color: var(--gold);">Получите ссылку от партнёра</strong> для регистрации.
+                `;
+                modalContent.innerHTML = `
+                    <div class="access-features">
+                        <div class="access-feature">
+                            <span class="access-feature-icon">🎓</span>
+                            <span>Обучение $1700</span>
+                        </div>
+                        <div class="access-feature">
+                            <span class="access-feature-icon">💰</span>
+                            <span>$1000 за 21 день</span>
+                        </div>
+                        <div class="access-feature">
+                            <span class="access-feature-icon">📈</span>
+                            <span>$100K за 90 дней</span>
+                        </div>
+                        <div class="access-feature">
+                            <span class="access-feature-icon">🏆</span>
+                            <span>10 BNB пенсия</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 13px;">
+                        Попросите партнёра отправить вам ссылку на Академию
+                    </p>
+                `;
+            } else if (!hasProvider && refId) {
+                // Нет кошелька, но есть реферал - предлагаем установить
+                modalIcon.textContent = '📱';
+                modalTitle.textContent = 'Установите кошелёк';
+                modalText.innerHTML = `
+                    Для доступа к Академии нужен криптокошелёк.<br>
+                    Рекомендуем <strong style="color: var(--gold);">SafePal</strong>.
+                `;
+                modalContent.innerHTML = `
+                    <a href="https://www.safepal.com/download" target="_blank" class="btn-connect-wallet" style="text-decoration: none;">
+                        📥 Скачать SafePal
+                    </a>
+                    <br><br>
+                    <p style="color: var(--text-muted); font-size: 13px;">
+                        После установки вернитесь на эту страницу
+                    </p>
+                    <a href="dashboard.html?ref=${refId}" class="btn-register">
+                        Или зарегистрируйтесь через кабинет →
+                    </a>
+                `;
+            } else {
+                // Есть кошелёк - показываем кнопку подключения
+                modalIcon.textContent = '🎓';
+                modalTitle.textContent = 'Академия CardGift';
+                modalText.innerHTML = `
+                    Обучение на <strong style="color: var(--gold);">$1700</strong> — бесплатно!<br>
+                    За обучение вам <strong style="color: var(--green);">платят $1000</strong>
+                `;
+                modalContent.innerHTML = `
+                    <div class="access-features">
+                        <div class="access-feature">
+                            <span class="access-feature-icon">💰</span>
+                            <span>Старт $22</span>
+                        </div>
+                        <div class="access-feature">
+                            <span class="access-feature-icon">🎓</span>
+                            <span>6 модулей</span>
+                        </div>
+                        <div class="access-feature">
+                            <span class="access-feature-icon">📅</span>
+                            <span>21 день</span>
+                        </div>
+                        <div class="access-feature">
+                            <span class="access-feature-icon">🛡️</span>
+                            <span>Гарантия</span>
+                        </div>
+                    </div>
+                    <button onclick="connectWalletAndCheck()" class="btn-connect-wallet" id="connectBtn">
+                        🔐 Подключить кошелёк
+                    </button>
+                    ${refId ? `
+                        <a href="dashboard.html?ref=${refId}" class="btn-register">
+                            Нет аккаунта? Зарегистрируйтесь →
+                        </a>
+                    ` : ''}
+                `;
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // РАБОТА С КОШЕЛЬКОМ
+        // ═══════════════════════════════════════════════════════════
+        
+        function getWeb3Provider() {
+            if (window.safepalProvider) return window.safepalProvider;
+            if (window.safepal && window.safepal.ethereum) return window.safepal.ethereum;
+            if (window.ethereum && window.ethereum.isSafePal) return window.ethereum;
+            if (window.ethereum && window.ethereum.providers) {
+                const safePal = window.ethereum.providers.find(p => p.isSafePal);
+                if (safePal) return safePal;
+            }
+            if (window.ethereum) return window.ethereum;
+            return null;
+        }
+        
+        async function connectWalletAndCheck() {
+            const btn = document.getElementById('connectBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '🔄 Подключение...';
+            }
+            
+            showStatus('loading', '🔄 Подключение к кошельку...');
+            
+            try {
+                const provider = getWeb3Provider();
+                if (!provider) {
+                    throw new Error('Кошелёк не найден');
+                }
+                
+                // Запрашиваем подключение
+                let accounts;
+                try {
+                    accounts = await provider.request({ method: 'eth_requestAccounts' });
+                } catch (e) {
+                    if (provider.enable) {
+                        accounts = await provider.enable();
+                    } else {
+                        throw e;
+                    }
+                }
+                
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('Нет доступных аккаунтов');
+                }
+                
+                walletAddress = accounts[0].toLowerCase();
+                
+                // Проверяем сеть
+                try {
+                    const chainId = await provider.request({ method: 'eth_chainId' });
+                    if (parseInt(chainId, 16) !== 204) {
+                        showStatus('loading', '🔄 Переключение на opBNB...');
+                        await switchToOpBNB(provider);
+                    }
+                } catch (e) {
+                    console.warn('Network switch failed:', e);
+                }
+                
+                // Сохраняем подключение
+                localStorage.setItem('walletAddress', walletAddress);
+                localStorage.setItem('walletConnected', 'true');
+                
+                showStatus('success', '✅ Кошелёк подключён!');
+                
+                // Проверяем уровень пользователя
+                await checkUserAccess();
+                
+            } catch (error) {
+                console.error('Connection error:', error);
+                showStatus('error', '❌ ' + (error.message || 'Ошибка подключения'));
+                
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🔐 Подключить кошелёк';
+                }
+            }
+        }
+        
+        async function autoConnect() {
+            try {
+                const provider = getWeb3Provider();
+                if (!provider) {
+                    showAccessScreen();
+                    return;
+                }
+                
+                // Проверяем есть ли уже подключённые аккаунты
+                const accounts = await provider.request({ method: 'eth_accounts' });
+                
+                if (accounts && accounts.length > 0) {
+                    walletAddress = accounts[0].toLowerCase();
+                    const savedWallet = localStorage.getItem('walletAddress');
+                    
+                    if (savedWallet && savedWallet.toLowerCase() === walletAddress) {
+                        showStatus('success', '✅ Автоподключение...');
+                        await checkUserAccess();
+                        return;
+                    }
+                }
+                
+                // Не удалось автоподключиться
+                showAccessScreen();
+                
+            } catch (error) {
+                console.error('Auto-connect error:', error);
+                showAccessScreen();
+            }
+        }
+        
+        async function switchToOpBNB(provider) {
+            try {
+                await provider.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: OPBNB_CHAIN.chainId }]
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    await provider.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [OPBNB_CHAIN]
+                    });
+                }
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // ПРОВЕРКА ДОСТУПА ПОЛЬЗОВАТЕЛЯ
+        // ═══════════════════════════════════════════════════════════
+        
+        async function checkUserAccess() {
+            showStatus('loading', '🔄 Проверка доступа...');
+            
+            // Получаем уровень из localStorage (устанавливается в dashboard)
+            userLevel = parseInt(localStorage.getItem('cardgift_user_level') || '0');
+            const userId = localStorage.getItem('cardgift_user_id');
+            
+            // Если нет данных о пользователе - направляем на регистрацию
+            if (!userId || userLevel < 1) {
+                showStatus('error', '⚠️ Аккаунт не найден');
+                
+                setTimeout(() => {
+                    const modalTitle = document.getElementById('modalTitle');
+                    const modalText = document.getElementById('modalText');
+                    const modalContent = document.getElementById('modalContent');
+                    
+                    modalTitle.textContent = 'Нужна регистрация';
+                    modalText.innerHTML = `
+                        Кошелёк подключён, но аккаунт не найден.<br>
+                        Пройдите регистрацию в личном кабинете.
+                    `;
+                    modalContent.innerHTML = `
+                        <a href="dashboard.html${refId ? '?ref=' + refId : ''}" class="btn-connect-wallet" style="text-decoration: none;">
+                            📊 Перейти в кабинет
+                        </a>
+                    `;
+                    hideStatus();
+                }, 1500);
+                return;
+            }
+            
+            // Проверяем минимальный уровень для Академии (4+)
+            if (userLevel < 4) {
+                showStatus('error', '⚠️ Нужен уровень 4+');
+                
+                setTimeout(() => {
+                    const modalTitle = document.getElementById('modalTitle');
+                    const modalText = document.getElementById('modalText');
+                    const modalContent = document.getElementById('modalContent');
+                    
+                    modalTitle.textContent = 'Активируй уровень 4';
+                    modalText.innerHTML = `
+                        Твой текущий уровень: <strong style="color: var(--orange);">${userLevel}</strong><br>
+                        Для Академии нужен уровень <strong style="color: var(--gold);">4+</strong>
+                    `;
+                    modalContent.innerHTML = `
+                        <div style="background: rgba(255,215,0,0.1); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                            <p style="color: var(--gold); font-size: 14px; margin: 0;">
+                                💰 Активация = <strong>$22</strong> (0.0225 opBNB)<br>
+                                🎁 Получишь 30 дней полного доступа!
+                            </p>
+                        </div>
+                        <a href="dashboard.html#wallet" class="btn-connect-wallet" style="text-decoration: none;">
+                            💳 Активировать уровень 4
+                        </a>
+                    `;
+                    hideStatus();
+                }, 1500);
+                return;
+            }
+            
+            // Всё ОК - разблокируем контент
+            isConnected = true;
+            showStatus('success', '✅ Добро пожаловать!');
+            
+            setTimeout(() => {
+                unlockContent();
+            }, 1000);
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // РАЗБЛОКИРОВКА КОНТЕНТА
+        // ═══════════════════════════════════════════════════════════
+        
+        function unlockContent() {
+            // Скрываем overlay
+            const overlay = document.getElementById('accessOverlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+            }
+            
+            // Инициализируем Академию
+            initAcademy();
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // СТАТУСЫ
+        // ═══════════════════════════════════════════════════════════
+        
+        function showStatus(type, message) {
+            const status = document.getElementById('connectionStatus');
+            if (status) {
+                status.style.display = 'block';
+                status.className = 'connection-status ' + type;
+                status.textContent = message;
+            }
+        }
+        
+        function hideStatus() {
+            const status = document.getElementById('connectionStatus');
+            if (status) {
+                status.style.display = 'none';
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // ЛОГИКА АКАДЕМИИ (после разблокировки)
+        // ═══════════════════════════════════════════════════════════
+        
+        const MODULES = {
+            quickstart: { id: 'quickstart', title: '🚀 Быстрый старт', url: 'academy-quickstart.html', tasks: 3, points: 50 },
+            generator: { id: 'generator', title: '🎨 Генератор открыток', url: 'cards-guide.html', tasks: 5, points: 100 },
+            crm: { id: 'crm', title: '📇 CRM: Контакты', url: 'academy-crm.html', tasks: 4, points: 80 },
+            surveys: { id: 'surveys', title: '📊 Опросы', url: 'academy-surveys.html', tasks: 3, points: 70 },
+            mailings: { id: 'mailings', title: '📨 Рассыльщик', url: 'academy-mailings.html', tasks: 4, points: 90 },
+            scale: { id: 'scale', title: '🏆 Масштабирование', url: 'academy-scale.html', tasks: 6, points: 150, locked: true }
+        };
+        
+        function initAcademy() {
+            updateProgressUI();
+            checkAndShowTrialStatus();
+            
+            // Анимация карточек
+            const cards = document.querySelectorAll('.module-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 * index);
+            });
+        }
+        
         function loadProgress() {
             const saved = localStorage.getItem('academy_progress');
             if (saved) {
                 return JSON.parse(saved);
             }
-            return {
-                completedModules: [],
-                completedTasks: [],
-                totalPoints: 0,
-                currentModule: 'quickstart'
-            };
+            return { completedModules: [], completedTasks: [], totalPoints: 0, currentModule: 'quickstart' };
         }
         
-        // Сохранение прогресса
         function saveProgress(progress) {
             localStorage.setItem('academy_progress', JSON.stringify(progress));
         }
         
-        // Открыть модуль
         function openModule(moduleId) {
+            if (!isConnected) {
+                alert('🔒 Сначала подключите кошелёк!');
+                return;
+            }
+            
             const module = MODULES[moduleId];
             if (!module) return;
             
@@ -777,21 +1303,21 @@
                 return;
             }
             
-            // Переход на страницу модуля
             window.location.href = module.url;
         }
         
-        // Обновление UI прогресса
         function updateProgressUI() {
             const progress = loadProgress();
             const totalModules = Object.keys(MODULES).length;
             const completedCount = progress.completedModules.length;
             const percent = Math.round((completedCount / totalModules) * 100);
             
-            document.getElementById('totalProgress').textContent = percent + '%';
-            document.getElementById('progressFill').style.width = percent + '%';
+            const totalProgress = document.getElementById('totalProgress');
+            const progressFill = document.getElementById('progressFill');
             
-            // Обновляем точки
+            if (totalProgress) totalProgress.textContent = percent + '%';
+            if (progressFill) progressFill.style.width = percent + '%';
+            
             const dots = document.querySelectorAll('.progress-dot');
             dots.forEach((dot, index) => {
                 const moduleKeys = Object.keys(MODULES);
@@ -807,211 +1333,75 @@
             });
         }
         
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', function() {
-            // Проверяем авторизацию и триал
-            checkAccessAndShowTrialStatus();
-            
-            updateProgressUI();
-            
-            // Анимация появления карточек
-            const cards = document.querySelectorAll('.module-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 100 * index);
-            });
-        });
-        
         // ═══════════════════════════════════════════════════════════
-        // ПРОВЕРКА ДОСТУПА И ТРИАЛ
+        // ТРИАЛ СИСТЕМА
         // ═══════════════════════════════════════════════════════════
         
-        function checkAccessAndShowTrialStatus() {
-            // Получаем данные пользователя из localStorage
-            const userLevel = parseInt(localStorage.getItem('cardgift_user_level') || '0');
-            const userId = localStorage.getItem('cardgift_user_id') || null;
-            const walletConnected = localStorage.getItem('walletConnected') === 'true';
-            const registrationDate = localStorage.getItem('cardgift_registration_date') || null;
+        function checkAndShowTrialStatus() {
+            const container = document.getElementById('accessStatusContainer');
+            if (!container) return;
             
-            // Показываем блок статуса доступа
-            const statusContainer = document.getElementById('accessStatusContainer');
-            if (!statusContainer) return;
-            
-            if (!walletConnected || !userId) {
-                // Не авторизован
-                statusContainer.innerHTML = `
-                    <div style="
-                        background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(185,28,28,0.1));
-                        border: 2px solid #EF4444;
-                        border-radius: 16px;
-                        padding: 25px;
-                        text-align: center;
-                        margin-bottom: 30px;
-                    ">
-                        <div style="font-size: 40px; margin-bottom: 15px;">🔒</div>
-                        <h3 style="color: #EF4444; margin-bottom: 10px;">Подключи кошелёк</h3>
-                        <p style="color: #9CA3AF; margin-bottom: 20px;">
-                            Для доступа к Академии нужно подключить кошелёк и активировать минимум 4-й уровень
-                        </p>
-                        <a href="dashboard.html" style="
-                            display: inline-block;
-                            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-                            border-radius: 12px;
-                            padding: 12px 30px;
-                            font-weight: 600;
-                            color: #fff;
-                            text-decoration: none;
-                        ">
-                            📊 Перейти в кабинет
-                        </a>
-                    </div>
-                `;
-                return;
-            }
-            
-            if (userLevel < 4) {
-                // Уровень меньше 4
-                statusContainer.innerHTML = `
-                    <div style="
-                        background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.1));
-                        border: 2px solid #F59E0B;
-                        border-radius: 16px;
-                        padding: 25px;
-                        text-align: center;
-                        margin-bottom: 30px;
-                    ">
-                        <div style="font-size: 40px; margin-bottom: 15px;">⚡</div>
-                        <h3 style="color: #F59E0B; margin-bottom: 10px;">Активируй уровень 4</h3>
-                        <p style="color: #9CA3AF; margin-bottom: 15px;">
-                            Твой уровень: <strong>${userLevel}</strong>. Для Академии нужен уровень 4+
-                        </p>
-                        <p style="color: #9CA3AF; margin-bottom: 20px; font-size: 13px;">
-                            Активируй и получи 30 дней полного доступа ко ВСЕМ инструментам!
-                        </p>
-                        <a href="dashboard.html#wallet" style="
-                            display: inline-block;
-                            background: linear-gradient(135deg, #FFD700, #F59E0B);
-                            border-radius: 12px;
-                            padding: 12px 30px;
-                            font-weight: 600;
-                            color: #000;
-                            text-decoration: none;
-                        ">
-                            💳 Активировать уровень 4 ($22)
-                        </a>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Уровень 4+ — проверяем/запускаем триал
             const trialData = loadTrialData();
             const academyLaunchDate = new Date('2026-01-30T00:00:00Z');
-            const regDate = registrationDate ? new Date(registrationDate) : null;
-            const isExistingUser = regDate && regDate < academyLaunchDate;
+            const regDate = localStorage.getItem('cardgift_registration_date');
+            const registrationDate = regDate ? new Date(regDate) : null;
+            const isExistingUser = registrationDate && registrationDate < academyLaunchDate;
             
             if (trialData.startDate) {
-                // Триал уже запущен - показываем статус
-                showTrialStatus(trialData);
+                showTrialStatus(trialData, container);
             } else if (isExistingUser) {
-                // Существующий пользователь - показываем кнопку "Начать обучение"
-                statusContainer.innerHTML = `
-                    <div style="
-                        background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1));
-                        border: 2px solid #10B981;
-                        border-radius: 16px;
-                        padding: 25px;
-                        text-align: center;
-                        margin-bottom: 30px;
-                    ">
-                        <div style="font-size: 50px; margin-bottom: 15px;">🎁</div>
-                        <h3 style="color: #10B981; margin-bottom: 10px; font-size: 22px;">
-                            Добро пожаловать в Академию!
-                        </h3>
-                        <p style="color: #9CA3AF; margin-bottom: 20px;">
-                            Нажми кнопку и получи <strong style="color: #FFD700;">30 дней полного доступа</strong> ко всем инструментам!<br>
-                            Заработай <strong style="color: #10B981;">$1000 за 21 день обучения</strong>
-                        </p>
-                        <button onclick="startTrialAndReload()" style="
-                            background: linear-gradient(135deg, #10B981, #059669);
-                            border: none;
-                            border-radius: 14px;
-                            padding: 16px 40px;
-                            font-size: 18px;
-                            font-weight: 700;
-                            color: #fff;
-                            cursor: pointer;
-                            box-shadow: 0 8px 30px rgba(16,185,129,0.4);
-                        ">
-                            🚀 НАЧАТЬ ОБУЧЕНИЕ
-                        </button>
-                    </div>
-                `;
+                showStartTrialButton(container);
             } else {
-                // Новый пользователь - триал должен запуститься автоматически при оплате 4 уровня
-                autoStartTrialForNewUser();
+                // Новый пользователь - автостарт триала
+                startTrialAuto();
+                showTrialStatus(loadTrialData(), container);
             }
         }
         
-        // Запуск триала
-        function startTrialAndReload() {
-            const userId = localStorage.getItem('cardgift_user_id');
-            if (!userId) return;
-            
-            const trialData = {
-                userId: userId,
-                startDate: new Date().toISOString(),
-                source: 'academy_button'
-            };
-            
-            localStorage.setItem('cardgift_trial', JSON.stringify(trialData));
-            
-            // Показываем анимацию успеха
-            alert('🎉 Поздравляем! 30 дней полного доступа активированы!');
-            location.reload();
-        }
-        
-        // Автозапуск для новых пользователей
-        function autoStartTrialForNewUser() {
-            const userId = localStorage.getItem('cardgift_user_id');
-            if (!userId) return;
-            
-            const trialData = loadTrialData();
-            if (!trialData.startDate) {
-                const newTrial = {
-                    userId: userId,
-                    startDate: new Date().toISOString(),
-                    source: 'level4_payment'
-                };
-                localStorage.setItem('cardgift_trial', JSON.stringify(newTrial));
-            }
-            
-            // Показываем статус
-            showTrialStatus(loadTrialData());
-        }
-        
-        // Загрузка данных триала
         function loadTrialData() {
             const saved = localStorage.getItem('cardgift_trial');
             if (saved) {
-                try {
-                    return JSON.parse(saved);
-                } catch (e) {
-                    return {};
-                }
+                try { return JSON.parse(saved); } catch (e) { return {}; }
             }
             return {};
         }
         
-        // Показ статуса триала
-        function showTrialStatus(trialData) {
-            const statusContainer = document.getElementById('accessStatusContainer');
-            if (!statusContainer || !trialData.startDate) return;
+        function startTrialAuto() {
+            const userId = localStorage.getItem('cardgift_user_id');
+            if (!userId) return;
+            
+            const trial = { userId, startDate: new Date().toISOString(), source: 'auto' };
+            localStorage.setItem('cardgift_trial', JSON.stringify(trial));
+        }
+        
+        function startTrialManual() {
+            const userId = localStorage.getItem('cardgift_user_id');
+            if (!userId) return;
+            
+            const trial = { userId, startDate: new Date().toISOString(), source: 'academy_button' };
+            localStorage.setItem('cardgift_trial', JSON.stringify(trial));
+            
+            alert('🎉 30 дней полного доступа активированы!');
+            location.reload();
+        }
+        
+        function showStartTrialButton(container) {
+            container.innerHTML = `
+                <div style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1)); border: 2px solid #10B981; border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 30px;">
+                    <div style="font-size: 50px; margin-bottom: 15px;">🎁</div>
+                    <h3 style="color: #10B981; margin-bottom: 10px;">Добро пожаловать в Академию!</h3>
+                    <p style="color: #9CA3AF; margin-bottom: 20px;">
+                        Нажми кнопку и получи <strong style="color: #FFD700;">30 дней полного доступа</strong>!
+                    </p>
+                    <button onclick="startTrialManual()" style="background: linear-gradient(135deg, #10B981, #059669); border: none; border-radius: 14px; padding: 16px 40px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer;">
+                        🚀 НАЧАТЬ ОБУЧЕНИЕ
+                    </button>
+                </div>
+            `;
+        }
+        
+        function showTrialStatus(trialData, container) {
+            if (!trialData.startDate) return;
             
             const startDate = new Date(trialData.startDate);
             const endDate = new Date(startDate);
@@ -1023,88 +1413,32 @@
             
             if (isActive) {
                 const barColor = daysRemaining > 14 ? '#10B981' : (daysRemaining > 7 ? '#F59E0B' : '#EF4444');
-                const barWidth = Math.round((daysRemaining / 30) * 100);
-                
-                statusContainer.innerHTML = `
-                    <div style="
-                        background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1));
-                        border: 2px solid #10B981;
-                        border-radius: 16px;
-                        padding: 25px;
-                        margin-bottom: 30px;
-                    ">
-                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <div style="font-size: 40px;">🎉</div>
+                container.innerHTML = `
+                    <div style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1)); border: 2px solid #10B981; border-radius: 16px; padding: 20px; margin-bottom: 30px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 32px;">🎉</span>
                                 <div>
-                                    <h3 style="color: #10B981; margin-bottom: 5px;">Полный доступ активен!</h3>
-                                    <p style="color: #9CA3AF; font-size: 13px; margin: 0;">
-                                        Все инструменты до AI Studio включены
-                                    </p>
+                                    <strong style="color: #10B981;">Полный доступ активен!</strong>
+                                    <div style="color: #9CA3AF; font-size: 12px;">Все инструменты включены</div>
                                 </div>
                             </div>
-                            <div style="text-align: center; min-width: 120px;">
-                                <div style="font-size: 32px; font-weight: bold; color: ${barColor};">${daysRemaining}</div>
-                                <div style="font-size: 12px; color: #9CA3AF;">дней осталось</div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 28px; font-weight: bold; color: ${barColor};">${daysRemaining}</div>
+                                <div style="font-size: 11px; color: #9CA3AF;">дней</div>
                             </div>
                         </div>
-                        <div style="margin-top: 20px;">
-                            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #9CA3AF; margin-bottom: 5px;">
-                                <span>Прогресс триала</span>
-                                <span>${30 - daysRemaining}/30 дней</span>
-                            </div>
-                            <div style="height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;">
-                                <div style="height: 100%; width: ${barWidth}%; background: ${barColor}; border-radius: 4px; transition: width 0.5s;"></div>
-                            </div>
-                        </div>
-                        ${daysRemaining <= 7 ? `
-                            <div style="margin-top: 15px; padding: 12px; background: rgba(239,68,68,0.1); border-radius: 10px; text-align: center;">
-                                <span style="color: #EF4444; font-size: 13px;">
-                                    ⏰ Успей апгрейднуть уровни чтобы сохранить доступ!
-                                </span>
-                            </div>
-                        ` : ''}
                     </div>
                 `;
             } else {
-                // Триал закончился
-                const userLevel = parseInt(localStorage.getItem('cardgift_user_level') || '4');
-                statusContainer.innerHTML = `
-                    <div style="
-                        background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(185,28,28,0.1));
-                        border: 2px solid #EF4444;
-                        border-radius: 16px;
-                        padding: 25px;
-                        text-align: center;
-                        margin-bottom: 30px;
-                    ">
-                        <div style="font-size: 40px; margin-bottom: 15px;">⏰</div>
-                        <h3 style="color: #EF4444; margin-bottom: 10px;">30 дней завершились</h3>
-                        <p style="color: #9CA3AF; margin-bottom: 15px;">
-                            Твой текущий уровень: <strong>${userLevel}</strong>. 
-                            Доступ ограничен инструментами этого уровня.
-                        </p>
-                        <a href="dashboard.html#wallet" style="
-                            display: inline-block;
-                            background: linear-gradient(135deg, #FFD700, #F59E0B);
-                            border-radius: 12px;
-                            padding: 12px 30px;
-                            font-weight: 600;
-                            color: #000;
-                            text-decoration: none;
-                        ">
-                            🔓 Открыть следующий уровень
-                        </a>
+                container.innerHTML = `
+                    <div style="background: rgba(239,68,68,0.1); border: 2px solid #EF4444; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 30px;">
+                        <span style="font-size: 32px;">⏰</span>
+                        <p style="color: #EF4444; margin: 10px 0;">30 дней завершились</p>
+                        <a href="dashboard.html#wallet" style="color: #FFD700;">🔓 Открыть уровни</a>
                     </div>
                 `;
             }
-        }
-        
-        // Проверка ref из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const refId = urlParams.get('ref');
-        if (refId) {
-            localStorage.setItem('cardgift_referrer', refId);
         }
     </script>
 </body>
