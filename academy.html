@@ -482,7 +482,13 @@
          SCRIPTS
          ═══════════════════════════════════════════════════════════ -->
     
-    <!-- Supabase для проверки данных -->
+    <!-- Config (содержит правильные ключи) -->
+    <script src="js/config.js"></script>
+    
+    <!-- Ethers.js для RPC вызовов (GlobalWayBridge) -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+    
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- GlobalWay Bridge -->
@@ -490,16 +496,20 @@
     
     <script>
         // ═══════════════════════════════════════════════════════════
-        // ACADEMY v2.1 - С поддержкой localStorage + Supabase
+        // ACADEMY v2.2 - Исправлен API key
         // ═══════════════════════════════════════════════════════════
         
-        // Supabase config
-        const SUPABASE_URL = 'https://imgpysvdosdsqucoghqa.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ3B5c3Zkb3Nkc3F1Y29naHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY4NjM3NTAsImV4cCI6MjA0MjQzOTc1MH0.FBHM4KBEH_W2u5WnnY5sJnBb5RKqEETjMfxAiLpH5VI';
-        
+        // Supabase - используем ключи из config.js
         let supabaseClient = null;
         try {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            const url = window.SUPABASE_URL || 'https://imgpysvdosdsqucoghqa.supabase.co';
+            const key = window.SUPABASE_ANON_KEY;
+            if (key) {
+                supabaseClient = supabase.createClient(url, key);
+                console.log('✅ Supabase initialized with config.js key');
+            } else {
+                console.warn('⚠️ No SUPABASE_ANON_KEY in config.js');
+            }
         } catch(e) {
             console.warn('Supabase init error:', e);
         }
@@ -665,19 +675,23 @@
                     }
                 }
                 
-                // 2. Fallback - GlobalWayBridge (только если есть Web3!)
-                if (typeof GlobalWayBridge !== 'undefined' && typeof window.ethereum !== 'undefined') {
+                // 2. Fallback - GlobalWayBridge через RPC (работает без Web3!)
+                if (typeof GlobalWayBridge !== 'undefined' && !this.state.gwId) {
                     try {
-                        console.log('📡 Trying GlobalWayBridge...');
+                        console.log('📡 Trying GlobalWayBridge RPC...');
                         
-                        // Используем правильный метод getUserLevel
+                        // getUserLevel работает через RPC с ethers.js
                         const level = await GlobalWayBridge.getUserLevel(this.state.walletAddress);
-                        this.state.level = level || 0;
+                        if (level) {
+                            this.state.level = level;
+                            console.log('✅ Level from GlobalWayBridge:', level);
+                        }
                         
                         const gwId = await GlobalWayBridge.getGlobalWayId(this.state.walletAddress);
-                        this.state.gwId = gwId || null;
-                        
-                        console.log('📊 Data from GlobalWayBridge:', { level: this.state.level, gwId: this.state.gwId });
+                        if (gwId) {
+                            this.state.gwId = gwId;
+                            console.log('✅ GW ID from GlobalWayBridge:', gwId);
+                        }
                     } catch (e) {
                         console.warn('GlobalWayBridge error:', e.message);
                     }
