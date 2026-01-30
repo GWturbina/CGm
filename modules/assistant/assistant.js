@@ -577,11 +577,15 @@ class VirtualAssistant {
         const hour = new Date().getHours();
         
         if (hour < 12) {
-            return this.currentDayData?.greeting || this.getRandomMorningGreeting();
+            // Поддержка обеих структур: morning.greeting или greeting
+            const greeting = this.currentDayData?.morning?.greeting || this.currentDayData?.greeting;
+            return greeting || this.getRandomMorningGreeting();
         } else if (hour < 18) {
             return `Добрый день! Продолжаем День ${this.state.currentDay}?`;
         } else {
-            return this.currentDayData?.eveningReflection || this.getRandomEveningGreeting();
+            // Поддержка обеих структур: evening.reflection или eveningReflection
+            const evening = this.currentDayData?.evening?.reflection || this.currentDayData?.eveningReflection;
+            return evening || this.getRandomEveningGreeting();
         }
     }
     
