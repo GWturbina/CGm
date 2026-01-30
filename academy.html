@@ -505,6 +505,9 @@
     
     <!-- Progress -->
     <div class="container">
+        <!-- Статус доступа / Триал -->
+        <div id="accessStatusContainer"></div>
+        
         <div class="progress-section fade-in">
             <div class="progress-header">
                 <span class="progress-title">📊 Твой прогресс</span>
@@ -806,6 +809,9 @@
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем авторизацию и триал
+            checkAccessAndShowTrialStatus();
+            
             updateProgressUI();
             
             // Анимация появления карточек
@@ -820,6 +826,279 @@
                 }, 100 * index);
             });
         });
+        
+        // ═══════════════════════════════════════════════════════════
+        // ПРОВЕРКА ДОСТУПА И ТРИАЛ
+        // ═══════════════════════════════════════════════════════════
+        
+        function checkAccessAndShowTrialStatus() {
+            // Получаем данные пользователя из localStorage
+            const userLevel = parseInt(localStorage.getItem('cardgift_user_level') || '0');
+            const userId = localStorage.getItem('cardgift_user_id') || null;
+            const walletConnected = localStorage.getItem('walletConnected') === 'true';
+            const registrationDate = localStorage.getItem('cardgift_registration_date') || null;
+            
+            // Показываем блок статуса доступа
+            const statusContainer = document.getElementById('accessStatusContainer');
+            if (!statusContainer) return;
+            
+            if (!walletConnected || !userId) {
+                // Не авторизован
+                statusContainer.innerHTML = `
+                    <div style="
+                        background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(185,28,28,0.1));
+                        border: 2px solid #EF4444;
+                        border-radius: 16px;
+                        padding: 25px;
+                        text-align: center;
+                        margin-bottom: 30px;
+                    ">
+                        <div style="font-size: 40px; margin-bottom: 15px;">🔒</div>
+                        <h3 style="color: #EF4444; margin-bottom: 10px;">Подключи кошелёк</h3>
+                        <p style="color: #9CA3AF; margin-bottom: 20px;">
+                            Для доступа к Академии нужно подключить кошелёк и активировать минимум 4-й уровень
+                        </p>
+                        <a href="dashboard.html" style="
+                            display: inline-block;
+                            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+                            border-radius: 12px;
+                            padding: 12px 30px;
+                            font-weight: 600;
+                            color: #fff;
+                            text-decoration: none;
+                        ">
+                            📊 Перейти в кабинет
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (userLevel < 4) {
+                // Уровень меньше 4
+                statusContainer.innerHTML = `
+                    <div style="
+                        background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.1));
+                        border: 2px solid #F59E0B;
+                        border-radius: 16px;
+                        padding: 25px;
+                        text-align: center;
+                        margin-bottom: 30px;
+                    ">
+                        <div style="font-size: 40px; margin-bottom: 15px;">⚡</div>
+                        <h3 style="color: #F59E0B; margin-bottom: 10px;">Активируй уровень 4</h3>
+                        <p style="color: #9CA3AF; margin-bottom: 15px;">
+                            Твой уровень: <strong>${userLevel}</strong>. Для Академии нужен уровень 4+
+                        </p>
+                        <p style="color: #9CA3AF; margin-bottom: 20px; font-size: 13px;">
+                            Активируй и получи 30 дней полного доступа ко ВСЕМ инструментам!
+                        </p>
+                        <a href="dashboard.html#wallet" style="
+                            display: inline-block;
+                            background: linear-gradient(135deg, #FFD700, #F59E0B);
+                            border-radius: 12px;
+                            padding: 12px 30px;
+                            font-weight: 600;
+                            color: #000;
+                            text-decoration: none;
+                        ">
+                            💳 Активировать уровень 4 ($22)
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Уровень 4+ — проверяем/запускаем триал
+            const trialData = loadTrialData();
+            const academyLaunchDate = new Date('2026-01-30T00:00:00Z');
+            const regDate = registrationDate ? new Date(registrationDate) : null;
+            const isExistingUser = regDate && regDate < academyLaunchDate;
+            
+            if (trialData.startDate) {
+                // Триал уже запущен - показываем статус
+                showTrialStatus(trialData);
+            } else if (isExistingUser) {
+                // Существующий пользователь - показываем кнопку "Начать обучение"
+                statusContainer.innerHTML = `
+                    <div style="
+                        background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1));
+                        border: 2px solid #10B981;
+                        border-radius: 16px;
+                        padding: 25px;
+                        text-align: center;
+                        margin-bottom: 30px;
+                    ">
+                        <div style="font-size: 50px; margin-bottom: 15px;">🎁</div>
+                        <h3 style="color: #10B981; margin-bottom: 10px; font-size: 22px;">
+                            Добро пожаловать в Академию!
+                        </h3>
+                        <p style="color: #9CA3AF; margin-bottom: 20px;">
+                            Нажми кнопку и получи <strong style="color: #FFD700;">30 дней полного доступа</strong> ко всем инструментам!<br>
+                            Заработай <strong style="color: #10B981;">$1000 за 21 день обучения</strong>
+                        </p>
+                        <button onclick="startTrialAndReload()" style="
+                            background: linear-gradient(135deg, #10B981, #059669);
+                            border: none;
+                            border-radius: 14px;
+                            padding: 16px 40px;
+                            font-size: 18px;
+                            font-weight: 700;
+                            color: #fff;
+                            cursor: pointer;
+                            box-shadow: 0 8px 30px rgba(16,185,129,0.4);
+                        ">
+                            🚀 НАЧАТЬ ОБУЧЕНИЕ
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Новый пользователь - триал должен запуститься автоматически при оплате 4 уровня
+                autoStartTrialForNewUser();
+            }
+        }
+        
+        // Запуск триала
+        function startTrialAndReload() {
+            const userId = localStorage.getItem('cardgift_user_id');
+            if (!userId) return;
+            
+            const trialData = {
+                userId: userId,
+                startDate: new Date().toISOString(),
+                source: 'academy_button'
+            };
+            
+            localStorage.setItem('cardgift_trial', JSON.stringify(trialData));
+            
+            // Показываем анимацию успеха
+            alert('🎉 Поздравляем! 30 дней полного доступа активированы!');
+            location.reload();
+        }
+        
+        // Автозапуск для новых пользователей
+        function autoStartTrialForNewUser() {
+            const userId = localStorage.getItem('cardgift_user_id');
+            if (!userId) return;
+            
+            const trialData = loadTrialData();
+            if (!trialData.startDate) {
+                const newTrial = {
+                    userId: userId,
+                    startDate: new Date().toISOString(),
+                    source: 'level4_payment'
+                };
+                localStorage.setItem('cardgift_trial', JSON.stringify(newTrial));
+            }
+            
+            // Показываем статус
+            showTrialStatus(loadTrialData());
+        }
+        
+        // Загрузка данных триала
+        function loadTrialData() {
+            const saved = localStorage.getItem('cardgift_trial');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    return {};
+                }
+            }
+            return {};
+        }
+        
+        // Показ статуса триала
+        function showTrialStatus(trialData) {
+            const statusContainer = document.getElementById('accessStatusContainer');
+            if (!statusContainer || !trialData.startDate) return;
+            
+            const startDate = new Date(trialData.startDate);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 30);
+            
+            const now = new Date();
+            const isActive = now < endDate;
+            const daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+            
+            if (isActive) {
+                const barColor = daysRemaining > 14 ? '#10B981' : (daysRemaining > 7 ? '#F59E0B' : '#EF4444');
+                const barWidth = Math.round((daysRemaining / 30) * 100);
+                
+                statusContainer.innerHTML = `
+                    <div style="
+                        background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1));
+                        border: 2px solid #10B981;
+                        border-radius: 16px;
+                        padding: 25px;
+                        margin-bottom: 30px;
+                    ">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="font-size: 40px;">🎉</div>
+                                <div>
+                                    <h3 style="color: #10B981; margin-bottom: 5px;">Полный доступ активен!</h3>
+                                    <p style="color: #9CA3AF; font-size: 13px; margin: 0;">
+                                        Все инструменты до AI Studio включены
+                                    </p>
+                                </div>
+                            </div>
+                            <div style="text-align: center; min-width: 120px;">
+                                <div style="font-size: 32px; font-weight: bold; color: ${barColor};">${daysRemaining}</div>
+                                <div style="font-size: 12px; color: #9CA3AF;">дней осталось</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #9CA3AF; margin-bottom: 5px;">
+                                <span>Прогресс триала</span>
+                                <span>${30 - daysRemaining}/30 дней</span>
+                            </div>
+                            <div style="height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;">
+                                <div style="height: 100%; width: ${barWidth}%; background: ${barColor}; border-radius: 4px; transition: width 0.5s;"></div>
+                            </div>
+                        </div>
+                        ${daysRemaining <= 7 ? `
+                            <div style="margin-top: 15px; padding: 12px; background: rgba(239,68,68,0.1); border-radius: 10px; text-align: center;">
+                                <span style="color: #EF4444; font-size: 13px;">
+                                    ⏰ Успей апгрейднуть уровни чтобы сохранить доступ!
+                                </span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                // Триал закончился
+                const userLevel = parseInt(localStorage.getItem('cardgift_user_level') || '4');
+                statusContainer.innerHTML = `
+                    <div style="
+                        background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(185,28,28,0.1));
+                        border: 2px solid #EF4444;
+                        border-radius: 16px;
+                        padding: 25px;
+                        text-align: center;
+                        margin-bottom: 30px;
+                    ">
+                        <div style="font-size: 40px; margin-bottom: 15px;">⏰</div>
+                        <h3 style="color: #EF4444; margin-bottom: 10px;">30 дней завершились</h3>
+                        <p style="color: #9CA3AF; margin-bottom: 15px;">
+                            Твой текущий уровень: <strong>${userLevel}</strong>. 
+                            Доступ ограничен инструментами этого уровня.
+                        </p>
+                        <a href="dashboard.html#wallet" style="
+                            display: inline-block;
+                            background: linear-gradient(135deg, #FFD700, #F59E0B);
+                            border-radius: 12px;
+                            padding: 12px 30px;
+                            font-weight: 600;
+                            color: #000;
+                            text-decoration: none;
+                        ">
+                            🔓 Открыть следующий уровень
+                        </a>
+                    </div>
+                `;
+            }
+        }
         
         // Проверка ref из URL
         const urlParams = new URLSearchParams(window.location.search);
