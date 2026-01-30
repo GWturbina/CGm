@@ -33,10 +33,13 @@
         console.log('🔌 Initializing Assistant Dashboard Integration...');
         
         // Ждём загрузки всех зависимостей
-        if (typeof AssistantInit === 'undefined' || 
-            typeof VirtualAssistant === 'undefined' ||
-            typeof LessonsData === 'undefined') {
-            console.warn('⏳ Waiting for dependencies...');
+        const missing = [];
+        if (typeof AssistantInit === 'undefined') missing.push('AssistantInit');
+        if (typeof VirtualAssistant === 'undefined') missing.push('VirtualAssistant');
+        if (typeof LessonsData === 'undefined') missing.push('LessonsData');
+        
+        if (missing.length > 0) {
+            console.warn('⏳ Waiting for dependencies. Missing:', missing.join(', '));
             setTimeout(initAssistantIntegration, 500);
             return;
         }
