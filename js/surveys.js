@@ -1169,8 +1169,14 @@ function shareSurveyTo(platform) {
 
 // Загрузка файла картинки
 async function uploadSurveyOgImage(input) {
+    console.log('🖼️ uploadSurveyOgImage called');
     const file = input.files?.[0];
-    if (!file) return;
+    if (!file) {
+        console.log('❌ No file selected');
+        return;
+    }
+    
+    console.log('📁 File:', file.name, file.type, file.size);
     
     // Проверка типа
     if (!file.type.startsWith('image/')) {
@@ -1188,9 +1194,12 @@ async function uploadSurveyOgImage(input) {
     
     try {
         // Конвертируем в base64
+        console.log('🔄 Converting to base64...');
         const base64 = await fileToBase64(file);
+        console.log('✅ Base64 ready, length:', base64.length);
         
         // Загружаем на Cloudinary
+        console.log('📤 Uploading to API...');
         const response = await fetch('/api/upload-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1201,7 +1210,9 @@ async function uploadSurveyOgImage(input) {
             })
         });
         
+        console.log('📥 API response status:', response.status);
         const data = await response.json();
+        console.log('📥 API response data:', data);
         
         if (data.success && data.url) {
             setSurveyOgImage(data.url);
@@ -1210,7 +1221,7 @@ async function uploadSurveyOgImage(input) {
             throw new Error(data.error || 'Ошибка загрузки');
         }
     } catch (e) {
-        console.error('Upload error:', e);
+        console.error('❌ Upload error:', e);
         showToast && showToast('❌ Ошибка загрузки: ' + e.message, 'error');
     }
     
@@ -1230,9 +1241,18 @@ function fileToBase64(file) {
 
 // Установить картинку превью
 function setSurveyOgImage(url) {
-    document.getElementById('survey-og-url').value = url;
-    document.getElementById('survey-og-image').src = url;
-    document.getElementById('survey-og-preview').style.display = 'block';
+    console.log('🖼️ setSurveyOgImage called with URL:', url);
+    const urlInput = document.getElementById('survey-og-url');
+    const imgElement = document.getElementById('survey-og-image');
+    const previewDiv = document.getElementById('survey-og-preview');
+    
+    console.log('📦 Elements found:', { urlInput: !!urlInput, imgElement: !!imgElement, previewDiv: !!previewDiv });
+    
+    if (urlInput) urlInput.value = url;
+    if (imgElement) imgElement.src = url;
+    if (previewDiv) previewDiv.style.display = 'block';
+    
+    console.log('✅ Image preview set');
 }
 
 // Очистить картинку превью
