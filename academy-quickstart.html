@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Быстрый старт | Академия CardGift</title>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-dark: #0a0a1a;
+            --bg-card: #12122a;
+            --gold: #FFD700;
+            --green: #10B981;
+            --blue: #3B82F6;
+            --orange: #F59E0B;
+            --text: #ffffff;
+            --text-muted: #9CA3AF;
+            --border: #2a2a4a;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--bg-card);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .back-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .module-badge {
+            padding: 5px 12px;
+            background: rgba(255,215,0,0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--gold);
+        }
+        
+        .progress-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .progress-mini-bar {
+            width: 100px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-mini-fill {
+            height: 100%;
+            background: var(--gold);
+            transition: width 0.3s;
+        }
+        
+        /* Main Content */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.1), transparent);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255,215,0,0.2);
+        }
+        
+        .hero-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .hero h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+        
+        /* Tasks */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .task-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+        
+        .task-card.active {
+            border-color: var(--gold);
+            box-shadow: 0 0 30px rgba(255,215,0,0.1);
+        }
+        
+        .task-card.completed {
+            border-color: var(--green);
+            opacity: 0.8;
+        }
+        
+        .task-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .task-number {
+            width: 40px;
+            height: 40px;
+            background: var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .task-card.active .task-number {
+            background: var(--gold);
+            color: #000;
+        }
+        
+        .task-card.completed .task-number {
+            background: var(--green);
+            color: #fff;
+        }
+        
+        .task-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .task-info p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        
+        .task-content {
+            margin-left: 55px;
+        }
+        
+        .task-steps {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        
+        .step-icon {
+            width: 28px;
+            height: 28px;
+            background: rgba(255,215,0,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .step-text {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .step-text strong {
+            color: var(--gold);
+        }
+        
+        .task-tip {
+            background: rgba(16,185,129,0.1);
+            border-left: 3px solid var(--green);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        
+        .task-tip::before {
+            content: '💡 ';
+        }
+        
+        .task-action {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            color: #000;
+        }
+        
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255,215,0,0.3);
+        }
+        
+        .btn-green {
+            background: var(--green);
+            color: #fff;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text);
+        }
+        
+        .btn-outline:hover {
+            border-color: var(--gold);
+        }
+        
+        /* Reward Banner */
+        .reward-banner {
+            background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.1));
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 40px;
+        }
+        
+        .reward-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .reward-banner h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--green);
+        }
+        
+        .reward-banner p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        
+        .reward-points {
+            display: inline-block;
+            padding: 10px 30px;
+            background: var(--green);
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        /* Footer Nav */
+        .footer-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255,215,0,0.1);
+        }
+        
+        .nav-btn-next {
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            color: #000;
+        }
+        
+        /* Confetti Animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        /* Mobile */
+        @media (max-width: 600px) {
+            .header-content { flex-direction: column; gap: 10px; }
+            .task-content { margin-left: 0; margin-top: 15px; }
+            .task-header { flex-direction: column; }
+            .task-number { width: 36px; height: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="academy.html" class="back-btn">← Академия</a>
+                <span class="module-badge">МОДУЛЬ 1</span>
+            </div>
+            <div class="progress-mini">
+                <span id="taskProgress">0/3</span>
+                <div class="progress-mini-bar">
+                    <div class="progress-mini-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main -->
+    <main class="main">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-icon">🚀</div>
+            <h1>Быстрый старт</h1>
+            <p>Создай первую открытку и отправь другу за 10 минут!<br>Получи первый результат прямо сейчас.</p>
+        </div>
+        
+        <!-- Tasks -->
+        <div class="task-list">
+            
+            <!-- Task 1 -->
+            <div class="task-card active" id="task-1">
+                <div class="task-header">
+                    <div class="task-number">1</div>
+                    <div class="task-info">
+                        <h3>🎨 Создай свою первую открытку</h3>
+                        <p>Займёт 3-5 минут</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">Открой <strong>Генератор</strong> — это главный инструмент платформы</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Выбери <strong>готовый шаблон</strong> — нажми "Корпоративные" или "От лидера"</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Добавь своё <strong>поздравление</strong> — или используй готовый текст</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">4️⃣</div>
+                            <div class="step-text">Нажми <strong>"Создать открытку"</strong> — готово!</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        Первая открытка — самая важная! Она покажет тебе как работает вся система.
+                    </div>
+                    
+                    <div class="task-action">
+                        <a href="generator.html" target="_blank" class="btn btn-gold">
+                            🎨 Открыть Генератор
+                        </a>
+                        <button onclick="completeTask(1)" class="btn btn-green">
+                            ✅ Сделано!
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Task 2 -->
+            <div class="task-card" id="task-2">
+                <div class="task-header">
+                    <div class="task-number">2</div>
+                    <div class="task-info">
+                        <h3>📤 Отправь открытку другу</h3>
+                        <p>Займёт 2 минуты</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">После создания нажми <strong>"Поделиться"</strong></div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Выбери мессенджер: <strong>Telegram, WhatsApp, Viber</strong></div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Отправь другу или родственнику — удиви его!</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        Когда друг откроет открытку — он увидит ТВОЮ реферальную ссылку. Так работает вирусный маркетинг!
+                    </div>
+                    
+                    <div class="task-action">
+                        <button onclick="completeTask(2)" class="btn btn-green">
+                            ✅ Отправил!
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Task 3 -->
+            <div class="task-card" id="task-3">
+                <div class="task-header">
+                    <div class="task-number">3</div>
+                    <div class="task-info">
+                        <h3>👤 Добавь контакт в CRM</h3>
+                        <p>Займёт 2 минуты</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">Открой раздел <strong>"Контакты"</strong> в кабинете</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Нажми <strong>"+ Добавить"</strong></div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Введи имя друга которому отправил открытку</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">4️⃣</div>
+                            <div class="step-text">Выбери шаблон сообщения и платформу</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        CRM — это твой дневник контактов. Записывай всех кому пишешь, чтобы не забыть follow-up!
+                    </div>
+                    
+                    <div class="task-action">
+                        <a href="dashboard.html#contacts" target="_blank" class="btn btn-gold">
+                            📇 Открыть Контакты
+                        </a>
+                        <button onclick="completeTask(3)" class="btn btn-green">
+                            ✅ Добавил!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reward Banner -->
+        <div class="reward-banner" id="rewardBanner" style="display: none;">
+            <div class="reward-icon">🎉</div>
+            <h2>Поздравляем! Модуль пройден!</h2>
+            <p>Ты сделал первый шаг к своему успеху. Теперь ты знаешь основы!</p>
+            <div class="reward-points">+50 баллов</div>
+        </div>
+        
+        <!-- Footer Nav -->
+        <div class="footer-nav">
+            <a href="academy.html" class="nav-btn">
+                ← Все модули
+            </a>
+            <a href="cards-guide.html" class="nav-btn nav-btn-next" id="nextBtn" style="display: none;">
+                Следующий модуль →
+            </a>
+        </div>
+    </main>
+    
+    <script>
+        // =============================================
+        // ЛОГИКА МОДУЛЯ
+        // =============================================
+        
+        const MODULE_ID = 'quickstart';
+        const TOTAL_TASKS = 3;
+        const POINTS_REWARD = 50;
+        
+        // Загрузка прогресса
+        function loadModuleProgress() {
+            const saved = localStorage.getItem('academy_module_' + MODULE_ID);
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            return {
+                completedTasks: [],
+                completed: false
+            };
+        }
+        
+        // Сохранение прогресса
+        function saveModuleProgress(progress) {
+            localStorage.setItem('academy_module_' + MODULE_ID, JSON.stringify(progress));
+        }
+        
+        // Завершить задание
+        function completeTask(taskNum) {
+            const progress = loadModuleProgress();
+            
+            if (!progress.completedTasks.includes(taskNum)) {
+                progress.completedTasks.push(taskNum);
+                saveModuleProgress(progress);
+                
+                // Анимация задания
+                const taskCard = document.getElementById('task-' + taskNum);
+                taskCard.classList.remove('active');
+                taskCard.classList.add('completed');
+                taskCard.querySelector('.task-number').innerHTML = '✓';
+                
+                // Активируем следующее
+                const nextTask = document.getElementById('task-' + (taskNum + 1));
+                if (nextTask) {
+                    nextTask.classList.add('active');
+                }
+                
+                // Показываем конфетти
+                createConfetti();
+                
+                // Проверяем завершение модуля
+                if (progress.completedTasks.length >= TOTAL_TASKS) {
+                    completeModule();
+                }
+                
+                updateUI();
+            }
+        }
+        
+        // Завершить модуль
+        function completeModule() {
+            const progress = loadModuleProgress();
+            progress.completed = true;
+            saveModuleProgress(progress);
+            
+            // Обновляем общий прогресс академии
+            const academyProgress = JSON.parse(localStorage.getItem('academy_progress') || '{"completedModules":[],"totalPoints":0}');
+            if (!academyProgress.completedModules.includes(MODULE_ID)) {
+                academyProgress.completedModules.push(MODULE_ID);
+                academyProgress.totalPoints += POINTS_REWARD;
+                academyProgress.currentModule = 'generator'; // Следующий модуль
+                localStorage.setItem('academy_progress', JSON.stringify(academyProgress));
+            }
+            
+            // Показываем награду
+            document.getElementById('rewardBanner').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'flex';
+            
+            // Большой конфетти
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => createConfetti(), i * 50);
+            }
+        }
+        
+        // Обновление UI
+        function updateUI() {
+            const progress = loadModuleProgress();
+            const completed = progress.completedTasks.length;
+            const percent = Math.round((completed / TOTAL_TASKS) * 100);
+            
+            document.getElementById('taskProgress').textContent = `${completed}/${TOTAL_TASKS}`;
+            document.getElementById('progressFill').style.width = percent + '%';
+            
+            // Обновляем карточки заданий
+            progress.completedTasks.forEach(taskNum => {
+                const taskCard = document.getElementById('task-' + taskNum);
+                if (taskCard) {
+                    taskCard.classList.remove('active');
+                    taskCard.classList.add('completed');
+                    taskCard.querySelector('.task-number').innerHTML = '✓';
+                }
+            });
+            
+            // Активируем текущее задание
+            for (let i = 1; i <= TOTAL_TASKS; i++) {
+                if (!progress.completedTasks.includes(i)) {
+                    const taskCard = document.getElementById('task-' + i);
+                    if (taskCard) {
+                        taskCard.classList.add('active');
+                    }
+                    break;
+                }
+            }
+            
+            // Показываем награду если завершен
+            if (progress.completed) {
+                document.getElementById('rewardBanner').style.display = 'block';
+                document.getElementById('nextBtn').style.display = 'flex';
+            }
+        }
+        
+        // Конфетти
+        function createConfetti() {
+            const colors = ['#FFD700', '#10B981', '#3B82F6', '#EC4899', '#F59E0B'];
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.cssText = `
+                left: ${Math.random() * 100}vw;
+                top: -10px;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+                transform: rotate(${Math.random() * 360}deg);
+            `;
+            document.body.appendChild(confetti);
+            
+            // Анимация падения
+            const duration = 2000 + Math.random() * 2000;
+            const endX = (Math.random() - 0.5) * 200;
+            
+            confetti.animate([
+                { transform: `translateY(0) translateX(0) rotate(0deg)`, opacity: 1 },
+                { transform: `translateY(100vh) translateX(${endX}px) rotate(720deg)`, opacity: 0 }
+            ], {
+                duration: duration,
+                easing: 'ease-out'
+            });
+            
+            setTimeout(() => confetti.remove(), duration);
+        }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', updateUI);
+    </script>
+</body>
+</html>
