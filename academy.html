@@ -482,19 +482,33 @@
          SCRIPTS
          ═══════════════════════════════════════════════════════════ -->
     
-    <!-- GlobalWay Bridge для проверки уровня -->
+    <!-- Supabase для проверки данных -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- GlobalWay Bridge -->
     <script src="js/globalway-bridge.js"></script>
     
     <script>
         // ═══════════════════════════════════════════════════════════
-        // ACADEMY v2.0 - По образцу AI Studio
+        // ACADEMY v2.1 - С поддержкой localStorage + Supabase
         // ═══════════════════════════════════════════════════════════
+        
+        // Supabase config
+        const SUPABASE_URL = 'https://imgpysvdosdsqucoghqa.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ3B5c3Zkb3Nkc3F1Y29naHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY4NjM3NTAsImV4cCI6MjA0MjQzOTc1MH0.FBHM4KBEH_W2u5WnnY5sJnBb5RKqEETjMfxAiLpH5VI';
+        
+        let supabaseClient = null;
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch(e) {
+            console.warn('Supabase init error:', e);
+        }
         
         const Academy = {
             // Конфигурация
             config: {
-                MIN_LEVEL: 4,           // Минимальный уровень для доступа
-                TRIAL_DAYS: 30,         // Дней триала
+                MIN_LEVEL: 4,
+                TRIAL_DAYS: 30,
                 DEV_WALLETS: [
                     '0x7bcd1753868895971e12448412cb3216d47884c8',
                     '0x9b49bd9c9458615e11c051afd1ebe983563b67ee'
@@ -505,7 +519,7 @@
             state: {
                 walletAddress: null,
                 level: 0,
-                cgId: null,
+                gwId: null,
                 hasAccess: false,
                 trialStarted: false,
                 trialDaysLeft: 0
@@ -526,62 +540,88 @@
             // ═══════════════════════════════════════════════════════════
             
             async init() {
-                console.log('🎓 Academy v2.0 initializing...');
+                console.log('🎓 Academy v2.1 initializing...');
                 
-                // Сохраняем ref
                 this.saveReferrer();
+                this.showStatus('loading', '🔄 Проверка доступа...');
                 
-                // Показываем статус загрузки
-                this.showStatus('loading', '🔄 Подключение кошелька...');
+                // 1. Пробуем получить wallet из localStorage (сохранён в dashboard)
+                this.state.walletAddress = this.getWalletFromStorage();
                 
-                // Автоподключение кошелька
-                await this.autoConnectWallet();
+                // 2. Если нет в localStorage - пробуем Web3
+                if (!this.state.walletAddress) {
+                    await this.tryWeb3Connect();
+                }
                 
-                // Если нет кошелька - показываем экран
+                console.log('💳 Wallet:', this.state.walletAddress || 'not found');
+                
+                // 3. Если нет wallet - показываем экран
                 if (!this.state.walletAddress) {
                     this.showNoWalletScreen();
                     return;
                 }
                 
-                // Загружаем данные пользователя
-                this.showStatus('loading', '🔄 Проверка уровня...');
+                // 4. Загружаем данные пользователя
+                this.showStatus('loading', '🔄 Загрузка данных...');
                 await this.loadUserData();
                 
-                // Проверяем доступ
+                console.log('📊 User data:', { level: this.state.level, gwId: this.state.gwId });
+                
+                // 5. Проверяем доступ
                 await this.checkAccess();
                 
-                // Обновляем UI
+                // 6. Обновляем UI
                 this.updateUI();
                 
                 console.log('✅ Academy initialized:', this.state);
             },
             
             // ═══════════════════════════════════════════════════════════
-            // РАБОТА С КОШЕЛЬКОМ
+            // ПОЛУЧЕНИЕ WALLET
             // ═══════════════════════════════════════════════════════════
             
-            async autoConnectWallet() {
+            getWalletFromStorage() {
+                // 1. Проверяем walletState (как в wallet-state.js)
+                try {
+                    const walletState = localStorage.getItem('walletState');
+                    if (walletState) {
+                        const data = JSON.parse(walletState);
+                        if (data.connected && data.address) {
+                            console.log('📦 Wallet from walletState:', data.address);
+                            return data.address.toLowerCase();
+                        }
+                    }
+                } catch(e) {}
+                
+                // 2. Проверяем другие ключи (как в admin-panel.js)
+                const wallet = localStorage.getItem('walletAddress') ||
+                               localStorage.getItem('cardgift_wallet') ||
+                               window.userWalletAddress ||
+                               null;
+                
+                if (wallet) {
+                    console.log('📦 Wallet from localStorage:', wallet);
+                    return wallet.toLowerCase();
+                }
+                return null;
+            },
+            
+            async tryWeb3Connect() {
                 if (typeof window.ethereum === 'undefined') {
                     console.log('❌ No Web3 provider');
                     return;
                 }
                 
                 try {
-                    // Сначала проверяем уже подключенные
-                    let accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    
-                    // Если нет - запрашиваем подключение
-                    if (!accounts || accounts.length === 0) {
-                        console.log('🔄 Requesting wallet connection...');
-                        accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    }
+                    // Проверяем уже подключенные аккаунты (не запрашиваем новые!)
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                     
                     if (accounts && accounts.length > 0) {
                         this.state.walletAddress = accounts[0].toLowerCase();
-                        console.log('💳 Wallet connected:', this.state.walletAddress);
+                        console.log('💳 Wallet from Web3:', this.state.walletAddress);
                     }
                 } catch (error) {
-                    console.log('⚠️ Wallet connection error:', error.message);
+                    console.log('⚠️ Web3 error:', error.message);
                 }
             },
             
@@ -592,57 +632,74 @@
             async loadUserData() {
                 if (!this.state.walletAddress) return;
                 
-                console.log('📋 Loading user data...');
+                console.log('📋 Loading user data for:', this.state.walletAddress);
                 
                 // Проверяем DEV WALLET
                 if (this.config.DEV_WALLETS.includes(this.state.walletAddress)) {
                     console.log('🔧 Dev wallet - full access');
                     this.state.level = 12;
-                    this.state.cgId = 'DEV';
+                    this.state.gwId = 'DEV';
                     return;
                 }
                 
-                // Пробуем GlobalWayBridge
-                if (typeof GlobalWayBridge !== 'undefined') {
+                // 1. ГЛАВНЫЙ ИСТОЧНИК: Supabase таблица users
+                if (supabaseClient) {
                     try {
-                        // Проверяем владельца контракта
-                        const isOwner = await GlobalWayBridge.isOwner(this.state.walletAddress);
-                        if (isOwner) {
-                            console.log('👑 Contract owner - full access');
-                            this.state.level = 12;
-                            this.state.cgId = 'OWNER';
+                        console.log('📡 Querying Supabase users table...');
+                        const { data, error } = await supabaseClient
+                            .from('users')
+                            .select('gw_id, gw_level, wallet_address')
+                            .ilike('wallet_address', this.state.walletAddress)
+                            .single();
+                        
+                        if (data && !error) {
+                            this.state.gwId = data.gw_id;
+                            this.state.level = data.gw_level || 0;
+                            console.log('✅ Data from Supabase:', { gwId: this.state.gwId, level: this.state.level });
                             return;
+                        } else {
+                            console.log('⚠️ Supabase query result:', error?.message || 'no data');
                         }
-                        
-                        // Получаем уровень
-                        const level = await GlobalWayBridge.getUserMaxLevel(this.state.walletAddress);
-                        this.state.level = level || 0;
-                        
-                        // Получаем ID
-                        const gwId = await GlobalWayBridge.getGlobalWayId(this.state.walletAddress);
-                        this.state.cgId = gwId || null;
-                        
-                        console.log('📊 User data:', { level: this.state.level, cgId: this.state.cgId });
                     } catch (e) {
-                        console.warn('GlobalWayBridge error:', e);
+                        console.warn('Supabase error:', e.message);
                     }
                 }
                 
-                // Fallback - пробуем Supabase
-                if (!this.state.cgId && typeof supabase !== 'undefined') {
+                // 2. Fallback - GlobalWayBridge (только если есть Web3!)
+                if (typeof GlobalWayBridge !== 'undefined' && typeof window.ethereum !== 'undefined') {
                     try {
-                        const { data } = await supabase
-                            .from('cardgift_users')
-                            .select('cg_id, level')
-                            .eq('wallet_address', this.state.walletAddress)
-                            .single();
+                        console.log('📡 Trying GlobalWayBridge...');
                         
-                        if (data) {
-                            this.state.cgId = data.cg_id;
-                            this.state.level = Math.max(this.state.level, data.level || 0);
-                        }
+                        // Используем правильный метод getUserLevel
+                        const level = await GlobalWayBridge.getUserLevel(this.state.walletAddress);
+                        this.state.level = level || 0;
+                        
+                        const gwId = await GlobalWayBridge.getGlobalWayId(this.state.walletAddress);
+                        this.state.gwId = gwId || null;
+                        
+                        console.log('📊 Data from GlobalWayBridge:', { level: this.state.level, gwId: this.state.gwId });
                     } catch (e) {
-                        console.warn('Supabase error:', e);
+                        console.warn('GlobalWayBridge error:', e.message);
+                    }
+                }
+                
+                // 3. Fallback - localStorage (данные из dashboard)
+                if (!this.state.gwId) {
+                    const savedGwId = localStorage.getItem('gwId') || 
+                                      localStorage.getItem('userGwId') ||
+                                      localStorage.getItem('cardgift_user_id');
+                    if (savedGwId) {
+                        this.state.gwId = savedGwId;
+                        console.log('📦 GW ID from localStorage:', savedGwId);
+                    }
+                }
+                
+                if (!this.state.level) {
+                    const savedLevel = localStorage.getItem('userLevel') ||
+                                       localStorage.getItem('cardgift_user_level');
+                    if (savedLevel) {
+                        this.state.level = parseInt(savedLevel);
+                        console.log('📦 Level from localStorage:', this.state.level);
                     }
                 }
             },
@@ -654,20 +711,19 @@
             async checkAccess() {
                 console.log('🔐 Checking access...');
                 
-                // Нет кошелька
                 if (!this.state.walletAddress) {
                     this.state.hasAccess = false;
                     return;
                 }
                 
-                // DEV / OWNER
-                if (this.state.cgId === 'DEV' || this.state.cgId === 'OWNER') {
+                // DEV wallet
+                if (this.state.gwId === 'DEV') {
                     this.state.hasAccess = true;
                     return;
                 }
                 
                 // Нет регистрации
-                if (!this.state.cgId) {
+                if (!this.state.gwId) {
                     console.log('❌ No registration');
                     this.state.hasAccess = false;
                     this.showNeedRegistrationScreen();
@@ -687,7 +743,7 @@
             },
             
             // ═══════════════════════════════════════════════════════════
-            // ТРИАЛ СИСТЕМА
+            // ТРИАЛ
             // ═══════════════════════════════════════════════════════════
             
             checkTrial() {
@@ -695,27 +751,28 @@
                 const saved = localStorage.getItem(trialKey);
                 
                 if (saved) {
-                    const data = JSON.parse(saved);
-                    const startDate = new Date(data.startDate);
-                    const endDate = new Date(startDate);
-                    endDate.setDate(endDate.getDate() + this.config.TRIAL_DAYS);
-                    
-                    const now = new Date();
-                    if (now < endDate) {
-                        this.state.trialStarted = true;
-                        this.state.trialDaysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-                    }
+                    try {
+                        const data = JSON.parse(saved);
+                        const startDate = new Date(data.startDate);
+                        const endDate = new Date(startDate);
+                        endDate.setDate(endDate.getDate() + this.config.TRIAL_DAYS);
+                        
+                        const now = new Date();
+                        if (now < endDate) {
+                            this.state.trialStarted = true;
+                            this.state.trialDaysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+                        }
+                    } catch(e) {}
                 }
             },
             
             startTrial() {
                 const trialKey = 'cardgift_trial_' + this.state.walletAddress;
-                const data = {
+                localStorage.setItem(trialKey, JSON.stringify({
                     walletAddress: this.state.walletAddress,
                     startDate: new Date().toISOString(),
                     source: 'academy_button'
-                };
-                localStorage.setItem(trialKey, JSON.stringify(data));
+                }));
                 
                 this.state.trialStarted = true;
                 this.state.trialDaysLeft = this.config.TRIAL_DAYS;
@@ -732,9 +789,9 @@
                 const refId = this.getReferrer();
                 
                 document.getElementById('modalIcon').textContent = '🔐';
-                document.getElementById('modalTitle').textContent = 'Подключите кошелёк';
+                document.getElementById('modalTitle').textContent = refId ? 'Войдите в систему' : 'Доступ ограничен';
                 document.getElementById('modalText').innerHTML = refId 
-                    ? 'Для доступа к Академии нужно подключить криптокошелёк.'
+                    ? 'Для доступа к Академии войдите в личный кабинет.'
                     : 'Академия доступна только зарегистрированным участникам.<br>Получите ссылку от партнёра.';
                 
                 document.getElementById('modalContent').innerHTML = refId ? `
@@ -744,12 +801,8 @@
                         <div class="feature-item"><span>📈</span> $100K за 90 дней</div>
                         <div class="feature-item"><span>🛡️</span> Гарантия</div>
                     </div>
-                    <button onclick="Academy.connectWallet()" class="btn-action" id="connectBtn">
-                        🔐 Подключить кошелёк
-                    </button>
-                    <br>
-                    <a href="dashboard.html?ref=${refId}" class="btn-secondary">
-                        Или зарегистрируйтесь через кабинет →
+                    <a href="dashboard.html?ref=${refId}" class="btn-action">
+                        📊 Войти в кабинет
                     </a>
                 ` : `
                     <div class="features-grid">
@@ -759,7 +812,7 @@
                         <div class="feature-item"><span>🛡️</span> Гарантия</div>
                     </div>
                     <p style="color: var(--text-muted); font-size: 13px;">
-                        Попросите партнёра отправить вам ссылку на Академию
+                        Попросите партнёра отправить вам ссылку
                     </p>
                 `;
                 
@@ -771,7 +824,10 @@
                 
                 document.getElementById('modalIcon').textContent = '📝';
                 document.getElementById('modalTitle').textContent = 'Нужна регистрация';
-                document.getElementById('modalText').innerHTML = 'Кошелёк подключён, но аккаунт не найден.<br>Пройдите регистрацию в личном кабинете.';
+                document.getElementById('modalText').innerHTML = `
+                    Кошелёк: <code style="background:#333;padding:2px 6px;border-radius:4px;font-size:11px;">${this.state.walletAddress.slice(0,6)}...${this.state.walletAddress.slice(-4)}</code><br>
+                    Аккаунт не найден. Пройдите регистрацию.
+                `;
                 document.getElementById('modalContent').innerHTML = `
                     <a href="dashboard.html${refId ? '?ref=' + refId : ''}" class="btn-action">
                         📊 Перейти в кабинет
@@ -785,7 +841,7 @@
                 document.getElementById('modalIcon').textContent = '⚡';
                 document.getElementById('modalTitle').textContent = 'Активируй уровень 4';
                 document.getElementById('modalText').innerHTML = `
-                    Твой текущий уровень: <strong style="color: var(--orange);">${this.state.level}</strong><br>
+                    Твой уровень: <strong style="color: var(--orange);">${this.state.level}</strong><br>
                     Для Академии нужен уровень <strong style="color: var(--gold);">4+</strong>
                 `;
                 document.getElementById('modalContent').innerHTML = `
@@ -810,11 +866,9 @@
             updateUI() {
                 if (!this.state.hasAccess) return;
                 
-                // Скрываем overlay, показываем контент
                 document.getElementById('accessOverlay').classList.add('hidden');
                 document.getElementById('mainContent').style.display = 'block';
                 
-                // Показываем триал баннер или кнопку старта
                 if (this.state.trialStarted) {
                     document.getElementById('trialBanner').style.display = 'flex';
                     document.getElementById('trialDaysLeft').textContent = this.state.trialDaysLeft;
@@ -824,7 +878,6 @@
                     document.getElementById('startTrialBlock').style.display = 'block';
                 }
                 
-                // Обновляем прогресс
                 this.updateProgress();
             },
             
@@ -864,54 +917,19 @@
             saveReferrer() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const ref = urlParams.get('ref');
-                if (ref) {
-                    localStorage.setItem('cardgift_referrer', ref);
-                }
+                if (ref) localStorage.setItem('cardgift_referrer', ref);
             },
             
             getReferrer() {
                 const urlParams = new URLSearchParams(window.location.search);
                 return urlParams.get('ref') || localStorage.getItem('cardgift_referrer');
-            },
-            
-            async connectWallet() {
-                const btn = document.getElementById('connectBtn');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.textContent = '🔄 Подключение...';
-                }
-                
-                try {
-                    if (typeof window.ethereum === 'undefined') {
-                        alert('Установите SafePal или MetaMask');
-                        return;
-                    }
-                    
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    if (accounts && accounts.length > 0) {
-                        this.state.walletAddress = accounts[0].toLowerCase();
-                        
-                        // Перезапускаем проверку
-                        await this.loadUserData();
-                        await this.checkAccess();
-                        this.updateUI();
-                    }
-                } catch (error) {
-                    console.error('Connection error:', error);
-                    alert('Ошибка подключения: ' + error.message);
-                }
-                
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = '🔐 Подключить кошелёк';
-                }
             }
         };
         
         // Глобальные функции
         function openModule(moduleId) {
             if (!Academy.state.hasAccess) {
-                alert('🔒 Сначала подключите кошелёк!');
+                alert('🔒 Нет доступа к Академии');
                 return;
             }
             
