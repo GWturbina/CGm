@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📨 Рассыльщик: Автоматизируй | Академия CardGift</title>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-dark: #0a0a1a;
+            --bg-card: #12122a;
+            --gold: #FFD700;
+            --green: #10B981;
+            --blue: #3B82F6;
+            --orange: #F59E0B;
+            --red: #EF4444;
+            --text: #ffffff;
+            --text-muted: #9CA3AF;
+            --border: #2a2a4a;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        
+        .header {
+            background: var(--bg-card);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .back-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .module-badge {
+            padding: 5px 12px;
+            background: rgba(245,158,11,0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--orange);
+        }
+        
+        .progress-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .progress-mini-bar {
+            width: 100px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-mini-fill {
+            height: 100%;
+            background: var(--orange);
+            transition: width 0.3s;
+        }
+        
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, rgba(245,158,11,0.1), transparent);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(245,158,11,0.2);
+        }
+        
+        .hero-icon { font-size: 60px; margin-bottom: 15px; }
+        
+        .hero h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--orange), var(--red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p { font-size: 18px; color: var(--text-muted); }
+        
+        .info-block {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--orange);
+        }
+        
+        .info-block h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--orange);
+        }
+        
+        .info-block p {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+        
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+        
+        .timeline-day {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--orange), var(--red));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .timeline-content h4 { font-size: 14px; margin-bottom: 3px; }
+        .timeline-content p { font-size: 12px; color: var(--text-muted); margin: 0; }
+        
+        .task-list { display: flex; flex-direction: column; gap: 25px; }
+        
+        .task-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+        
+        .task-card.active {
+            border-color: var(--orange);
+            box-shadow: 0 0 30px rgba(245,158,11,0.1);
+        }
+        
+        .task-card.completed {
+            border-color: var(--green);
+            opacity: 0.8;
+        }
+        
+        .task-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .task-number {
+            width: 40px;
+            height: 40px;
+            background: var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .task-card.active .task-number {
+            background: var(--orange);
+            color: #000;
+        }
+        
+        .task-card.completed .task-number {
+            background: var(--green);
+            color: #fff;
+        }
+        
+        .task-info h3 { font-size: 18px; margin-bottom: 5px; }
+        .task-info p { font-size: 14px; color: var(--text-muted); }
+        
+        .task-content { margin-left: 55px; }
+        
+        .task-steps {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .step:last-child { margin-bottom: 0; }
+        
+        .step-icon {
+            width: 28px;
+            height: 28px;
+            background: rgba(245,158,11,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .step-text { font-size: 14px; line-height: 1.6; }
+        .step-text strong { color: var(--orange); }
+        
+        .task-tip {
+            background: rgba(16,185,129,0.1);
+            border-left: 3px solid var(--green);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        
+        .task-tip::before { content: '💡 '; }
+        
+        .task-action { display: flex; gap: 15px; flex-wrap: wrap; }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-orange {
+            background: linear-gradient(135deg, var(--orange), var(--red));
+            color: #fff;
+        }
+        
+        .btn-orange:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245,158,11,0.3);
+        }
+        
+        .btn-green { background: var(--green); color: #fff; }
+        
+        .message-template {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 3px solid var(--orange);
+        }
+        
+        .message-template-header {
+            font-size: 12px;
+            color: var(--orange);
+            margin-bottom: 8px;
+        }
+        
+        .message-template-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            white-space: pre-line;
+        }
+        
+        .reward-banner {
+            background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(239,68,68,0.1));
+            border: 2px solid var(--orange);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 40px;
+            display: none;
+        }
+        
+        .reward-icon { font-size: 60px; margin-bottom: 15px; }
+        .reward-banner h2 { font-size: 24px; margin-bottom: 10px; color: var(--orange); }
+        .reward-banner p { color: var(--text-muted); margin-bottom: 20px; }
+        
+        .reward-points {
+            display: inline-block;
+            padding: 10px 30px;
+            background: var(--orange);
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .footer-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover { background: rgba(245,158,11,0.1); }
+        
+        .nav-btn-next {
+            background: linear-gradient(135deg, var(--orange), var(--red));
+            color: #fff;
+        }
+        
+        @media (max-width: 600px) {
+            .header-content { flex-direction: column; gap: 10px; }
+            .task-content { margin-left: 0; margin-top: 15px; }
+            .task-header { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="academy.html" class="back-btn">← Академия</a>
+                <span class="module-badge">МОДУЛЬ 5</span>
+            </div>
+            <div class="progress-mini">
+                <span id="taskProgress">0/4</span>
+                <div class="progress-mini-bar">
+                    <div class="progress-mini-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="main">
+        <div class="hero">
+            <div class="hero-icon">📨</div>
+            <h1>Рассыльщик: Автоматизируй</h1>
+            <p>Настрой автоматические цепочки сообщений.<br>Пусть система работает пока ты отдыхаешь!</p>
+        </div>
+        
+        <div class="info-block">
+            <h3>🤔 Зачем нужен Рассыльщик?</h3>
+            <p><strong>Проблема:</strong> Ты написал 100 людям, 20 ответили, остальные молчат. Что делать?</p>
+            <p><strong>Решение:</strong> Автоматические напоминания! Рассыльщик отправляет сообщения по расписанию.</p>
+            <p style="margin-top: 15px;"><strong>Результат:</strong> Из тех 80 кто молчал → 20-30 ответят после напоминаний!</p>
+        </div>
+        
+        <div class="info-block">
+            <h3>📅 Пример автоворонки на 7 дней</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-day">День 1</div>
+                    <div class="timeline-content">
+                        <h4>🎁 Первое касание</h4>
+                        <p>Открытка + короткое сообщение с ценностью</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-day">День 3</div>
+                    <div class="timeline-content">
+                        <h4>💬 Мягкое напоминание</h4>
+                        <p>"Привет! Может пропустил моё сообщение?"</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-day">День 5</div>
+                    <div class="timeline-content">
+                        <h4>📊 Ценность</h4>
+                        <p>Факты, статистика, история успеха</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-day">День 7</div>
+                    <div class="timeline-content">
+                        <h4>⏰ Последний шанс</h4>
+                        <p>"Закрываю вопрос. Если интересно — напиши!"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="task-list">
+            <div class="task-card active" id="task-1">
+                <div class="task-header">
+                    <div class="task-number">1</div>
+                    <div class="task-info">
+                        <h3>📝 Подготовь 3 шаблона сообщений</h3>
+                        <p>Займёт 10 минут</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <p style="color: var(--text-muted); margin-bottom: 15px;">Создай 3 варианта сообщений для разных ситуаций:</p>
+                    
+                    <div class="message-template">
+                        <div class="message-template-header">💬 Шаблон 1: Мягкое напоминание</div>
+                        <div class="message-template-text">Привет! 👋
+
+Писал тебе про инструменты для заработка — может пропустил сообщение?
+
+Если сейчас не актуально — ничего страшного, просто скажи.
+Если интересно — с удовольствием расскажу подробнее 😊</div>
+                    </div>
+                    
+                    <div class="message-template">
+                        <div class="message-template-header">📊 Шаблон 2: С ценностью</div>
+                        <div class="message-template-text">Привет!
+
+Решил поделиться: за последнюю неделю 12 человек начали использовать инструменты — двое уже заработали первые $50!
+
+Если хочешь узнать как — напиши, покажу 🚀</div>
+                    </div>
+                    
+                    <div class="message-template">
+                        <div class="message-template-header">⏰ Шаблон 3: Последний шанс</div>
+                        <div class="message-template-text">Привет!
+
+Закрываю вопрос по инструментам — не хочу быть навязчивым.
+
+Если когда-нибудь станет актуально — пиши, помогу!
+Удачи тебе 🙏</div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        Эти шаблоны уже есть в разделе "Контакты" → "Добавить" → выбери этап воронки!
+                    </div>
+                    
+                    <div class="task-action">
+                        <button onclick="completeTask(1)" class="btn btn-green">
+                            ✅ Шаблоны готовы!
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-card" id="task-2">
+                <div class="task-header">
+                    <div class="task-number">2</div>
+                    <div class="task-info">
+                        <h3>📅 Составь план рассылки</h3>
+                        <p>Займёт 5 минут</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">Возьми список контактов которым уже писал</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Раздели на группы: <strong>не ответили / интерес / отказ</strong></div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Запланируй: кому и когда напишешь в ближайшие 7 дней</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        Совет: напоминай тем кто не ответил через 3 дня, потом через 7 дней. Больше 3 раз — не надо.
+                    </div>
+                    
+                    <div class="task-action">
+                        <button onclick="completeTask(2)" class="btn btn-green">
+                            ✅ План готов!
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-card" id="task-3">
+                <div class="task-header">
+                    <div class="task-number">3</div>
+                    <div class="task-info">
+                        <h3>📨 Открой Рассыльщик в кабинете</h3>
+                        <p>Займёт 3 минуты</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">Открой <strong>"Рассылки"</strong> в кабинете</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Изучи интерфейс: шаблоны, история, статистика</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Попробуй создать тестовую рассылку (можно не отправлять)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-action">
+                        <a href="dashboard.html#mailings" target="_blank" class="btn btn-orange">
+                            📨 Открыть Рассылки
+                        </a>
+                        <button onclick="completeTask(3)" class="btn btn-green">
+                            ✅ Изучил!
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-card" id="task-4">
+                <div class="task-header">
+                    <div class="task-number">4</div>
+                    <div class="task-info">
+                        <h3>🚀 Отправь первую рассылку</h3>
+                        <p>Займёт 5 минут</p>
+                    </div>
+                </div>
+                
+                <div class="task-content">
+                    <div class="task-steps">
+                        <div class="step">
+                            <div class="step-icon">1️⃣</div>
+                            <div class="step-text">Выбери 3-5 человек которым не писал давно</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2️⃣</div>
+                            <div class="step-text">Используй шаблон <strong>"Мягкое напоминание"</strong></div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3️⃣</div>
+                            <div class="step-text">Отправь и отметь в CRM что написал</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-tip">
+                        Не бойся напоминать! Люди часто просто забывают ответить. Твоё напоминание — это забота, а не навязчивость.
+                    </div>
+                    
+                    <div class="task-action">
+                        <button onclick="completeTask(4)" class="btn btn-green">
+                            ✅ Отправил!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="reward-banner" id="rewardBanner">
+            <div class="reward-icon">🎉</div>
+            <h2>Превосходно! Ты освоил Рассыльщик!</h2>
+            <p>Теперь ты знаешь как автоматизировать общение. Продолжай и результаты не заставят себя ждать!</p>
+            <div class="reward-points">+90 баллов</div>
+        </div>
+        
+        <div class="footer-nav">
+            <a href="academy-surveys.html" class="nav-btn">
+                ← Опросы
+            </a>
+            <a href="academy-scale.html" class="nav-btn nav-btn-next" id="nextBtn" style="display: none;">
+                Масштабирование →
+            </a>
+        </div>
+    </main>
+    
+    <script>
+        const MODULE_ID = 'mailings';
+        const TOTAL_TASKS = 4;
+        const POINTS_REWARD = 90;
+        
+        function loadModuleProgress() {
+            const saved = localStorage.getItem('academy_module_' + MODULE_ID);
+            return saved ? JSON.parse(saved) : { completedTasks: [], completed: false };
+        }
+        
+        function saveModuleProgress(progress) {
+            localStorage.setItem('academy_module_' + MODULE_ID, JSON.stringify(progress));
+        }
+        
+        function completeTask(taskNum) {
+            const progress = loadModuleProgress();
+            
+            if (!progress.completedTasks.includes(taskNum)) {
+                progress.completedTasks.push(taskNum);
+                saveModuleProgress(progress);
+                
+                const taskCard = document.getElementById('task-' + taskNum);
+                taskCard.classList.remove('active');
+                taskCard.classList.add('completed');
+                taskCard.querySelector('.task-number').innerHTML = '✓';
+                
+                const nextTask = document.getElementById('task-' + (taskNum + 1));
+                if (nextTask) nextTask.classList.add('active');
+                
+                if (progress.completedTasks.length >= TOTAL_TASKS) completeModule();
+                updateUI();
+            }
+        }
+        
+        function completeModule() {
+            const progress = loadModuleProgress();
+            progress.completed = true;
+            saveModuleProgress(progress);
+            
+            const academyProgress = JSON.parse(localStorage.getItem('academy_progress') || '{"completedModules":[],"totalPoints":0}');
+            if (!academyProgress.completedModules.includes(MODULE_ID)) {
+                academyProgress.completedModules.push(MODULE_ID);
+                academyProgress.totalPoints += POINTS_REWARD;
+                academyProgress.currentModule = 'scale';
+                localStorage.setItem('academy_progress', JSON.stringify(academyProgress));
+            }
+            
+            document.getElementById('rewardBanner').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'flex';
+        }
+        
+        function updateUI() {
+            const progress = loadModuleProgress();
+            const completed = progress.completedTasks.length;
+            const percent = Math.round((completed / TOTAL_TASKS) * 100);
+            
+            document.getElementById('taskProgress').textContent = `${completed}/${TOTAL_TASKS}`;
+            document.getElementById('progressFill').style.width = percent + '%';
+            
+            progress.completedTasks.forEach(taskNum => {
+                const taskCard = document.getElementById('task-' + taskNum);
+                if (taskCard) {
+                    taskCard.classList.remove('active');
+                    taskCard.classList.add('completed');
+                    taskCard.querySelector('.task-number').innerHTML = '✓';
+                }
+            });
+            
+            for (let i = 1; i <= TOTAL_TASKS; i++) {
+                if (!progress.completedTasks.includes(i)) {
+                    const taskCard = document.getElementById('task-' + i);
+                    if (taskCard) taskCard.classList.add('active');
+                    break;
+                }
+            }
+            
+            if (progress.completed) {
+                document.getElementById('rewardBanner').style.display = 'block';
+                document.getElementById('nextBtn').style.display = 'flex';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', updateUI);
+    </script>
+</body>
+</html>
