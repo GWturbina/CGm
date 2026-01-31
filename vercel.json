@@ -1,4 +1,14 @@
 {
+  "crons": [
+    {
+      "path": "/api/academy-reminders",
+      "schedule": "0 6,9,18,21 * * *"
+    },
+    {
+      "path": "/api/cardgift-bot-process-queue",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/crm",
