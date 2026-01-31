@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Telegram бот | Наставник CardGift</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #0088cc; --primary-light: #54c7ec; --secondary: #8B5CF6; --success: #10B981; --warning: #F59E0B; --bg: #0f0f1a; --bg-card: #1a1a2e; --text: #ffffff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 17px; }
+        .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 60px 20px; text-align: center; }
+        .header h1 { font-size: 42px; margin-bottom: 10px; }
+        .header p { font-size: 18px; opacity: 0.9; }
+        .back-link { position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; opacity: 0.8; }
+        .main { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+        .section { background: var(--bg-card); border-radius: 20px; padding: 35px; margin-bottom: 30px; }
+        .section-title { font-size: 26px; color: var(--primary-light); margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid rgba(0, 136, 204, 0.3); }
+        p { margin-bottom: 18px; color: #d0d0e0; }
+        strong { color: var(--text); }
+        em { color: var(--primary-light); font-style: normal; }
+        .highlight { background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--warning); padding: 20px 25px; border-radius: 0 12px 12px 0; margin: 25px 0; }
+        .tip { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 20px 25px; border-radius: 0 12px 12px 0; margin: 25px 0; }
+        .tip-title, .highlight-title { font-weight: 600; margin-bottom: 10px; }
+        .tip-title { color: var(--success); }
+        .highlight-title { color: var(--warning); }
+        .example { background: rgba(139, 92, 246, 0.1); border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .example-title { color: var(--secondary); font-weight: 600; margin-bottom: 12px; }
+        .example-text { background: var(--bg); padding: 15px 20px; border-radius: 8px; border-left: 3px solid var(--secondary); }
+        .video-placeholder { background: linear-gradient(135deg, #1e293b, #334155); border-radius: 16px; padding: 50px; text-align: center; margin: 30px 0; }
+        .video-placeholder span { font-size: 48px; }
+        .tasks { background: rgba(0, 136, 204, 0.1); border-radius: 16px; padding: 25px; margin: 30px 0; }
+        .tasks h3 { color: var(--primary-light); margin-bottom: 20px; }
+        .task { display: flex; align-items: center; gap: 15px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .task:last-child { border-bottom: none; }
+        .task-check { width: 24px; height: 24px; border: 2px solid var(--primary); border-radius: 6px; }
+        .task-points { margin-left: auto; color: var(--warning); font-weight: 600; }
+        .nav-footer { display: flex; gap: 20px; margin-top: 40px; }
+        .nav-btn { flex: 1; padding: 20px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 600; transition: transform 0.2s; }
+        .nav-btn:hover { transform: translateY(-3px); }
+        .nav-btn.back { background: #252542; color: var(--text); }
+        .nav-btn.next { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        @media (max-width: 768px) { .header h1 { font-size: 28px; } .section { padding: 25px; } .nav-footer { flex-direction: column; } }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <a href="../learning-center.html" class="back-link">← К модулям</a>
+    <h1>🤖 Telegram бот</h1>
+    <p>Автоматические уведомления и напоминания</p>
+</header>
+
+<main class="main">
+
+    <section class="section">
+        <h2 class="section-title">📱 Зачем нужен бот</h2>
+        
+        <p>Telegram — самый популярный мессенджер для бизнеса. Здесь общаются, здесь покупают, здесь получают информацию.</p>
+        
+        <p>Бот CardGift — это твой автоматический помощник в Telegram. Он присылает уведомления о новых контактах, напоминает о задачах, информирует о продажах.</p>
+        
+        <p>Ты занимаешься своими делами — а бот держит тебя в курсе. Пришёл новый лид — уведомление. Кто-то прошёл опрос — уведомление. Партнёр активировался — уведомление.</p>
+        
+        <div class="highlight">
+            <div class="highlight-title">💡 Главная польза</div>
+            <p style="margin:0;">Ты никогда не пропустишь горячего лида. Уведомление приходит мгновенно — можешь отреагировать пока человек ещё в теме.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">⚙️ Настройка бота</h2>
+        
+        <p>Подключение занимает две минуты.</p>
+        
+        <p><strong>Шаг 1:</strong> Открой раздел «Telegram бот» в личном кабинете.</p>
+        
+        <p><strong>Шаг 2:</strong> Нажми «Подключить» — откроется ссылка на бота.</p>
+        
+        <p><strong>Шаг 3:</strong> Перейди в Telegram и нажми «Start» в диалоге с ботом.</p>
+        
+        <p><strong>Шаг 4:</strong> Бот пришлёт код — введи его в личном кабинете.</p>
+        
+        <p>Готово! Теперь бот связан с твоим аккаунтом и будет присылать уведомления.</p>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">🔔 Типы уведомлений</h2>
+        
+        <p>Ты можешь настроить какие уведомления получать.</p>
+        
+        <p><em>Новый контакт</em> — кто-то оставил данные через открытку или опрос.</p>
+        
+        <p><em>Прохождение опроса</em> — человек ответил на вопросы, ты видишь его ответы.</p>
+        
+        <p><em>Новая активация</em> — партнёр зарегистрировался в системе.</p>
+        
+        <p><em>Напоминания</em> — задачи из CRM, которые ты сам себе поставил.</p>
+        
+        <p><em>Статистика</em> — ежедневный отчёт о касаниях и конверсии.</p>
+        
+        <div class="tip">
+            <div class="tip-title">✅ Рекомендация</div>
+            <p style="margin:0;">Включи все уведомления на старте. Потом отключишь лишние если будут мешать. Лучше видеть всё, чем пропустить важное.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">📊 Напоминания по программе</h2>
+        
+        <p>Бот может напоминать о заданиях 21-дневной программы.</p>
+        
+        <p>Каждое утро — сообщение с задачами на сегодня. Каждый вечер — напоминание подвести итоги.</p>
+        
+        <p>Это помогает не выпадать из ритма. Программа работает когда ты следуешь ей каждый день. Бот не даст забыть.</p>
+        
+        <div class="example">
+            <div class="example-title">📝 Пример утреннего напоминания</div>
+            <div class="example-text">
+                «🌅 Доброе утро!<br><br>
+                Сегодня День 5 программы. Твои задачи:<br>
+                ✅ Изучить систему опросов<br>
+                ✅ Создать квалификационный опрос<br>
+                ✅ Отправить 5 касаний<br><br>
+                Удачного дня! 💪»
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="tasks">
+            <h3>📋 Практические задания</h3>
+            <div class="task">
+                <div class="task-check"></div>
+                <span>Подключи Telegram бота к аккаунту</span>
+                <span class="task-points">+25</span>
+            </div>
+            <div class="task">
+                <div class="task-check"></div>
+                <span>Настрой уведомления о новых контактах</span>
+                <span class="task-points">+15</span>
+            </div>
+            <div class="task">
+                <div class="task-check"></div>
+                <span>Включи напоминания по программе</span>
+                <span class="task-points">+15</span>
+            </div>
+            <div class="task">
+                <div class="task-check"></div>
+                <span>Проверь что уведомления приходят</span>
+                <span class="task-points">+10</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="video-placeholder">
+        <span>🎬</span>
+        <p style="color: #a0a0b0; margin-top: 15px;">Видео-инструкция появится здесь</p>
+    </div>
+
+    <div class="nav-footer">
+        <a href="mailings-guide.html" class="nav-btn back">← Рассылки</a>
+        <a href="brand-guide.html" class="nav-btn next">Следующий: Создай свой бренд →</a>
+    </div>
+
+</main>
+
+</body>
+</html>
