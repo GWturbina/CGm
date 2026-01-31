@@ -1,6 +1,6 @@
 // api/cardgift-bot-process-queue.js
 // Cron Job для обработки очереди Telegram уведомлений
-// Вызывать каждую минуту через Vercel Cron или внешний сервис
+// Вызывается каждые 5 минут через Vercel Cron
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -41,14 +41,6 @@ async function sendTelegramMessage(chatId, text, buttonText, buttonUrl) {
 }
 
 export default async function handler(req, res) {
-    // Проверка авторизации (простой секретный ключ)
-    const authKey = req.headers['x-cron-key'] || req.query.key;
-    const expectedKey = process.env.CRON_SECRET_KEY;
-    
-    if (expectedKey && authKey !== expectedKey) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
     if (!BOT_TOKEN) {
         return res.status(500).json({ error: 'Bot token not configured' });
     }
@@ -91,7 +83,7 @@ export default async function handler(req, res) {
             );
             
             if (result.ok) {
-                // Успешно отправлено
+                // Успешно отправлено - обновляем статус
                 await supabase
                     .from('cardgift_bot_queue')
                     .update({ 
@@ -101,13 +93,21 @@ export default async function handler(req, res) {
                     .eq('id', item.id);
                 
                 // Обновить статистику подписчика
-                await supabase
+                const { data: subscriber } = await supabase
                     .from('cardgift_bot_subscribers')
-                    .update({ 
-                        last_message_at: new Date().toISOString(),
-                        messages_received: supabase.raw('messages_received + 1')
-                    })
-                    .eq('user_gw_id', item.user_gw_id);
+                    .select('messages_received')
+                    .eq('user_gw_id', item.user_gw_id)
+                    .single();
+                
+                if (subscriber) {
+                    await supabase
+                        .from('cardgift_bot_subscribers')
+                        .update({ 
+                            last_message_at: new Date().toISOString(),
+                            messages_received: (subscriber.messages_received || 0) + 1
+                        })
+                        .eq('user_gw_id', item.user_gw_id);
+                }
                 
                 sent++;
             } else {
@@ -122,7 +122,7 @@ export default async function handler(req, res) {
                     })
                     .eq('id', item.id);
                 
-                // Если пользователь заблокировал бота - помечаем
+                // Если пользователь заблокировал бота (403) - помечаем
                 if (errorCode === 403) {
                     await supabase
                         .from('cardgift_bot_subscribers')
