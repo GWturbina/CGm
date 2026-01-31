@@ -22,8 +22,13 @@
         startDelay: 1500,                   // Задержка перед запуском (мс)
         showWelcomeOnFirstVisit: true,      // Показывать приветствие новичкам
         trackUserActions: true,             // Отслеживать действия пользователя
-        debug: false                        // Режим отладки
+        debug: false,                       // Режим отладки
+        maxRetries: 10,                     // ⭐ Максимум попыток загрузки
+        retryDelay: 500                     // Задержка между попытками (мс)
     };
+    
+    // ⭐ Счётчик попыток
+    let retryCount = 0;
     
     // ═══════════════════════════════════════════════════════════
     // ЗАПУСК
@@ -39,10 +44,28 @@
         if (typeof LessonsData === 'undefined') missing.push('LessonsData');
         
         if (missing.length > 0) {
-            console.warn('⏳ Waiting for dependencies. Missing:', missing.join(', '));
-            setTimeout(initAssistantIntegration, 500);
+            retryCount++;
+            
+            // ⭐ ПРОВЕРКА ЛИМИТА ПОПЫТОК
+            if (retryCount > CONFIG.maxRetries) {
+                console.warn(`⚠️ Assistant: dependencies not loaded after ${CONFIG.maxRetries} attempts.`);
+                console.warn('Missing:', missing.join(', '));
+                console.info('💡 Assistant will not start. To enable, load these scripts:');
+                console.info('   - js/lessons-data.js');
+                console.info('   - js/modules/assistant/assistant.js');
+                console.info('   - js/modules/assistant/assistant-ui.js');
+                console.info('   - js/modules/assistant/assistant-init.js');
+                return; // ⭐ ПРЕКРАЩАЕМ попытки, не зацикливаемся!
+            }
+            
+            console.log(`⏳ Waiting for dependencies (${retryCount}/${CONFIG.maxRetries})...`);
+            setTimeout(initAssistantIntegration, CONFIG.retryDelay);
             return;
         }
+        
+        // ✅ Все зависимости загружены!
+        retryCount = 0;
+        console.log('✅ All dependencies loaded!');
         
         // Получаем userId из текущей сессии
         const userId = getUserId();
@@ -124,9 +147,13 @@
         
         console.log('🔗 Binding CardGift events...');
         
-        // === Генератор открыток ===
+        // ⭐ Проверяем наличие AssistantEvents
+        if (typeof AssistantEvents === 'undefined') {
+            console.warn('⚠️ AssistantEvents not available');
+            return;
+        }
         
-        // Отслеживаем сохранение открытки
+        // === Генератор открыток ===
         const originalSaveCard = window.saveCard;
         if (typeof originalSaveCard === 'function') {
             window.saveCard = async function(...args) {
@@ -140,8 +167,6 @@
         }
         
         // === Опросы ===
-        
-        // Отслеживаем создание опроса
         const originalSaveSurvey = window.saveSurvey;
         if (typeof originalSaveSurvey === 'function') {
             window.saveSurvey = async function(...args) {
@@ -155,8 +180,6 @@
         }
         
         // === Блог ===
-        
-        // Отслеживаем сохранение настроек блога
         const originalSaveBlogSettings = window.saveBlogSettings;
         if (typeof originalSaveBlogSettings === 'function') {
             window.saveBlogSettings = async function(...args) {
@@ -170,14 +193,11 @@
         }
         
         // === Контакты ===
-        
-        // Отслеживаем добавление контактов
         const originalAddContact = window.addContact || window.ContactsService?.addContact;
         if (typeof originalAddContact === 'function') {
             const wrapper = async function(...args) {
                 const result = await originalAddContact.apply(this, args);
                 if (result) {
-                    // Проверяем количество контактов
                     const count = await getContactsCount();
                     AssistantEvents.trackContactAdded(count);
                     logEvent('contact_added', { count });
@@ -189,9 +209,7 @@
             if (window.ContactsService?.addContact) window.ContactsService.addContact = wrapper;
         }
         
-        // === Навигация по секциям ===
-        
-        // Отслеживаем переходы между секциями
+        // === Навигация ===
         observeNavigation();
     }
     
@@ -200,7 +218,8 @@
     // ═══════════════════════════════════════════════════════════
     
     function observeNavigation() {
-        // Отслеживаем клики по навигации
+        if (typeof AssistantEvents === 'undefined') return;
+        
         document.addEventListener('click', (e) => {
             const navLink = e.target.closest('[data-section], [href*="#"]');
             if (navLink) {
@@ -213,7 +232,6 @@
             }
         });
         
-        // Отслеживаем изменения hash
         window.addEventListener('hashchange', () => {
             const section = window.location.hash.replace('#', '');
             if (section) {
@@ -228,19 +246,22 @@
     // ═══════════════════════════════════════════════════════════
     
     function checkFirstVisit(ui) {
+        if (!ui) return;
+        
         const visited = localStorage.getItem('assistant_visited');
         
         if (!visited) {
             localStorage.setItem('assistant_visited', 'true');
             
-            // Показываем приветственное сообщение через 2 секунды
             setTimeout(() => {
-                ui.open();
-                ui.showNotification(
-                    'info',
-                    '👋 Добро пожаловать!',
-                    'Я буду помогать вам освоить все инструменты за 21 день'
-                );
+                if (ui.open) ui.open();
+                if (ui.showNotification) {
+                    ui.showNotification(
+                        'info',
+                        '👋 Добро пожаловать!',
+                        'Я буду помогать вам освоить все инструменты за 21 день'
+                    );
+                }
             }, 2000);
         }
     }
@@ -250,14 +271,10 @@
     // ═══════════════════════════════════════════════════════════
     
     function addProgramLink() {
-        // Ищем навигацию
         const nav = document.querySelector('.sidebar-nav, .main-nav, .dashboard-nav, nav');
         if (!nav) return;
-        
-        // Проверяем, не добавлена ли уже
         if (nav.querySelector('[href="program.html"]')) return;
         
-        // Создаём ссылку
         const link = document.createElement('a');
         link.href = 'program.html';
         link.className = 'nav-link program-link';
@@ -276,43 +293,28 @@
             transition: background 0.2s;
         `;
         
-        link.addEventListener('mouseenter', () => {
-            link.style.background = 'rgba(99, 102, 241, 0.1)';
-        });
-        link.addEventListener('mouseleave', () => {
-            link.style.background = 'transparent';
-        });
+        link.addEventListener('mouseenter', () => link.style.background = 'rgba(99, 102, 241, 0.1)');
+        link.addEventListener('mouseleave', () => link.style.background = 'transparent');
         
-        // Добавляем в начало навигации
         nav.insertBefore(link, nav.firstChild);
     }
     
     // ═══════════════════════════════════════════════════════════
-    // ПРАЗДНОВАНИЕ ЗАВЕРШЕНИЯ ПРОГРАММЫ
+    // ПРАЗДНОВАНИЕ
     // ═══════════════════════════════════════════════════════════
     
     function showProgramCompleteCelebration() {
-        // Создаём конфетти
         const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
         
         for (let i = 0; i < 100; i++) {
-            setTimeout(() => {
-                createConfetti(colors[Math.floor(Math.random() * colors.length)]);
-            }, i * 30);
+            setTimeout(() => createConfetti(colors[Math.floor(Math.random() * colors.length)]), i * 30);
         }
         
-        // Показываем модальное окно
         const modal = document.createElement('div');
         modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             z-index: 999999;
         `;
         
@@ -339,23 +341,16 @@
     function createConfetti(color) {
         const confetti = document.createElement('div');
         confetti.style.cssText = `
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background: ${color};
-            left: ${Math.random() * 100}vw;
-            top: -10px;
-            border-radius: 2px;
-            z-index: 9999999;
-            pointer-events: none;
+            position: fixed; width: 10px; height: 10px; background: ${color};
+            left: ${Math.random() * 100}vw; top: -10px; border-radius: 2px;
+            z-index: 9999999; pointer-events: none;
             animation: confetti-fall 3s ease-out forwards;
         `;
-        
         document.body.appendChild(confetti);
         setTimeout(() => confetti.remove(), 3000);
     }
     
-    // Добавляем анимацию конфетти
+    // Анимация конфетти
     const style = document.createElement('style');
     style.textContent = `
         @keyframes confetti-fall {
@@ -397,7 +392,7 @@
         }
     }
     
-    // Экспортируем для ручного управления
+    // Экспорт
     window.AssistantDashboard = {
         init: initAssistantIntegration,
         config: CONFIG
