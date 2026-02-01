@@ -13,45 +13,77 @@
     <!-- Mobile: Header прячется при скролле вниз -->
     <style>
     @media (max-width: 768px) {
+        /* ИСПРАВЛЕНО: sticky вместо fixed чтобы не падал */
         .studio-header {
-            position: fixed !important;
+            position: sticky !important;
             top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
+            z-index: 100;
             background: rgba(15, 15, 30, 0.98) !important;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            transition: transform 0.3s ease;
-            padding: 10px 15px !important;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+            padding: 8px 12px !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
+        
+        /* Убираем анимацию - она вызывала "падение" */
         .studio-header.header-hidden {
-            transform: translateY(-100%);
+            /* НЕ скрываем - просто оставляем */
         }
+        
+        /* Компактный header */
+        .header-left {
+            gap: 8px !important;
+        }
+        .logo-text {
+            font-size: 18px !important;
+        }
+        .logo-icon {
+            font-size: 24px !important;
+        }
+        .logo-badge {
+            font-size: 8px !important;
+            padding: 1px 4px !important;
+        }
+        .back-btn {
+            padding: 4px 8px !important;
+            font-size: 12px !important;
+        }
+        
+        /* Кнопки в хедере компактнее */
+        .header-buttons {
+            gap: 4px !important;
+        }
+        .header-buttons button {
+            padding: 4px 8px !important;
+            font-size: 11px !important;
+        }
+        
+        /* Лимиты компактнее */
+        .limits-display {
+            gap: 6px !important;
+        }
+        .limit-item {
+            padding: 3px 6px !important;
+            font-size: 11px !important;
+        }
+        
+        /* Контент без большого отступа */
         .content-tabs {
-            margin-top: 180px !important;
+            margin-top: 0 !important;
             position: relative;
             z-index: 1;
         }
         .studio-main {
             padding-top: 10px !important;
         }
+        
+        /* Trial banner */
         #trialBanner {
-            position: fixed !important;
+            position: sticky !important;
             top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1001;
-        }
-        #trialBanner:not(:empty) ~ .studio-header,
-        #trialBanner[style*="block"] ~ .studio-header {
-            top: 45px !important;
-        }
-        #trialBanner:not(:empty) ~ .content-tabs {
-            margin-top: 220px !important;
+            z-index: 101;
         }
     }
     </style>
@@ -79,7 +111,8 @@
                 <button class="btn-rules" onclick="showRulesModal()">
                     🚫 Правила
                 </button>
-                <button class="btn-settings-api" onclick="showSettingsModal()">
+                <!-- Настройки API только для уровня 8+ -->
+                <button class="btn-settings-api" id="btnSettingsApi" onclick="showSettingsModal()" style="display: none;">
                     ⚙️ Настройки API
                 </button>
             </div>
@@ -804,7 +837,26 @@
             if (clearGroq) clearGroq.classList.toggle('visible', canSee);
             if (clearElevenlabs) clearElevenlabs.classList.toggle('visible', canSee);
             if (clearOpenai) clearOpenai.classList.toggle('visible', canSee);
+            
+            // Показываем кнопку настроек API только для уровня 8+
+            const btnSettingsApi = document.getElementById('btnSettingsApi');
+            if (btnSettingsApi) {
+                btnSettingsApi.style.display = canSee ? 'flex' : 'none';
+            }
         }
+        
+        // Вызываем проверку после загрузки AIStudio
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем через интервал пока AIStudio не загрузится
+            let checkCount = 0;
+            const checkInterval = setInterval(() => {
+                checkCount++;
+                if (window.AIStudio?.state?.level !== undefined || checkCount > 30) {
+                    updateClearButtonsVisibility();
+                    clearInterval(checkInterval);
+                }
+            }, 500);
+        });
         
         // Переключение языка
         function switchLang(lang) {
@@ -830,32 +882,9 @@
         const header = document.querySelector('.studio-header');
         if (!header) return;
         
-        let lastScrollY = 0;
-        let ticking = false;
-        
-        function updateHeader() {
-            const currentScrollY = window.scrollY;
-            
-            if (currentScrollY > lastScrollY && currentScrollY > 50) {
-                // Скролл ВНИЗ - прячем
-                header.classList.add('header-hidden');
-            } else {
-                // Скролл ВВЕРХ - показываем
-                header.classList.remove('header-hidden');
-            }
-            
-            lastScrollY = currentScrollY;
-            ticking = false;
-        }
-        
-        window.addEventListener('scroll', function() {
-            if (!ticking) {
-                requestAnimationFrame(updateHeader);
-                ticking = true;
-            }
-        }, { passive: true });
-        
-        console.log('📱 Mobile header scroll enabled');
+        // ОТКЛЮЧЕНО: Автоскрытие хедера вызывало проблемы на мобильных
+        // Хедер теперь всегда видимый
+        console.log('📱 Mobile header: always visible (auto-hide disabled)');
     })();
     </script>
 </body>
