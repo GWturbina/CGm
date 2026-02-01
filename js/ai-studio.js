@@ -111,7 +111,7 @@ const AIStudio = {
     },
     
     async init() {
-        console.log('🎬 AI Studio v3.0 initializing...');
+        console.log('🎬 AI Studio v3.1 initializing...');
         
         this.showMainContent();
         await this.autoConnectWallet();
@@ -126,10 +126,17 @@ const AIStudio = {
         this.updateUI();
         this.showCreditsInfo();
         
+        // Показываем кнопку "Настройки API" для 8+ уровня
+        if (this.canUseOwnApi()) {
+            const btnApi = document.getElementById('btnSettingsApi');
+            if (btnApi) btnApi.style.display = 'inline-flex';
+        }
+        
         if (this.isAuthor()) this.showAuthorTools();
         
-        console.log('✅ AI Studio v3.0 initialized');
+        console.log('✅ AI Studio v3.1 initialized');
         console.log('📊 Credits:', this.state.credits);
+        console.log('📊 Limits:', this.state.limits);
     },
     
     async autoConnectWallet() {
@@ -211,12 +218,16 @@ const AIStudio = {
     },
     
     async loadCredits() {
+        console.log('📊 Loading credits for wallet:', this.state.walletAddress);
+        
         if (!this.state.walletAddress) {
+            console.log('⚠️ No wallet, using localStorage');
             this.loadCreditsFromLocalStorage();
             return;
         }
         
         if (this.isAuthor()) {
+            console.log('👑 Author detected - unlimited credits');
             this.state.credits = {
                 textUsed: 0, imageUsed: 0, voiceUsed: 0,
                 extraCredits: 999999,
@@ -228,6 +239,21 @@ const AIStudio = {
             return;
         }
         
+        // Сначала устанавливаем дефолтные лимиты по уровню
+        const imageLimit = this.getLimitByLevel('image');
+        const voiceLimit = this.getLimitByLevel('voice');
+        console.log('📊 Level:', this.state.level, '→ Limits: image=', imageLimit, 'voice=', voiceLimit);
+        
+        this.state.credits = {
+            textUsed: 0, imageUsed: 0, voiceUsed: 0,
+            extraCredits: 0,
+            dailyImageLimit: imageLimit,
+            dailyVoiceLimit: voiceLimit,
+            lastResetDate: new Date().toISOString().split('T')[0]
+        };
+        this.syncLimitsFromCredits();
+        
+        // Пробуем загрузить из Supabase
         if (window.SupabaseClient?.client) {
             try {
                 const { data, error } = await SupabaseClient.client
@@ -238,7 +264,7 @@ const AIStudio = {
                 
                 if (error) {
                     console.warn('Credits load error:', error);
-                    this.loadCreditsFromLocalStorage();
+                    this.saveCreditsToLocalStorage();
                     return;
                 }
                 
@@ -246,13 +272,15 @@ const AIStudio = {
                     const record = data[0];
                     const today = new Date().toISOString().split('T')[0];
                     
+                    console.log('✅ Credits found in Supabase:', record);
+                    
                     if (record.last_reset_date !== today) {
                         await this.resetDailyCredits();
                         this.state.credits = {
                             textUsed: 0, imageUsed: 0, voiceUsed: 0,
                             extraCredits: record.extra_credits || 0,
-                            dailyImageLimit: record.daily_image_limit || this.getLimitByLevel('image'),
-                            dailyVoiceLimit: record.daily_voice_limit || this.getLimitByLevel('voice'),
+                            dailyImageLimit: record.daily_image_limit || imageLimit,
+                            dailyVoiceLimit: record.daily_voice_limit || voiceLimit,
                             lastResetDate: today
                         };
                     } else {
@@ -261,23 +289,25 @@ const AIStudio = {
                             imageUsed: record.image_used || 0,
                             voiceUsed: record.voice_used || 0,
                             extraCredits: record.extra_credits || 0,
-                            dailyImageLimit: record.daily_image_limit || this.getLimitByLevel('image'),
-                            dailyVoiceLimit: record.daily_voice_limit || this.getLimitByLevel('voice'),
+                            dailyImageLimit: record.daily_image_limit || imageLimit,
+                            dailyVoiceLimit: record.daily_voice_limit || voiceLimit,
                             lastResetDate: record.last_reset_date
                         };
                     }
+                    this.syncLimitsFromCredits();
                 } else {
+                    console.log('📝 No credits record, creating new one...');
                     await this.createCreditsRecord();
+                    this.syncLimitsFromCredits();
                 }
-                
-                this.syncLimitsFromCredits();
                 
             } catch (e) {
                 console.warn('Credits exception:', e);
-                this.loadCreditsFromLocalStorage();
+                this.saveCreditsToLocalStorage();
             }
         } else {
-            this.loadCreditsFromLocalStorage();
+            console.log('⚠️ Supabase not available, using localStorage');
+            this.saveCreditsToLocalStorage();
         }
     },
     
@@ -538,7 +568,13 @@ const AIStudio = {
             const response = await fetch('/api/ai/image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, format, style, userApiKey })
+                body: JSON.stringify({ 
+                    prompt, 
+                    format, 
+                    style, 
+                    userApiKey,
+                    wallet: this.state.walletAddress  // Для серверной проверки кредитов
+                })
             });
             
             const data = await response.json();
@@ -583,7 +619,15 @@ const AIStudio = {
             const response = await fetch('/api/ai/voice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, voice, language, stability, clarity, userApiKey })
+                body: JSON.stringify({ 
+                    text, 
+                    voice, 
+                    language, 
+                    stability, 
+                    clarity, 
+                    userApiKey,
+                    wallet: this.state.walletAddress  // Для серверной проверки кредитов
+                })
             });
             
             const data = await response.json();
