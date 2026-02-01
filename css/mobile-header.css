@@ -1,228 +1,148 @@
 /* =====================================================
-   MOBILE HEADER v3.0 - ПОЛНОЕ СКРЫТИЕ НА МОБИЛКАХ
+   AI STUDIO MOBILE v4.0 - ПРОСТОЕ СКРЫТИЕ HEADER
    
-   На мобилках < 768px:
-   - Header ПОЛНОСТЬЮ скрыт
-   - Маленькая кнопка ☰ для показа
-   - При нажатии header выезжает сверху
+   Этот CSS работает ТОЛЬКО на ai-studio.html
+   потому что использует класс .studio-header
+   (такого класса нет на других страницах)
    ===================================================== */
-
-/* ═══════════════════════════════════════════════════════
-   КНОПКА МЕНЮ (показать header)
-   ═══════════════════════════════════════════════════════ */
-.mobile-menu-btn {
-    display: none;
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1001;
-    width: 44px;
-    height: 44px;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    border: none;
-    border-radius: 12px;
-    color: #fff;
-    font-size: 20px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-    transition: all 0.3s ease;
-}
-
-.mobile-menu-btn:active {
-    transform: scale(0.95);
-}
-
-/* Когда header открыт - меняем иконку */
-body.header-open .mobile-menu-btn {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-/* ═══════════════════════════════════════════════════════
-   МИНИ-СТАТУС (вместо огромного header)
-   ═══════════════════════════════════════════════════════ */
-.mobile-mini-bar {
-    display: none;
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    right: 60px;
-    z-index: 1000;
-    background: rgba(20, 20, 40, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 8px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    color: #fff;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.mobile-mini-bar .mini-title {
-    font-weight: 600;
-    color: #FFD700;
-}
-
-.mobile-mini-bar .mini-credits {
-    display: flex;
-    gap: 8px;
-    font-size: 11px;
-}
-
-.mobile-mini-bar .mini-credits span {
-    background: rgba(255,255,255,0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
-}
 
 /* ═══════════════════════════════════════════════════════
    МОБИЛЬНЫЕ СТИЛИ (< 768px)
    ═══════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
     
-    /* Показываем кнопку меню и мини-бар */
-    .mobile-menu-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .mobile-mini-bar {
-        display: flex;
-    }
-    
-    /* СКРЫВАЕМ HEADER ПОЛНОСТЬЮ */
+    /* ПОЛНОСТЬЮ СКРЫВАЕМ HEADER AI STUDIO */
     .studio-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 999;
-        transform: translateY(-100%);
-        opacity: 0;
-        pointer-events: none;
-        transition: transform 0.3s ease, opacity 0.3s ease;
-        background: rgba(15, 15, 30, 0.98);
-        backdrop-filter: blur(10px);
-        padding: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        display: none !important;
     }
     
-    /* Когда header ОТКРЫТ */
-    body.header-open .studio-header {
-        transform: translateY(0);
-        opacity: 1;
-        pointer-events: auto;
+    /* Trial/Credits баннер - компактнее */
+    #trialBanner {
+        position: relative !important;
+        margin: 0 !important;
     }
     
-    /* Когда header открыт - скрываем мини-бар */
-    body.header-open .mobile-mini-bar {
-        opacity: 0;
-        pointer-events: none;
+    #trialBanner > div {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        border-radius: 0 !important;
     }
     
-    /* Overlay за header (затемнение) */
-    .header-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 998;
-    }
-    
-    body.header-open .header-overlay {
-        display: block;
-    }
-    
-    /* КОНТЕНТ - поднимаем вверх */
+    /* Табы поднимаем вверх (сразу после баннера) */
     .content-tabs {
-        margin-top: 60px !important;
-        padding-top: 0 !important;
+        margin-top: 5px !important;
+        padding: 5px !important;
+        gap: 4px !important;
     }
     
+    /* Табы - компактнее */
+    .tab-btn {
+        padding: 10px 6px !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        min-width: 0 !important;
+    }
+    
+    .tab-btn .tab-icon {
+        font-size: 20px !important;
+    }
+    
+    .tab-btn .tab-name {
+        font-size: 10px !important;
+    }
+    
+    .tab-btn .coming-soon {
+        font-size: 8px !important;
+        padding: 1px 3px !important;
+    }
+    
+    /* Основная область */
     .studio-main {
         margin-top: 0 !important;
-        padding-top: 10px !important;
+        padding: 10px !important;
     }
     
-    /* Trial banner - если есть */
-    #trialBanner {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1002;
+    /* Шаблоны - скрываем (экономим место) */
+    .templates-panel {
+        display: none !important;
     }
     
-    /* Если есть баннер - сдвигаем мини-бар */
-    #trialBanner:not(:empty) ~ .mobile-mini-bar,
-    #trialBanner[style*="block"] ~ .mobile-mini-bar {
-        top: 60px;
+    /* Генерация карточки */
+    .generation-card {
+        padding: 15px !important;
+        margin: 0 !important;
     }
     
-    #trialBanner:not(:empty) ~ .mobile-menu-btn,
-    #trialBanner[style*="block"] ~ .mobile-menu-btn {
-        top: 60px;
+    .generation-card h2 {
+        font-size: 18px !important;
+        margin-bottom: 8px !important;
     }
     
-    #trialBanner:not(:empty) ~ .content-tabs,
-    #trialBanner[style*="block"] ~ .content-tabs {
-        margin-top: 110px !important;
+    .generation-card .description {
+        font-size: 12px !important;
+        margin-bottom: 12px !important;
     }
     
-    /* Header внутренняя компоновка на мобилке */
-    .studio-header {
-        flex-direction: column;
-        gap: 12px;
+    /* Форма */
+    .form-group {
+        margin-bottom: 12px !important;
     }
     
-    .studio-header .header-left,
-    .studio-header .header-center,
-    .studio-header .header-right {
-        width: 100%;
-        justify-content: center;
+    .form-group label {
+        font-size: 12px !important;
+        margin-bottom: 4px !important;
     }
     
-    .studio-header .header-buttons {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        width: 100%;
+    .form-textarea {
+        min-height: 80px !important;
+        font-size: 14px !important;
+        padding: 10px !important;
     }
     
-    .studio-header .limits-display {
-        justify-content: center;
+    .form-select {
+        padding: 10px !important;
+        font-size: 14px !important;
     }
     
-    .studio-header .lang-switcher {
-        justify-content: center;
+    /* Кнопка генерации */
+    .btn-generate {
+        width: 100% !important;
+        padding: 14px 20px !important;
+        font-size: 16px !important;
     }
     
-    .studio-header .wallet-info {
-        text-align: center;
+    /* Результаты */
+    .result-area {
+        padding: 12px !important;
+        margin-top: 15px !important;
     }
     
-    /* Кнопка закрытия header */
-    .header-close-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 36px;
-        height: 36px;
-        background: rgba(239, 68, 68, 0.2);
-        border: 1px solid rgba(239, 68, 68, 0.5);
-        border-radius: 8px;
-        color: #ef4444;
-        font-size: 18px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .result-area h3 {
+        font-size: 14px !important;
+    }
+    
+    .result-content {
+        font-size: 14px !important;
+        padding: 10px !important;
+    }
+    
+    .result-actions {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        margin-top: 10px !important;
+    }
+    
+    .result-actions .btn {
+        flex: 1 1 45% !important;
+        min-width: 45% !important;
+        padding: 10px 8px !important;
+        font-size: 11px !important;
+    }
+    
+    /* Generation area на всю ширину */
+    .generation-area {
+        width: 100% !important;
+        max-width: none !important;
     }
 }
 
@@ -230,52 +150,39 @@ body.header-open .mobile-menu-btn {
    ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (< 480px)
    ═══════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-    .mobile-mini-bar {
-        padding: 6px 10px;
-        font-size: 11px;
-        right: 55px;
-    }
     
-    .mobile-menu-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-    }
-    
-    .content-tabs {
-        margin-top: 55px !important;
-    }
-    
-    /* Табы компактнее */
-    .tab-btn {
-        padding: 8px 6px;
-        font-size: 11px;
-    }
-    
+    /* Скрываем названия табов, оставляем иконки */
     .tab-btn .tab-name {
-        display: none;
+        display: none !important;
+    }
+    
+    .tab-btn {
+        padding: 12px 8px !important;
     }
     
     .tab-btn .tab-icon {
-        font-size: 18px;
+        font-size: 22px !important;
+    }
+    
+    .generation-card {
+        padding: 12px !important;
+    }
+    
+    .generation-card h2 {
+        font-size: 16px !important;
+    }
+    
+    #trialBanner > div {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
     }
 }
 
 /* ═══════════════════════════════════════════════════════
-   ДЕСКТОП - БЕЗ ИЗМЕНЕНИЙ
+   ДЕСКТОП - ВСЁ КАК БЫЛО
    ═══════════════════════════════════════════════════════ */
 @media (min-width: 769px) {
-    .mobile-menu-btn,
-    .mobile-mini-bar,
-    .header-overlay,
-    .header-close-btn {
-        display: none !important;
-    }
-    
     .studio-header {
-        transform: none !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-        position: relative !important;
+        display: flex !important;
     }
 }
