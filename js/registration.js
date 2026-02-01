@@ -21,10 +21,12 @@
 // ROOT GW ID — главный аккаунт системы
 const ROOT_GW_ID = window.CONFIG?.ROOT_GW_ID || 'GW9729645';
 
-// Два FOUNDER аккаунта для рандомизации новых пользователей
+// Соавторы для рандомизации новых пользователей без реферала
+// Берём из CONFIG (только соавторы, не OWNER)
 const FOUNDERS = window.CONFIG?.COAUTHORS?.map(c => ({ gwId: c.gwId, tempId: null })) || [
-    { gwId: 'GW7346221', tempId: null },
-    { gwId: 'GW1514866', tempId: null }
+    { gwId: 'GW7346221', tempId: null },  // Соавтор 1
+    { gwId: 'GW1514866', tempId: null },  // Соавтор 2
+    { gwId: 'GW7649513', tempId: null }   // Соавтор 3
 ];
 
 // Максимальная глубина распространения контактов вверх
