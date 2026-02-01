@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Supabase Table Validator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #00ff00;
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #FFD700; text-align: center; margin-bottom: 30px; }
+        h2 { color: #8b5cf6; border-bottom: 1px solid #8b5cf6; padding-bottom: 8px; }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: scale(1.05); }
+        button.danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        button.success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        
+        .log-container {
+            background: rgba(0,0,0,0.8);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+        }
+        
+        .error { color: #ef4444; }
+        .success { color: #10b981; }
+        .warning { color: #f59e0b; }
+        .info { color: #3b82f6; }
+        
+        .table-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        
+        .table-card h3 {
+            color: #FFD700;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .column-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px;
+        }
+        
+        .column-item {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .column-item .type {
+            color: #8b5cf6;
+            font-size: 10px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-ok { background: #10b981; color: #fff; }
+        .status-error { background: #ef4444; color: #fff; }
+        .status-warning { background: #f59e0b; color: #000; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Supabase Table Validator</h1>
+        
+        <div class="controls">
+            <button onclick="checkConnection()">1️⃣ Подключение</button>
+            <button onclick="validateAllTables()">2️⃣ Проверить все таблицы</button>
+            <button onclick="checkAiCredits()">3️⃣ Таблица AI Credits</button>
+            <button onclick="checkUserIdLinks()">4️⃣ Таблица user_id_links</button>
+            <button onclick="listAllTables()">5️⃣ Список всех таблиц</button>
+            <button onclick="findProblems()">6️⃣ Найти проблемы</button>
+            <button onclick="clearLog()">🗑️ Очистить</button>
+        </div>
+        
+        <div id="tables-info"></div>
+        
+        <h2>📋 Лог</h2>
+        <div class="log-container">
+            <pre id="log"></pre>
+        </div>
+    </div>
+    
+    <script>
+        const SUPABASE_URL = 'https://imgpysvdosdsqucoghqa.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltZ3B5c3Zkb3Nkc3F1Y29naHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1NTU0ODYsImV4cCI6MjA4MjEzMTQ4Nn0.HTRDARe0DkeyI4et9I5xcElToiHzrfJTr2kFpwoik0Y';
+        
+        let client = null;
+        
+        // Ожидаемая структура таблиц
+        const EXPECTED_TABLES = {
+            'users': {
+                required: ['temp_id', 'name', 'messenger', 'contact'],
+                optional: ['gw_id', 'wallet_address', 'gw_level', 'language', 'push_consent', 'referrer_temp_id', 'referrer_gw_id', 'created_at']
+            },
+            'contacts': {
+                required: ['id', 'owner_temp_id', 'name', 'messenger', 'contact'],
+                optional: ['owner_gw_id', 'push_consent', 'source', 'source_card_id', 'status', 'created_at']
+            },
+            'cards': {
+                required: ['id', 'card_code', 'title', 'message'],
+                optional: ['owner_temp_id', 'owner_gw_id', 'template_id', 'image_url', 'created_at']
+            },
+            'user_id_links': {
+                required: ['wallet_address'],
+                optional: ['cg_id', 'gw_id', 'gw_level', 'created_at', 'updated_at']
+            },
+            'ai_credits': {
+                required: ['wallet_address', 'credits_balance', 'credits_used_today', 'daily_limit'],
+                optional: ['last_reset_date', 'total_earned', 'total_purchased', 'is_blocked', 'created_at', 'updated_at']
+            }
+        };
+        
+        function log(msg, type = 'info') {
+            const el = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const cls = type;
+            
+            if (typeof msg === 'object') {
+                el.innerHTML += `<span class="${cls}">[${time}]</span> ${JSON.stringify(msg, null, 2)}\n\n`;
+            } else {
+                el.innerHTML += `<span class="${cls}">[${time}]</span> ${msg}\n\n`;
+            }
+            el.scrollTop = el.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('tables-info').innerHTML = '';
+        }
+        
+        async function checkConnection() {
+            log('🔌 Подключение к Supabase...', 'info');
+            try {
+                client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                log('✅ Клиент создан', 'success');
+                
+                // Тестовый запрос
+                const { data, error } = await client.from('users').select('count').limit(1);
+                if (error) {
+                    log('❌ Ошибка подключения: ' + error.message, 'error');
+                } else {
+                    log('✅ Подключение успешно!', 'success');
+                }
+            } catch (e) {
+                log('❌ Исключение: ' + e.message, 'error');
+            }
+        }
+        
+        async function validateAllTables() {
+            if (!client) await checkConnection();
+            
+            log('📋 Проверка всех таблиц...', 'info');
+            
+            const tablesInfo = document.getElementById('tables-info');
+            tablesInfo.innerHTML = '';
+            
+            for (const [tableName, schema] of Object.entries(EXPECTED_TABLES)) {
+                await validateTable(tableName, schema, tablesInfo);
+            }
+        }
+        
+        async function validateTable(tableName, schema, container) {
+            log(`\n🔍 Проверка таблицы: ${tableName}`, 'info');
+            
+            try {
+                // Получаем одну запись для анализа структуры
+                const { data, error } = await client
+                    .from(tableName)
+                    .select('*')
+                    .limit(1);
+                
+                if (error) {
+                    log(`❌ Ошибка: ${error.message}`, 'error');
+                    renderTableCard(container, tableName, null, error.message);
+                    return;
+                }
+                
+                // Получаем количество записей
+                const { count } = await client
+                    .from(tableName)
+                    .select('*', { count: 'exact', head: true });
+                
+                // Анализируем колонки
+                const columns = data && data.length > 0 ? Object.keys(data[0]) : [];
+                
+                // Проверяем обязательные поля
+                const missingRequired = schema.required.filter(col => !columns.includes(col));
+                const extraColumns = columns.filter(col => 
+                    !schema.required.includes(col) && !schema.optional.includes(col)
+                );
+                
+                if (missingRequired.length > 0) {
+                    log(`⚠️ Отсутствуют обязательные поля: ${missingRequired.join(', ')}`, 'warning');
+                }
+                
+                if (extraColumns.length > 0) {
+                    log(`ℹ️ Дополнительные поля: ${extraColumns.join(', ')}`, 'info');
+                }
+                
+                log(`✅ Таблица ${tableName}: ${count || 0} записей, ${columns.length} колонок`, 'success');
+                
+                renderTableCard(container, tableName, {
+                    columns,
+                    count: count || 0,
+                    missingRequired,
+                    extraColumns,
+                    schema
+                });
+                
+            } catch (e) {
+                log(`❌ Исключение: ${e.message}`, 'error');
+                renderTableCard(container, tableName, null, e.message);
+            }
+        }
+        
+        function renderTableCard(container, tableName, info, error = null) {
+            const card = document.createElement('div');
+            card.className = 'table-card';
+            
+            if (error) {
+                card.innerHTML = `
+                    <h3>📊 ${tableName} <span class="status-badge status-error">ERROR</span></h3>
+                    <p class="error">${error}</p>
+                `;
+            } else {
+                const status = info.missingRequired.length > 0 ? 'warning' : 'ok';
+                const statusText = status === 'ok' ? 'OK' : 'WARNING';
+                
+                card.innerHTML = `
+                    <h3>📊 ${tableName} <span class="status-badge status-${status}">${statusText}</span></h3>
+                    <p>📦 Записей: <strong>${info.count}</strong> | Колонок: <strong>${info.columns.length}</strong></p>
+                    ${info.missingRequired.length > 0 ? `<p class="warning">⚠️ Отсутствуют: ${info.missingRequired.join(', ')}</p>` : ''}
+                    ${info.extraColumns.length > 0 ? `<p class="info">➕ Дополнительные: ${info.extraColumns.join(', ')}</p>` : ''}
+                    <div class="column-list">
+                        ${info.columns.map(col => {
+                            const isRequired = info.schema.required.includes(col);
+                            const isOptional = info.schema.optional.includes(col);
+                            const type = isRequired ? '🔴 required' : (isOptional ? '🟡 optional' : '🔵 extra');
+                            return `<div class="column-item">${col} <span class="type">${type}</span></div>`;
+                        }).join('')}
+                    </div>
+                `;
+            }
+            
+            container.appendChild(card);
+        }
+        
+        async function checkAiCredits() {
+            if (!client) await checkConnection();
+            
+            log('\n💳 Проверка таблицы ai_credits...', 'info');
+            
+            try {
+                const { data, error } = await client
+                    .from('ai_credits')
+                    .select('*')
+                    .limit(5);
+                
+                if (error) {
+                    log(`❌ Ошибка: ${error.message}`, 'error');
+                    log(`💡 Возможно таблица не существует. Создайте её в Supabase:`, 'warning');
+                    log(`
+CREATE TABLE ai_credits (
+    id SERIAL PRIMARY KEY,
+    wallet_address TEXT UNIQUE NOT NULL,
+    credits_balance INTEGER DEFAULT 0,
+    credits_used_today INTEGER DEFAULT 0,
+    daily_limit INTEGER DEFAULT 3,
+    last_reset_date DATE,
+    total_earned INTEGER DEFAULT 0,
+    total_purchased INTEGER DEFAULT 0,
+    is_blocked BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+                    `, 'info');
+                    return;
+                }
+                
+                log(`✅ Найдено ${data?.length || 0} записей`, 'success');
+                if (data && data.length > 0) {
+                    log('Пример записи:', 'info');
+                    log(data[0], 'info');
+                }
+                
+            } catch (e) {
+                log(`❌ Исключение: ${e.message}`, 'error');
+            }
+        }
+        
+        async function checkUserIdLinks() {
+            if (!client) await checkConnection();
+            
+            log('\n🔗 Проверка таблицы user_id_links...', 'info');
+            
+            try {
+                const { data, error } = await client
+                    .from('user_id_links')
+                    .select('*')
+                    .limit(5);
+                
+                if (error) {
+                    log(`❌ Ошибка: ${error.message}`, 'error');
+                    return;
+                }
+                
+                log(`✅ Найдено ${data?.length || 0} записей`, 'success');
+                if (data && data.length > 0) {
+                    log('Пример записи:', 'info');
+                    log(data[0], 'info');
+                }
+                
+            } catch (e) {
+                log(`❌ Исключение: ${e.message}`, 'error');
+            }
+        }
+        
+        async function listAllTables() {
+            if (!client) await checkConnection();
+            
+            log('\n📋 Попытка получить список таблиц...', 'info');
+            log('ℹ️ Supabase не даёт прямой доступ к списку таблиц через anon key', 'warning');
+            log('Проверяем известные таблицы:', 'info');
+            
+            const knownTables = ['users', 'contacts', 'cards', 'user_id_links', 'ai_credits', 'assistant_progress', 'user_templates'];
+            
+            for (const table of knownTables) {
+                try {
+                    const { count, error } = await client
+                        .from(table)
+                        .select('*', { count: 'exact', head: true });
+                    
+                    if (error) {
+                        log(`❌ ${table}: не существует или нет доступа`, 'error');
+                    } else {
+                        log(`✅ ${table}: ${count || 0} записей`, 'success');
+                    }
+                } catch (e) {
+                    log(`❌ ${table}: ошибка - ${e.message}`, 'error');
+                }
+            }
+        }
+        
+        async function findProblems() {
+            if (!client) await checkConnection();
+            
+            log('\n🔍 Поиск проблем...', 'info');
+            
+            const problems = [];
+            
+            // 1. Проверяем users без wallet_address
+            try {
+                const { data: usersNoWallet } = await client
+                    .from('users')
+                    .select('temp_id, gw_id, name')
+                    .is('wallet_address', null)
+                    .limit(10);
+                
+                if (usersNoWallet && usersNoWallet.length > 0) {
+                    log(`⚠️ Пользователей без wallet: ${usersNoWallet.length}`, 'warning');
+                    problems.push(`${usersNoWallet.length} users without wallet`);
+                }
+            } catch (e) {}
+            
+            // 2. Проверяем contacts с archived статусом
+            try {
+                const { count: archivedCount } = await client
+                    .from('contacts')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'archived');
+                
+                if (archivedCount > 0) {
+                    log(`ℹ️ Архивированных контактов: ${archivedCount}`, 'info');
+                }
+            } catch (e) {}
+            
+            // 3. Проверяем ai_credits с исчерпанным лимитом
+            try {
+                const { data: exhausted } = await client
+                    .from('ai_credits')
+                    .select('wallet_address, credits_used_today, daily_limit')
+                    .gte('credits_used_today', 'daily_limit')
+                    .limit(10);
+                
+                if (exhausted && exhausted.length > 0) {
+                    log(`ℹ️ Пользователей с исчерпанным лимитом: ${exhausted.length}`, 'info');
+                }
+            } catch (e) {}
+            
+            // 4. Проверяем дубликаты в user_id_links
+            try {
+                const { data: links } = await client
+                    .from('user_id_links')
+                    .select('wallet_address')
+                    .limit(1000);
+                
+                if (links) {
+                    const wallets = links.map(l => l.wallet_address);
+                    const duplicates = wallets.filter((w, i) => wallets.indexOf(w) !== i);
+                    if (duplicates.length > 0) {
+                        log(`⚠️ Дубликаты wallet в user_id_links: ${duplicates.length}`, 'warning');
+                        problems.push(`${duplicates.length} duplicate wallets`);
+                    }
+                }
+            } catch (e) {}
+            
+            if (problems.length === 0) {
+                log('✅ Критических проблем не найдено!', 'success');
+            } else {
+                log(`\n⚠️ Найдено проблем: ${problems.length}`, 'warning');
+                problems.forEach(p => log(`  - ${p}`, 'warning'));
+            }
+        }
+        
+        // Автозапуск
+        checkConnection();
+    </script>
+</body>
+</html>
