@@ -9,6 +9,52 @@
     <!-- Стили CardGift -->
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/ai-studio.css">
+    
+    <!-- Mobile: Header прячется при скролле вниз -->
+    <style>
+    @media (max-width: 768px) {
+        .studio-header {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(15, 15, 30, 0.98) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+            padding: 10px 15px !important;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .studio-header.header-hidden {
+            transform: translateY(-100%);
+        }
+        .content-tabs {
+            margin-top: 180px !important;
+            position: relative;
+            z-index: 1;
+        }
+        .studio-main {
+            padding-top: 10px !important;
+        }
+        #trialBanner {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1001;
+        }
+        #trialBanner:not(:empty) ~ .studio-header,
+        #trialBanner[style*="block"] ~ .studio-header {
+            top: 45px !important;
+        }
+        #trialBanner:not(:empty) ~ .content-tabs {
+            margin-top: 220px !important;
+        }
+    }
+    </style>
 </head>
 <body>
     <!-- Основной контент - БЕЗ ЗАСТАВКИ -->
@@ -774,5 +820,43 @@
     <script src="modules/assistant/assistant-ui.js"></script>
     <script src="modules/assistant/assistant-init.js"></script>
     <script src="modules/assistant/dashboard-integration.js"></script>
+    
+    <!-- Mobile: Header прячется при скролле -->
+    <script>
+    (function() {
+        // Только для мобилок
+        if (window.innerWidth > 768) return;
+        
+        const header = document.querySelector('.studio-header');
+        if (!header) return;
+        
+        let lastScrollY = 0;
+        let ticking = false;
+        
+        function updateHeader() {
+            const currentScrollY = window.scrollY;
+            
+            if (currentScrollY > lastScrollY && currentScrollY > 50) {
+                // Скролл ВНИЗ - прячем
+                header.classList.add('header-hidden');
+            } else {
+                // Скролл ВВЕРХ - показываем
+                header.classList.remove('header-hidden');
+            }
+            
+            lastScrollY = currentScrollY;
+            ticking = false;
+        }
+        
+        window.addEventListener('scroll', function() {
+            if (!ticking) {
+                requestAnimationFrame(updateHeader);
+                ticking = true;
+            }
+        }, { passive: true });
+        
+        console.log('📱 Mobile header scroll enabled');
+    })();
+    </script>
 </body>
 </html>
