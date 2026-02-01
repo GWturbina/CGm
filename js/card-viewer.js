@@ -1195,18 +1195,29 @@ function handleMarqueeClick() {
         cardId: cardData?.cardId || 'demo'
     });
     
-    const refId = cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || '';
+    // ═══════════════════════════════════════════════════════════
+    // Приоритет для refId: owner_gw_id > userId > walletAddress > actualCreator
+    // owner_gw_id - это GW ID владельца открытки (например GW9729645)
+    // ═══════════════════════════════════════════════════════════
+    const refId = cardData?.owner_gw_id || cardData?.ownerGwId || 
+                  cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || '';
     
     if (cardData && cardData.marqueeUrl && cardData.marqueeUrl.trim()) {
         let cleanedUrl = cleanUrl(cardData.marqueeUrl);
         if (cleanedUrl) {
-            if (cleanedUrl.includes('registration') && refId) {
+            // Добавляем ref к ЛЮБОМУ URL (не только registration)
+            if (refId && !cleanedUrl.includes('ref=')) {
                 const separator = cleanedUrl.includes('?') ? '&' : '?';
                 cleanedUrl += `${separator}ref=${encodeURIComponent(refId)}&from=${encodeURIComponent(cardData.cardId || '')}`;
             }
             window.open(cleanedUrl, '_blank');
         } else {
-            window.open('/generator.html', '_blank');
+            // Переход на generator.html С параметром ref!
+            let genUrl = '/generator.html';
+            if (refId) {
+                genUrl += `?ref=${encodeURIComponent(refId)}&from=${encodeURIComponent(cardData?.cardId || '')}`;
+            }
+            window.open(genUrl, '_blank');
         }
     } else {
         let regUrl = '/registration.html';
@@ -1232,18 +1243,26 @@ function handleActionClick() {
         2000
     );
     
-    const refId = cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || '';
+    // Приоритет для refId: owner_gw_id > userId > walletAddress > actualCreator
+    const refId = cardData?.owner_gw_id || cardData?.ownerGwId || 
+                  cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || '';
     
     if (cardData && cardData.ctaUrl && cardData.ctaUrl.trim()) {
         let cleanedUrl = cleanUrl(cardData.ctaUrl);
         if (cleanedUrl) {
-            if (cleanedUrl.includes('registration') && refId) {
+            // Добавляем ref к ЛЮБОМУ URL (не только registration)
+            if (refId && !cleanedUrl.includes('ref=')) {
                 const separator = cleanedUrl.includes('?') ? '&' : '?';
                 cleanedUrl += `${separator}ref=${encodeURIComponent(refId)}&from=${encodeURIComponent(cardData.cardId || '')}`;
             }
             setTimeout(() => window.open(cleanedUrl, '_blank'), 500);
         } else {
-            setTimeout(() => window.open('/generator.html', '_blank'), 500);
+            // Переход на generator.html С параметром ref!
+            let genUrl = '/generator.html';
+            if (refId) {
+                genUrl += `?ref=${encodeURIComponent(refId)}&from=${encodeURIComponent(cardData?.cardId || '')}`;
+            }
+            setTimeout(() => window.open(genUrl, '_blank'), 500);
         }
     } else {
         let regUrl = '/registration.html';
@@ -1261,18 +1280,26 @@ function handleBottomBannerClick() {
         cardId: cardData?.cardId || 'demo'
     });
     
-    const refId = cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || '';
+    // Приоритет для refId: owner_gw_id > userId > walletAddress > actualCreator
+    const refId = cardData?.owner_gw_id || cardData?.ownerGwId || 
+                  cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || '';
     
     if (cardData && cardData.bannerUrl && cardData.bannerUrl.trim()) {
         let cleanedUrl = cleanUrl(cardData.bannerUrl);
         if (cleanedUrl) {
-            if (cleanedUrl.includes('registration') && refId) {
+            // Добавляем ref к ЛЮБОМУ URL (не только registration)
+            if (refId && !cleanedUrl.includes('ref=')) {
                 const separator = cleanedUrl.includes('?') ? '&' : '?';
                 cleanedUrl += `${separator}ref=${encodeURIComponent(refId)}&from=${encodeURIComponent(cardData.cardId || '')}`;
             }
             window.open(cleanedUrl, '_blank');
         } else {
-            window.open('/generator.html', '_blank');
+            // Переход на generator.html С параметром ref!
+            let genUrl = '/generator.html';
+            if (refId) {
+                genUrl += `?ref=${encodeURIComponent(refId)}&from=${encodeURIComponent(cardData?.cardId || '')}`;
+            }
+            window.open(genUrl, '_blank');
         }
     } else {
         let regUrl = '/registration.html';
