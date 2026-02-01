@@ -101,7 +101,7 @@ const LEVEL_COLORS = {
     12: '#FFD700'
 };
 
-// LEVEL_PRICES из CONFIG с fallback
+// LEVEL_PRICES - БЕРЁМ ТОЛЬКО ИЗ CONFIG! (единственный источник)
 const LEVEL_PRICES = window.CONFIG?.LEVEL_PRICES || {
     1: 0.0015, 2: 0.003, 3: 0.006, 4: 0.012, 5: 0.024, 6: 0.048,
     7: 0.096, 8: 0.192, 9: 0.384, 10: 0.768, 11: 1.536, 12: 3.072
