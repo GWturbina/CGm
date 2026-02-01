@@ -2421,16 +2421,29 @@ async function createCard() {
             // Это главное поле для передачи в registration.html
             // Приоритет: GW ID > CG ID > temp_id > ref из URL
             // ═══════════════════════════════════════════════════════════
-            owner_gw_id: localStorage.getItem('cardgift_gw_id') || 
-                         localStorage.getItem('cardgift_cg_id') ||
-                         localStorage.getItem('cardgift_temp_id') ||
-                         (currentUser?.gwId) || 
-                         (currentUser?.gw_id) ||
-                         (currentUser?.cgId) ||
-                         (currentUser?.cg_id) ||
-                         (currentUser?.temp_id) ||
-                         new URLSearchParams(window.location.search).get('ref') ||
-                         null,
+            owner_gw_id: (() => {
+                const gwId = localStorage.getItem('cardgift_gw_id');
+                const cgId = localStorage.getItem('cardgift_cg_id');
+                const tempId = localStorage.getItem('cardgift_temp_id');
+                const userGwId = currentUser?.gwId || currentUser?.gw_id;
+                const userCgId = currentUser?.cgId || currentUser?.cg_id;
+                const userTempId = currentUser?.temp_id;
+                const urlRef = new URLSearchParams(window.location.search).get('ref');
+                
+                console.log('🔍 owner_gw_id sources:', {
+                    'localStorage.cardgift_gw_id': gwId,
+                    'localStorage.cardgift_cg_id': cgId,
+                    'localStorage.cardgift_temp_id': tempId,
+                    'currentUser.gwId': userGwId,
+                    'currentUser.cgId': userCgId,
+                    'currentUser.temp_id': userTempId,
+                    'URL ref': urlRef
+                });
+                
+                const result = gwId || cgId || tempId || userGwId || userCgId || userTempId || urlRef || null;
+                console.log('✅ owner_gw_id selected:', result);
+                return result;
+            })(),
             
             // Текст (оба варианта для совместимости)
             greetingText: greetingText,
