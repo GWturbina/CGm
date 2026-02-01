@@ -4,30 +4,33 @@
    
    ИСПРАВЛЕНО:
    - Добавлен whitelist для бизнес-терминов
-   - Улучшена нормализация (не так агрессивно)
-   - Добавлено логирование для отладки
+   - Убрана агрессивная замена латиницы на кириллицу
+   - Улучшено логирование для отладки
    ===================================================== */
 
 const ContentFilter = {
     
-    // ⭐ WHITELIST - разрешённые слова (не блокировать!)
+    // ⭐ WHITELIST - разрешённые слова/фразы (НЕ блокировать!)
     whitelist: [
-        // Криптовалюты
+        // Криптовалюты и блокчейн
         'bnb', 'usdt', 'btc', 'eth', 'bitcoin', 'ethereum', 'криптовалюта', 'блокчейн', 'blockchain',
-        'web3', 'defi', 'nft', 'токен', 'token', 'смарт-контракт', 'smart contract',
+        'web3', 'web 3', 'defi', 'nft', 'токен', 'token', 'смарт-контракт', 'smart contract',
+        'opbnb', 'binance', 'metamask', 'safepal', 'trustwallet',
         
-        // Бизнес термины
-        'доход', 'выход', 'пенсия', 'заработок', 'прибыль', 'инвестиции',
-        'академия', 'обучение', 'курс', 'программа', 'cardgift', 'globalway',
+        // Бизнес термины  
+        'доход', 'выход', 'пенсия', 'заработок', 'прибыль', 'инвестиции', 'инвестор',
+        'академия', 'обучение', 'курс', 'программа', 'cardgift', 'globalway', 'globalstudio',
         
         // Маркетинг
         'рассылка', 'листовка', 'банер', 'баннер', 'реклама', 'слайд', 'презентация',
+        'маркетинг', 'продвижение', 'конверсия', 'воронка',
         
-        // Цифры и обозначения  
-        '1000', '100000', '21', '90', '10'
+        // Техническое
+        'youtube', 'telegram', 'whatsapp', 'instagram', 'facebook', 'tiktok',
+        'api', 'sdk', 'url', 'http', 'https', 'www'
     ],
     
-    // Мат (русский + английский)
+    // Мат (русский + английский) - ТОЛЬКО явные корни
     matRoots: [
         'хуй', 'хуя', 'хуе', 'хуи', 'хую',
         'пизд', 'пезд',
@@ -115,16 +118,13 @@ const ContentFilter = {
             return { allowed: true, reason: null, category: null };
         }
         
+        // Работаем с оригинальным текстом в нижнем регистре
+        const lowerText = text.toLowerCase();
+        
+        // Для обхода фильтра (замены цифр на буквы)
         const normalized = this.normalizeText(text);
         
-        console.log('🔍 ContentFilter checking:', text.substring(0, 100) + '...');
-        console.log('🔍 Normalized:', normalized.substring(0, 100) + '...');
-        
-        // ⭐ Сначала проверяем whitelist
-        const isWhitelisted = this.checkWhitelist(text);
-        if (isWhitelisted) {
-            console.log('✅ ContentFilter: Text contains whitelisted business terms');
-        }
+        console.log('🔍 ContentFilter checking:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
         
         const checks = [
             { words: this.matRoots, category: 'mat', reason: 'Нецензурная лексика запрещена' },
@@ -137,10 +137,9 @@ const ContentFilter = {
         ];
         
         for (const check of checks) {
-            const found = this.findForbiddenWord(normalized, check.words, text);
+            const found = this.findForbiddenWord(lowerText, normalized, check.words);
             if (found) {
                 console.log(`🚫 ContentFilter: blocked "${found}" (${check.category})`);
-                console.log(`🚫 Original text fragment with blocked word`);
                 return {
                     allowed: false,
                     reason: check.reason,
@@ -159,26 +158,17 @@ const ContentFilter = {
     },
     
     /**
-     * ⭐ Проверка whitelist
-     */
-    checkWhitelist(text) {
-        const lower = text.toLowerCase();
-        return this.whitelist.some(word => lower.includes(word.toLowerCase()));
-    },
-    
-    /**
-     * ⭐ УЛУЧШЕННАЯ нормализация (менее агрессивная)
+     * ⭐ БЕЗОПАСНАЯ нормализация - только для обхода фильтра через цифры
+     * НЕ заменяем латиницу на кириллицу!
      */
     normalizeText(text) {
         return text
             .toLowerCase()
-            // Только явные замены цифр на буквы (для обхода фильтра)
+            // Только замены цифр на буквы (для обхода типа "х0й" -> "хой")
             .replace(/0/g, 'о')
             .replace(/3/g, 'е')
             .replace(/4/g, 'а')
             .replace(/@/g, 'а')
-            .replace(/\$/g, 's')
-            // НЕ заменяем латинские буквы на кириллические - это вызывало ложные срабатывания!
             // Убираем повторяющиеся символы (ааааа -> аа)
             .replace(/(.)\1{2,}/g, '$1$1')
             .replace(/\s+/g, ' ')
@@ -188,22 +178,20 @@ const ContentFilter = {
     /**
      * ⭐ Улучшенный поиск запрещённых слов
      */
-    findForbiddenWord(normalizedText, wordList, originalText) {
-        const originalLower = originalText.toLowerCase();
-        
+    findForbiddenWord(lowerText, normalizedText, wordList) {
         for (const word of wordList) {
             const wordLower = word.toLowerCase();
             
-            // Проверяем в оригинальном тексте (более точно)
-            if (originalLower.includes(wordLower)) {
-                // Проверяем что это не часть разрешённого слова
-                if (!this.isPartOfWhitelistedWord(originalLower, wordLower)) {
+            // Проверяем в оригинальном тексте
+            if (lowerText.includes(wordLower)) {
+                // Проверяем что это НЕ часть разрешённого слова
+                if (!this.isPartOfWhitelistedWord(lowerText, wordLower)) {
                     return word;
                 }
             }
             
-            // Проверяем в нормализованном
-            if (normalizedText.includes(wordLower)) {
+            // Проверяем в нормализованном (для обхода через цифры)
+            if (normalizedText !== lowerText && normalizedText.includes(wordLower)) {
                 if (!this.isPartOfWhitelistedWord(normalizedText, wordLower)) {
                     return word;
                 }
@@ -218,8 +206,11 @@ const ContentFilter = {
      */
     isPartOfWhitelistedWord(text, foundWord) {
         for (const whiteWord of this.whitelist) {
-            if (whiteWord.toLowerCase().includes(foundWord) && text.includes(whiteWord.toLowerCase())) {
-                console.log(`ℹ️ "${foundWord}" is part of whitelisted "${whiteWord}", allowing`);
+            const whiteLower = whiteWord.toLowerCase();
+            // Если разрешённое слово содержит найденное "плохое" слово
+            // И текст содержит это разрешённое слово — пропускаем
+            if (whiteLower.includes(foundWord) && text.includes(whiteLower)) {
+                console.log(`ℹ️ "${foundWord}" is part of whitelisted "${whiteWord}", skipping`);
                 return true;
             }
         }
@@ -255,6 +246,19 @@ const ContentFilter = {
     addToWhitelist(word) {
         this.whitelist.push(word.toLowerCase());
         console.log(`✅ Added "${word}" to whitelist`);
+    },
+    
+    /**
+     * ⭐ Удалить слово из whitelist
+     */
+    removeFromWhitelist(word) {
+        const index = this.whitelist.indexOf(word.toLowerCase());
+        if (index > -1) {
+            this.whitelist.splice(index, 1);
+            console.log(`✅ Removed "${word}" from whitelist`);
+            return true;
+        }
+        return false;
     }
 };
 
