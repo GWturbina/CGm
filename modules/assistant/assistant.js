@@ -1,17 +1,22 @@
 /* =====================================================
-   VIRTUAL ASSISTANT - CORE MODULE v1.0
+   VIRTUAL ASSISTANT - CORE MODULE v1.1
    Основная логика виртуального помощника
    
-   Зависимости:
-   - LessonsData (lessons-data.js)
-   - Supabase client
+   ИСПРАВЛЕНО v1.1:
+   - Правильная работа с Supabase клиентом
+   - Защита от redeclaration
    ===================================================== */
+
+// Защита от повторного объявления
+if (typeof window.VirtualAssistant === 'undefined') {
 
 class VirtualAssistant {
     constructor(options = {}) {
         this.userId = options.userId || null;
         this.gwId = options.gwId || null;
-        this.supabase = options.supabase || window.supabase;
+        
+        // ⭐ ИСПРАВЛЕНО: Правильное получение Supabase клиента
+        this.supabase = this.getSupabaseClient(options.supabase);
         
         // Состояние
         this.state = {
@@ -24,7 +29,7 @@ class VirtualAssistant {
             completedTasks: [],
             completedLessons: [],
             earnedAchievements: [],
-            programStatus: 'active', // active, completed, paused
+            programStatus: 'active',
             lastActivity: null
         };
         
@@ -48,9 +53,34 @@ class VirtualAssistant {
         console.log('🤖 VirtualAssistant initialized');
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // ИНИЦИАЛИЗАЦИЯ
-    // ═══════════════════════════════════════════════════════════
+    // ⭐ НОВЫЙ МЕТОД: Правильное получение Supabase клиента
+    getSupabaseClient(providedClient) {
+        // Если передан клиент напрямую с методом from
+        if (providedClient && typeof providedClient.from === 'function') {
+            return providedClient;
+        }
+        
+        // Проверяем window.SupabaseClient (обёртка CardGift)
+        if (window.SupabaseClient && typeof window.SupabaseClient.getClient === 'function') {
+            const client = window.SupabaseClient.getClient();
+            if (client && typeof client.from === 'function') {
+                return client;
+            }
+        }
+        
+        // Проверяем window.supabaseClient
+        if (window.supabaseClient && typeof window.supabaseClient.from === 'function') {
+            return window.supabaseClient;
+        }
+        
+        // Проверяем window.supabase напрямую
+        if (window.supabase && typeof window.supabase.from === 'function') {
+            return window.supabase;
+        }
+        
+        console.warn('⚠️ VirtualAssistant: No valid Supabase client found, using localStorage');
+        return null;
+    }
     
     async init() {
         if (!this.userId) {
@@ -59,16 +89,9 @@ class VirtualAssistant {
         }
         
         try {
-            // Загружаем прогресс из БД
             await this.loadProgress();
-            
-            // Загружаем данные текущего дня
             this.loadCurrentDayData();
-            
-            // Проверяем пропущенные дни
             await this.checkMissedDays();
-            
-            // Проверяем достижения
             await this.checkAchievements();
             
             this.state.initialized = true;
@@ -83,10 +106,6 @@ class VirtualAssistant {
         }
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // РАБОТА С ПРОГРЕССОМ
-    // ═══════════════════════════════════════════════════════════
-    
     async loadProgress() {
         if (!this.supabase) {
             console.warn('⚠️ No Supabase client, using localStorage');
@@ -100,7 +119,7 @@ class VirtualAssistant {
                 .eq('user_id', this.userId)
                 .single();
             
-            if (error && error.code !== 'PGRST116') { // Not found is ok
+            if (error && error.code !== 'PGRST116') {
                 throw error;
             }
             
@@ -119,7 +138,6 @@ class VirtualAssistant {
                     lastActivity: data.last_activity_at
                 };
             } else {
-                // Создаём новую запись
                 await this.createProgress();
             }
             
@@ -144,7 +162,6 @@ class VirtualAssistant {
     }
     
     async saveProgress() {
-        // Сохраняем в localStorage как backup
         localStorage.setItem(`assistant_progress_${this.userId}`, JSON.stringify(this.state));
         
         if (!this.supabase) return true;
@@ -197,10 +214,6 @@ class VirtualAssistant {
         }
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // ДАННЫЕ ДНЕЙ И УРОКОВ
-    // ═══════════════════════════════════════════════════════════
-    
     loadCurrentDayData() {
         const day = this.state.currentDay;
         const week = Math.ceil(day / 7);
@@ -244,40 +257,23 @@ class VirtualAssistant {
         }
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // ВЫПОЛНЕНИЕ ЗАДАНИЙ
-    // ═══════════════════════════════════════════════════════════
-    
     async completeTask(taskId, data = {}) {
         if (this.state.completedTasks.includes(taskId)) {
-            console.log('Task already completed:', taskId);
             return { success: false, reason: 'already_completed' };
         }
         
-        // Находим задание
         const task = this.findTask(taskId);
         if (!task) {
-            console.error('Task not found:', taskId);
             return { success: false, reason: 'task_not_found' };
         }
         
-        // Добавляем очки
         const points = task.points || 0;
         this.state.totalPoints += points;
-        
-        // Отмечаем как выполненное
         this.state.completedTasks.push(taskId);
         
-        // Сохраняем в БД детали выполнения
         await this.saveTaskCompletion(taskId, task, data);
-        
-        // Проверяем завершение дня
         await this.checkDayCompletion();
-        
-        // Проверяем достижения
         await this.checkAchievements();
-        
-        // Сохраняем общий прогресс
         await this.saveProgress();
         
         this.triggerStateChange();
@@ -351,38 +347,27 @@ class VirtualAssistant {
         };
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // ПРОВЕРКА ЗАВЕРШЕНИЯ ДНЯ/НЕДЕЛИ/ПРОГРАММЫ
-    // ═══════════════════════════════════════════════════════════
-    
     async checkDayCompletion() {
         const dayProgress = this.getDayProgress(this.state.currentDay);
         
         if (dayProgress.isComplete && !this.state.completedDays.includes(this.state.currentDay)) {
-            // День завершён!
             this.state.completedDays.push(this.state.currentDay);
             
-            // Бонус за день
-            const dayBonus = this.lessonsData.config.points.dailyGoal || 100;
+            const dayBonus = this.lessonsData.config?.points?.dailyGoal || 100;
             this.state.totalPoints += dayBonus;
             
-            // Обновляем streak
             this.updateStreak();
             
-            // Callback
             if (this.onDayComplete) {
                 this.onDayComplete(this.state.currentDay, dayBonus);
             }
             
-            // Проверяем завершение недели
             await this.checkWeekCompletion();
             
-            // Переходим к следующему дню
             if (this.state.currentDay < 21) {
                 this.state.currentDay++;
                 this.loadCurrentDayData();
             } else {
-                // Программа завершена!
                 await this.completeProgram();
             }
         }
@@ -402,7 +387,7 @@ class VirtualAssistant {
         }
         
         if (allDaysComplete) {
-            const weekBonus = this.lessonsData.config.points.weekComplete || 500;
+            const weekBonus = this.lessonsData.config?.points?.weekComplete || 500;
             this.state.totalPoints += weekBonus;
             
             if (this.onWeekComplete) {
@@ -414,10 +399,9 @@ class VirtualAssistant {
     async completeProgram() {
         this.state.programStatus = 'completed';
         
-        const programBonus = this.lessonsData.config.points.programComplete || 2000;
+        const programBonus = this.lessonsData.config?.points?.programComplete || 2000;
         this.state.totalPoints += programBonus;
         
-        // Достижение "Выпускник"
         await this.awardAchievement('program_complete');
         
         if (this.onProgramComplete) {
@@ -428,7 +412,6 @@ class VirtualAssistant {
     }
     
     updateStreak() {
-        // Проверяем, был ли вчера активность
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
@@ -439,13 +422,10 @@ class VirtualAssistant {
             const daysDiff = Math.floor((today - lastActivity) / (1000 * 60 * 60 * 24));
             
             if (daysDiff === 1) {
-                // Продолжаем streak
                 this.state.streakDays++;
             } else if (daysDiff > 1) {
-                // Streak сбросился
                 this.state.streakDays = 1;
             }
-            // Если daysDiff === 0, уже был сегодня, ничего не меняем
         } else {
             this.state.streakDays = 1;
         }
@@ -453,17 +433,13 @@ class VirtualAssistant {
         this.state.lastActivity = new Date().toISOString();
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // ДОСТИЖЕНИЯ
-    // ═══════════════════════════════════════════════════════════
-    
     async checkAchievements() {
         const achievements = this.lessonsData.achievements || [];
         const newAchievements = [];
         
         for (const achievement of achievements) {
             if (this.state.earnedAchievements.includes(achievement.id)) {
-                continue; // Уже получено
+                continue;
             }
             
             if (this.checkAchievementCondition(achievement)) {
@@ -481,21 +457,13 @@ class VirtualAssistant {
         switch (condition.type) {
             case 'day_complete':
                 return this.state.completedDays.includes(condition.value);
-                
             case 'week_complete':
                 const weekDays = this.getWeekDays(condition.value);
                 return weekDays.every(d => this.state.completedDays.includes(d));
-                
             case 'task_complete':
                 return this.state.completedTasks.includes(condition.value);
-                
-            case 'contacts_count':
-                // Нужно проверить в таблице contacts
-                return false; // TODO: интеграция с contacts
-                
             case 'streak':
                 return this.state.streakDays >= condition.value;
-                
             default:
                 return false;
         }
@@ -521,7 +489,6 @@ class VirtualAssistant {
         this.state.earnedAchievements.push(achievementId);
         this.state.totalPoints += achievement.points || 0;
         
-        // Сохраняем в БД
         if (this.supabase) {
             try {
                 await this.supabase
@@ -537,7 +504,6 @@ class VirtualAssistant {
             }
         }
         
-        // Callback
         if (this.onAchievement) {
             this.onAchievement(achievement);
         }
@@ -552,10 +518,6 @@ class VirtualAssistant {
         }));
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // ПРОПУЩЕННЫЕ ДНИ
-    // ═══════════════════════════════════════════════════════════
-    
     async checkMissedDays() {
         if (!this.state.lastActivity) return;
         
@@ -565,25 +527,18 @@ class VirtualAssistant {
         
         if (daysDiff > 1) {
             console.log(`⚠️ User missed ${daysDiff - 1} days`);
-            // Можно отправить уведомление или показать сообщение
         }
     }
-    
-    // ═══════════════════════════════════════════════════════════
-    // СООБЩЕНИЯ И ПРИВЕТСТВИЯ
-    // ═══════════════════════════════════════════════════════════
     
     getGreeting() {
         const hour = new Date().getHours();
         
         if (hour < 12) {
-            // Поддержка обеих структур: morning.greeting или greeting
             const greeting = this.currentDayData?.morning?.greeting || this.currentDayData?.greeting;
             return greeting || this.getRandomMorningGreeting();
         } else if (hour < 18) {
             return `Добрый день! Продолжаем День ${this.state.currentDay}?`;
         } else {
-            // Поддержка обеих структур: evening.reflection или eveningReflection
             const evening = this.currentDayData?.evening?.reflection || this.currentDayData?.eveningReflection;
             return evening || this.getRandomEveningGreeting();
         }
@@ -610,10 +565,6 @@ class VirtualAssistant {
         return messages[Math.floor(Math.random() * messages.length)];
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // СТАТИСТИКА
-    // ═══════════════════════════════════════════════════════════
-    
     getStats() {
         return {
             currentDay: this.state.currentDay,
@@ -629,12 +580,7 @@ class VirtualAssistant {
         };
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // НАВИГАЦИЯ
-    // ═══════════════════════════════════════════════════════════
-    
     canAccessDay(dayNumber) {
-        // Можно открыть только текущий день или ранее завершённые
         return dayNumber <= this.state.currentDay;
     }
     
@@ -642,32 +588,18 @@ class VirtualAssistant {
         if (!this.canAccessDay(dayNumber)) {
             return false;
         }
-        
-        // Временно переключаемся для просмотра
-        const data = this.getDayData(dayNumber);
-        return data;
+        return this.getDayData(dayNumber);
     }
-    
-    // ═══════════════════════════════════════════════════════════
-    // СОБЫТИЯ
-    // ═══════════════════════════════════════════════════════════
     
     triggerStateChange() {
         if (this.onStateChange) {
             this.onStateChange(this.state);
         }
-        
-        // Dispatch custom event
         window.dispatchEvent(new CustomEvent('assistant:stateChange', {
             detail: this.state
         }));
     }
     
-    // ═══════════════════════════════════════════════════════════
-    // ПУБЛИЧНОЕ API
-    // ═══════════════════════════════════════════════════════════
-    
-    // Получить текущий день
     getCurrentDay() {
         return {
             number: this.state.currentDay,
@@ -676,22 +608,18 @@ class VirtualAssistant {
         };
     }
     
-    // Получить все задания текущего дня
     getTodayTasks() {
         return this.getTasksForDay(this.state.currentDay);
     }
     
-    // Получить теорию текущего дня
     getTodayTheory() {
         return this.currentDayData?.theory || null;
     }
     
-    // Получить уроки текущего дня
     getTodayLessons() {
         return this.currentDayData?.lessons || [];
     }
     
-    // Сбросить прогресс (для тестирования)
     async resetProgress() {
         this.state = {
             initialized: true,
@@ -713,10 +641,6 @@ class VirtualAssistant {
         
         console.log('🔄 Progress reset');
     }
-    
-    // ═══════════════════════════════════════════════════════════
-    // НАПОМИНАНИЯ ОБ АКАДЕМИИ
-    // ═══════════════════════════════════════════════════════════
     
     getAcademyReminder() {
         const day = this.state.currentDay;
@@ -769,11 +693,9 @@ class VirtualAssistant {
     }
 }
 
-// Экспорт
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = VirtualAssistant;
-}
-
 window.VirtualAssistant = VirtualAssistant;
-
 console.log('🤖 VirtualAssistant module loaded');
+
+} else {
+    console.log('🤖 VirtualAssistant already loaded, skipping');
+}
