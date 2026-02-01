@@ -115,12 +115,18 @@ const ARCHIVE_LIMITS = window.CONFIG?.LIMITS?.maxArchiveCards || {
     SUPER_ADMIN: 500, MANAGER: 1000, AUTHOR: -1
 };
 
-const ACTIVATION_PRICES = window.CONFIG?.ACTIVATION_PRICES || {
-    USER: '0.0015', MINI_ADMIN: '0.0225', ADMIN: '0.2145', SUPER_ADMIN: '0.2145'
-};
+// Убраны устаревшие ACTIVATION_PRICES - теперь используем LEVEL_PRICES из CONFIG
 
-const FOUNDERS_ADDRESSES = window.CONFIG?.FOUNDERS || window.FOUNDERS_ADDRESSES || [];
-const CENTRAL_FOUNDER = window.CONFIG?.CENTRAL_FOUNDER || '0x0099188030174e381e7a7ee36d2783ecc31b6728';
+// DEV кошельки (OWNER + соавторы) - берём из CONFIG
+const DEV_WALLETS = window.CONFIG?.DEV_WALLETS || [
+    '0x7bcd1753868895971e12448412cb3216d47884c8',  // OWNER
+    '0x9b49bd9c9458615e11c051afd1ebe983563b67ee',  // Соавтор 1
+    '0x03284a899147f5a07f82c622f34df92198671635',  // Соавтор 2
+    '0xa3496cacc8523421dd151f1d92a456c2dafa28c2'   // Соавтор 3
+];
+
+// Центральный кошелёк - OWNER
+const CENTRAL_WALLET = window.CONFIG?.CENTRAL_WALLET || '0x7bcd1753868895971e12448412cb3216d47884c8';
 
 // ===== БАЗОВЫЕ ПЕРЕВОДЫ =====
 const commonTranslations = {
@@ -551,24 +557,50 @@ async function checkNetwork() {
     }
 }
 
-function isFounder(address) {
+// ===== ПРОВЕРКА РОЛЕЙ =====
+
+/**
+ * Проверка - это OWNER?
+ */
+function isOwner(address) {
     if (!address) return false;
-    // Используем CONFIG.isFounder если доступен
-    if (window.CONFIG?.isFounder) {
-        return window.CONFIG.isFounder(address);
+    if (window.CONFIG?.isOwner) {
+        return window.CONFIG.isOwner(address);
     }
-    return FOUNDERS_ADDRESSES.some(addr => 
+    return address.toLowerCase() === '0x7bcd1753868895971e12448412cb3216d47884c8';
+}
+
+/**
+ * Проверка - это DEV кошелёк? (OWNER + соавторы)
+ */
+function isDevWallet(address) {
+    if (!address) return false;
+    if (window.CONFIG?.isDevWallet) {
+        return window.CONFIG.isDevWallet(address);
+    }
+    return DEV_WALLETS.some(addr => 
         addr.toLowerCase() === address.toLowerCase()
     );
 }
 
-function isAuthor(address) {
+/**
+ * Проверка - это соавтор?
+ */
+function isCoauthor(address) {
     if (!address) return false;
-    // Проверяем соавторов через CONFIG если доступен
     if (window.CONFIG?.isCoauthor) {
         return window.CONFIG.isCoauthor(address);
     }
-    return CENTRAL_FOUNDER.toLowerCase() === address.toLowerCase();
+    return false;
+}
+
+// Legacy алиасы для совместимости
+function isFounder(address) {
+    return isDevWallet(address);
+}
+
+function isAuthor(address) {
+    return isOwner(address);
 }
 
 // ===== КОПИРОВАНИЕ В БУФЕР =====
@@ -611,13 +643,17 @@ window.createSecureHash = createSecureHash;
 window.getWalletAddress = getWalletAddress;
 window.switchToOpBNB = switchToOpBNB;
 window.checkNetwork = checkNetwork;
-window.isFounder = isFounder;
-window.isAuthor = isAuthor;
+window.isOwner = isOwner;
+window.isDevWallet = isDevWallet;
+window.isCoauthor = isCoauthor;
+window.isFounder = isFounder; // Legacy
+window.isAuthor = isAuthor; // Legacy
 window.copyToClipboard = copyToClipboard;
 window.ARCHIVE_LIMITS = ARCHIVE_LIMITS;
-window.FOUNDERS_ADDRESSES = FOUNDERS_ADDRESSES;
-window.CENTRAL_FOUNDER = CENTRAL_FOUNDER;
+window.DEV_WALLETS = DEV_WALLETS;
+window.CENTRAL_WALLET = CENTRAL_WALLET;
 window.commonTranslations = commonTranslations;
 
-console.log('✅ CardGift Common JS v2.0 loaded');
+console.log('✅ CardGift Common JS v3.0 loaded');
 console.log('   CONFIG loaded:', !!window.CONFIG);
+console.log('   OWNER:', window.CONFIG?.OWNER?.wallet?.slice(0,10) + '...');
