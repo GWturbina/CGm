@@ -1,5 +1,125 @@
 // api/ai/voice.js
 // ElevenLabs Voice Generation - Extended Version with emotions, speed, languages
+// v2.0 - ДОБАВЛЕНА серверная проверка кредитов!
+
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// DEV кошельки - безлимит
+const DEV_WALLETS = [
+    '0x7bcd1753868895971e12448412cb3216d47884c8',
+    '0x9b49bd9c9458615e11c051afd1ebe983563b67ee',
+    '0x03284a899147f5a07f82c622f34df92198671635',
+    '0xa3496cacc8523421dd151f1d92a456c2dafa28c2'
+];
+
+// Проверка и списание кредита
+async function checkAndUseCredit(wallet, type) {
+    if (!wallet || !SUPABASE_URL || !SUPABASE_KEY) {
+        console.log('⚠️ No wallet or Supabase config - allowing');
+        return { allowed: true, reason: 'no_check' };
+    }
+    
+    const walletLower = wallet.toLowerCase();
+    
+    // DEV кошельки - безлимит
+    if (DEV_WALLETS.includes(walletLower)) {
+        return { allowed: true, reason: 'dev_wallet' };
+    }
+    
+    try {
+        // Получаем запись из ai_credits
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+            {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            }
+        );
+        
+        const data = await response.json();
+        
+        if (!data || data.length === 0) {
+            // Нет записи - создаём с 3 кредитами
+            await createCreditsRecord(walletLower);
+            return { allowed: true, reason: 'new_user' };
+        }
+        
+        const record = data[0];
+        const today = new Date().toISOString().split('T')[0];
+        const field = type === 'image' ? 'image_used' : 'voice_used';
+        const limitField = type === 'image' ? 'daily_image_limit' : 'daily_voice_limit';
+        
+        // Проверяем сброс дневного лимита
+        let usedToday = record[field] || 0;
+        if (record.last_reset_date !== today) {
+            usedToday = 0;
+        }
+        
+        const dailyLimit = record[limitField] || 3;
+        
+        if (usedToday >= dailyLimit) {
+            return { allowed: false, reason: 'limit_exceeded', used: usedToday, limit: dailyLimit };
+        }
+        
+        // Списываем кредит
+        const updateData = {
+            [field]: usedToday + 1,
+            last_reset_date: today,
+            updated_at: new Date().toISOString()
+        };
+        
+        await fetch(
+            `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(updateData)
+            }
+        );
+        
+        return { allowed: true, reason: 'credit_used', used: usedToday + 1, limit: dailyLimit };
+        
+    } catch (e) {
+        console.error('Credit check error:', e);
+        return { allowed: true, reason: 'error_fallback' };
+    }
+}
+
+async function createCreditsRecord(wallet) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits`,
+        {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                wallet_address: wallet,
+                text_used: 0,
+                image_used: 0,
+                voice_used: 0,
+                extra_credits: 0,
+                daily_image_limit: 3,
+                daily_voice_limit: 3,
+                last_reset_date: today,
+                created_at: new Date().toISOString()
+            })
+        }
+    );
+}
 
 module.exports = async function handler(req, res) {
     // CORS
@@ -24,11 +144,21 @@ module.exports = async function handler(req, res) {
             speed = 1.0,
             stability = 0.5,
             clarity = 0.75,
-            userApiKey 
+            userApiKey,
+            wallet
         } = req.body;
         
         if (!text) {
             return res.status(400).json({ error: 'Text required' });
+        }
+        
+        // СЕРВЕРНАЯ ПРОВЕРКА КРЕДИТОВ
+        const creditCheck = await checkAndUseCredit(wallet, 'voice');
+        if (!creditCheck.allowed) {
+            return res.status(403).json({ 
+                error: `🎤 Лимит исчерпан! Использовано ${creditCheck.used}/${creditCheck.limit} за сегодня`,
+                creditError: true
+            });
         }
         
         // Используем ключ пользователя или серверный
