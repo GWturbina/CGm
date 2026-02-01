@@ -111,7 +111,7 @@ const AIStudio = {
     },
     
     async init() {
-        console.log('🎬 AI Studio v3.1 initializing...');
+        console.log('🎬 AI Studio v3.2 initializing...');
         
         this.showMainContent();
         await this.autoConnectWallet();
@@ -125,18 +125,29 @@ const AIStudio = {
         this.updateVoiceSelect();
         this.updateUI();
         this.showCreditsInfo();
-        
-        // Показываем кнопку "Настройки API" для 8+ уровня
-        if (this.canUseOwnApi()) {
-            const btnApi = document.getElementById('btnSettingsApi');
-            if (btnApi) btnApi.style.display = 'inline-flex';
-        }
+        this.updateApiButtonVisibility();
         
         if (this.isAuthor()) this.showAuthorTools();
         
-        console.log('✅ AI Studio v3.1 initialized');
+        console.log('✅ AI Studio v3.2 initialized');
         console.log('📊 Credits:', this.state.credits);
         console.log('📊 Limits:', this.state.limits);
+    },
+    
+    // Показать/скрыть кнопку настроек API
+    updateApiButtonVisibility() {
+        const canUse = this.canUseOwnApi();
+        const btnApi = document.getElementById('btnSettingsApi');
+        if (btnApi) {
+            btnApi.style.display = canUse ? 'inline-flex' : 'none';
+            console.log('🔑 API Settings button:', canUse ? 'visible' : 'hidden', 
+                        '(level:', this.state.level, ', isAuthor:', this.isAuthor(), ')');
+        }
+        
+        // Также вызываем HTML функцию если есть
+        if (typeof window.updateClearButtonsVisibility === 'function') {
+            window.updateClearButtonsVisibility();
+        }
     },
     
     async autoConnectWallet() {
@@ -150,6 +161,18 @@ const AIStudio = {
             if (accounts?.length) {
                 this.state.walletAddress = accounts[0].toLowerCase();
                 console.log('💳 Wallet:', this.state.walletAddress);
+                
+                // Слушаем изменения аккаунта
+                window.ethereum.on('accountsChanged', async (newAccounts) => {
+                    if (newAccounts?.length) {
+                        this.state.walletAddress = newAccounts[0].toLowerCase();
+                        await this.loadUserData();
+                        await this.loadCredits();
+                        this.updateUI();
+                        this.showCreditsInfo();
+                        this.updateApiButtonVisibility();
+                    }
+                });
             }
         } catch (e) {
             console.log('⚠️ Wallet error:', e.message);
@@ -170,6 +193,7 @@ const AIStudio = {
                 await this.loadCredits();
                 this.updateUI();
                 this.showCreditsInfo();
+                this.updateApiButtonVisibility();  // Обновляем видимость кнопки API
                 this.showNotification('✅ Кошелёк подключен', 'success');
                 return this.state.walletAddress;
             }
@@ -236,6 +260,7 @@ const AIStudio = {
                 lastResetDate: new Date().toISOString().split('T')[0]
             };
             this.syncLimitsFromCredits();
+            this.updateApiButtonVisibility();  // Показываем кнопку API для авторов
             return;
         }
         
