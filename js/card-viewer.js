@@ -1196,13 +1196,16 @@ function handleMarqueeClick() {
     });
     
     // ═══════════════════════════════════════════════════════════
-    // Приоритет для refId: owner_gw_id > userId > ref из URL открытки
-    // owner_gw_id - это GW или CardGift ID владельца открытки
+    // Приоритет для refId: 
+    // 1. ref из URL (это партнёрская реферальная ссылка - ГЛАВНЫЙ!)
+    // 2. owner_gw_id из данных открытки (ID создателя)
     // ═══════════════════════════════════════════════════════════
     const urlRef = new URLSearchParams(window.location.search).get('ref') || '';
-    const refId = cardData?.owner_gw_id || cardData?.ownerGwId || 
-                  cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || 
-                  urlRef || '';
+    
+    // URL ref имеет ПРИОРИТЕТ! Если партнёр отправил ссылку - это его реферал
+    const refId = urlRef || 
+                  cardData?.owner_gw_id || cardData?.ownerGwId || 
+                  cardData?.userId || '';
     
     if (cardData && cardData.marqueeUrl && cardData.marqueeUrl.trim()) {
         let cleanedUrl = cleanUrl(cardData.marqueeUrl);
@@ -1246,12 +1249,16 @@ function handleActionClick() {
     );
     
     // ═══════════════════════════════════════════════════════════
-    // Приоритет для refId: owner_gw_id > userId > ref из URL открытки
+    // Приоритет для refId:
+    // 1. ref из URL (партнёрская ссылка - ГЛАВНЫЙ!)
+    // 2. owner_gw_id из данных открытки
     // ═══════════════════════════════════════════════════════════
     const urlRefAction = new URLSearchParams(window.location.search).get('ref') || '';
-    const refId = cardData?.owner_gw_id || cardData?.ownerGwId || 
-                  cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || 
-                  urlRefAction || '';
+    
+    // URL ref имеет ПРИОРИТЕТ!
+    const refId = urlRefAction || 
+                  cardData?.owner_gw_id || cardData?.ownerGwId || 
+                  cardData?.userId || '';
     
     if (cardData && cardData.ctaUrl && cardData.ctaUrl.trim()) {
         let cleanedUrl = cleanUrl(cardData.ctaUrl);
@@ -1287,12 +1294,16 @@ function handleBottomBannerClick() {
     });
     
     // ═══════════════════════════════════════════════════════════
-    // Приоритет для refId: owner_gw_id > userId > ref из URL открытки
+    // Приоритет для refId:
+    // 1. ref из URL (партнёрская ссылка - ГЛАВНЫЙ!)
+    // 2. owner_gw_id из данных открытки
     // ═══════════════════════════════════════════════════════════
     const urlRefBanner = new URLSearchParams(window.location.search).get('ref') || '';
-    const refId = cardData?.owner_gw_id || cardData?.ownerGwId || 
-                  cardData?.userId || cardData?.walletAddress || cardData?.actualCreator || 
-                  urlRefBanner || '';
+    
+    // URL ref имеет ПРИОРИТЕТ!
+    const refId = urlRefBanner || 
+                  cardData?.owner_gw_id || cardData?.ownerGwId || 
+                  cardData?.userId || '';
     
     if (cardData && cardData.bannerUrl && cardData.bannerUrl.trim()) {
         let cleanedUrl = cleanUrl(cardData.bannerUrl);
