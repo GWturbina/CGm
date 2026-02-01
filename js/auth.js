@@ -1,37 +1,35 @@
 /* =====================================================
    CARDGIFT - AUTHENTICATION SERVICE
-   v1.4 - Убрана FOUNDERS_ADDRESSES, уровень ТОЛЬКО из контракта
+   v2.0 - Исправлена структура OWNER/Соавторов
+        - Убран старый AUTHOR_WALLET
+        - Роли берутся из CONFIG
+        - Только OWNER имеет доступ к админке
    ===================================================== */
 
 const AuthService = {
     currentUser: null,
     isInitialized: false,
     
-    AUTHOR_WALLET: '0x0099188030174e381e7a7ee36d2783ecc31b6728',
-    
+    // Используем CONFIG для определения ролей
     getProvider: function() {
+        // Используем getSafePalProvider из wallet.js
+        if (typeof getSafePalProvider === 'function') {
+            return getSafePalProvider();
+        }
+        
+        // Fallback - только SafePal!
         if (window.safepalProvider) {
-            console.log('Using SafePal provider');
             return window.safepalProvider;
         }
         if (window.safepal && window.safepal.ethereum) {
-            console.log('Using SafePal ethereum');
             return window.safepal.ethereum;
         }
         if (window.ethereum && window.ethereum.isSafePal) {
-            console.log('Using ethereum.isSafePal');
             return window.ethereum;
         }
         if (window.ethereum && window.ethereum.providers && window.ethereum.providers.length) {
             var safePalProvider = window.ethereum.providers.find(function(p) { return p.isSafePal; });
-            if (safePalProvider) {
-                console.log('Using SafePal from providers');
-                return safePalProvider;
-            }
-        }
-        if (window.ethereum) {
-            console.log('Using default ethereum');
-            return window.ethereum;
+            if (safePalProvider) return safePalProvider;
         }
         return null;
     },
@@ -212,27 +210,43 @@ const AuthService = {
         try {
             var wallet = walletAddress.toLowerCase();
             
-            // Проверяем Owner/Founders (hardcoded для гарантии)
-            var ownerAddresses = [
-                '0x7bcd1753868895971e12448412cb3216d47884c8',
-                '0x03284a899147f5a07f82c622f34df92198671635'
-            ];
-            
-            if (ownerAddresses.includes(wallet)) {
-                console.log('👑 Owner detected!');
+            // Проверяем OWNER (единственный кто управляет админкой)
+            if (window.CONFIG && CONFIG.isOwner(wallet)) {
+                console.log('👑 OWNER detected!');
                 var ownerUser = {
                     wallet_address: wallet,
                     gw_level: 12,
                     rank: 5,
                     role: 'owner',
-                    name: 'Owner',
-                    cg_id: wallet === '0x7bcd1753868895971e12448412cb3216d47884c8' ? '7346221' : '1514866'
+                    name: CONFIG.OWNER.name || 'Owner',
+                    gw_id: CONFIG.OWNER.gwId
                 };
                 this.currentUser = ownerUser;
                 localStorage.setItem('currentUser', JSON.stringify(ownerUser));
-                localStorage.setItem('cardgift_cg_id', ownerUser.cg_id);
+                localStorage.setItem('cardgift_gw_id', ownerUser.gw_id);
                 localStorage.setItem('cardgift_level', '12');
                 return ownerUser;
+            }
+            
+            // Проверяем соавторов (уровень 12, но БЕЗ доступа к админке)
+            if (window.CONFIG && CONFIG.isCoauthor(wallet)) {
+                console.log('👤 Coauthor detected!');
+                var coauthorInfo = CONFIG.getCoauthorInfo(wallet);
+                var coauthorUser = {
+                    wallet_address: wallet,
+                    gw_level: 12,
+                    rank: 5,
+                    role: 'coauthor',
+                    name: coauthorInfo?.name || 'Соавтор',
+                    gw_id: coauthorInfo?.gwId || null
+                };
+                this.currentUser = coauthorUser;
+                localStorage.setItem('currentUser', JSON.stringify(coauthorUser));
+                if (coauthorUser.gw_id) {
+                    localStorage.setItem('cardgift_gw_id', coauthorUser.gw_id);
+                }
+                localStorage.setItem('cardgift_level', '12');
+                return coauthorUser;
             }
             
             // Загружаем пользователя из Supabase
@@ -327,22 +341,26 @@ const AuthService = {
         // Берём максимальный уровень
         gwLevel = Math.max(gwLevel, grantedLevel);
         
-        // Проверяем автора
-        var isAuthor = wallet === this.AUTHOR_WALLET.toLowerCase();
-        var role = isAuthor ? 'author' : 'user';
-        if (isAuthor) gwLevel = 12;
+        // Проверяем OWNER и соавторов через CONFIG
+        var isOwner = window.CONFIG && CONFIG.isOwner(wallet);
+        var isCoauthor = window.CONFIG && CONFIG.isCoauthor(wallet);
+        var role = isOwner ? 'owner' : (isCoauthor ? 'coauthor' : 'user');
         
-        // Генерируем CG ID (только цифры)
-        var cgId = String(Math.floor(1000000 + Math.random() * 9000000));
+        if (isOwner || isCoauthor) {
+            gwLevel = 12; // DEV кошельки всегда уровень 12
+        }
         
-        // Данные для новой схемы
+        // Генерируем temp_id (новая архитектура v4.0)
+        var tempId = 'CG_TEMP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        
+        // Данные для новой схемы (v4.0)
         var userData = {
-            cg_id: cgId,
+            temp_id: tempId,
             gw_id: gwId,
             wallet_address: wallet,
             gw_level: gwLevel,
             gw_registered: isRegisteredInGW,
-            referrer_cg_id: referrerCgId || null,
+            referrer_temp_id: referrerCgId || null,
             name: null,
             created_at: new Date().toISOString()
         };
@@ -356,9 +374,9 @@ const AuthService = {
                     created.role = role;
                     this.currentUser = created;
                     localStorage.setItem('currentUser', JSON.stringify(created));
-                    localStorage.setItem('cardgift_cg_id', cgId);
+                    localStorage.setItem('cardgift_temp_id', tempId);
                     if (gwId) localStorage.setItem('cardgift_gw_id', gwId);
-                    console.log('New user created:', cgId, 'Level:', gwLevel);
+                    console.log('New user created:', tempId, 'Level:', gwLevel);
                     return created;
                 }
             } catch (e) {
@@ -371,7 +389,7 @@ const AuthService = {
         userData.role = role;
         this.currentUser = userData;
         localStorage.setItem('currentUser', JSON.stringify(userData));
-        localStorage.setItem('cardgift_cg_id', cgId);
+        localStorage.setItem('cardgift_temp_id', tempId);
         return userData;
     },
     
@@ -397,11 +415,11 @@ const AuthService = {
             
             var newLevel = Math.max(chainLevel, grantedLevel);
             
-            // Автор = максимальный уровень
-            if (user.wallet_address.toLowerCase() === this.AUTHOR_WALLET.toLowerCase()) {
+            // OWNER и соавторы = максимальный уровень 12
+            if (window.CONFIG && CONFIG.isDevWallet(user.wallet_address)) {
                 user.gw_level = 12;
                 user.rank = 5;
-                user.role = 'author';
+                user.role = CONFIG.isOwner(user.wallet_address) ? 'owner' : 'coauthor';
             } else {
                 // Обновляем уровень из контракта
                 user.gw_level = newLevel;
@@ -482,26 +500,43 @@ const AuthService = {
         return this.levelToRank(user.gw_level || 0);
     },
     
-    isAuthor: function() {
-        var user = this.getUser();
-        return user && (user.role === 'author' || (user.wallet_address && user.wallet_address.toLowerCase() === this.AUTHOR_WALLET.toLowerCase()));
-    },
-    
-    isFounder: function() {
+    // Проверка - это OWNER? (единственный кто управляет админкой)
+    isOwner: function() {
         var user = this.getUser();
         if (!user) return false;
-        // Проверяем уровень 12 из контракта
-        return user.gw_level === 12 && user.role !== 'author';
+        if (window.CONFIG && CONFIG.isOwner(user.wallet_address)) return true;
+        return user.role === 'owner';
     },
     
+    // Проверка - это соавтор? (уровень 12, но без админки)
     isCoauthor: function() {
         var user = this.getUser();
-        return user && user.role === 'coauthor';
+        if (!user) return false;
+        if (window.CONFIG && CONFIG.isCoauthor(user.wallet_address)) return true;
+        return user.role === 'coauthor';
+    },
+    
+    // Проверка - это DEV кошелёк? (OWNER или соавтор)
+    isDevWallet: function() {
+        var user = this.getUser();
+        if (!user) return false;
+        if (window.CONFIG && CONFIG.isDevWallet(user.wallet_address)) return true;
+        return user.role === 'owner' || user.role === 'coauthor';
+    },
+    
+    // Доступ к админке - ТОЛЬКО OWNER!
+    hasAdminAccess: function() {
+        return this.isOwner();
     },
     
     hasAccess: function(feature) {
         var level = this.getLevel();
-        if (this.isAuthor()) return true;
+        
+        // OWNER и соавторы имеют полный доступ ко всем функциям
+        if (this.isDevWallet()) return true;
+        
+        // Админка - ТОЛЬКО OWNER!
+        if (feature === 'admin') return this.isOwner();
         
         if (window.GlobalWayBridge && typeof GlobalWayBridge.hasAccess === 'function') {
             return GlobalWayBridge.hasAccess(level, feature);
@@ -518,14 +553,15 @@ const AuthService = {
             case 'analytics': return rank >= 3;
             case 'partner_program': return rank >= 2;
             case 'coauthors': return rank >= 5;
-            case 'admin': return this.isAuthor();
             default: return false;
         }
     },
     
     getLimits: function() {
         var level = this.getLevel();
-        if (this.isAuthor()) {
+        
+        // OWNER и соавторы - безлимит
+        if (this.isDevWallet()) {
             return { archive: -1, referralLevels: 9, contacts: true };
         }
         
@@ -548,4 +584,4 @@ const AuthService = {
 };
 
 window.AuthService = AuthService;
-console.log('AuthService v1.4 loaded (Level from contract only)');
+console.log('🔐 AuthService v2.0 loaded (OWNER/Coauthors from CONFIG)');
