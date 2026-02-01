@@ -531,7 +531,9 @@ const AIStudio = {
             const format = document.getElementById('imageFormat')?.value || '1:1';
             const style = document.getElementById('imageStyle')?.value || 'realistic';
             const apiKeys = JSON.parse(localStorage.getItem('ai_studio_api_keys') || '{}');
-            const userApiKey = this.canUseOwnApi() ? apiKeys.openai : null;
+            const savedKey = apiKeys.openai || '';
+            // Используем ТОЛЬКО если ключ валидный (начинается с sk-)
+            const userApiKey = (this.canUseOwnApi() && savedKey.startsWith('sk-')) ? savedKey : null;
             
             const response = await fetch('/api/ai/image', {
                 method: 'POST',
@@ -574,7 +576,9 @@ const AIStudio = {
             const stability = (parseInt(document.getElementById('voiceStability')?.value) || 50) / 100;
             const clarity = (parseInt(document.getElementById('voiceClarity')?.value) || 75) / 100;
             const apiKeys = JSON.parse(localStorage.getItem('ai_studio_api_keys') || '{}');
-            const userApiKey = this.canUseOwnApi() ? apiKeys.elevenlabs : null;
+            const savedKey = apiKeys.elevenlabs || '';
+            // Используем ТОЛЬКО если ключ валидный (минимум 20 символов)
+            const userApiKey = (this.canUseOwnApi() && savedKey.length >= 20) ? savedKey : null;
             
             const response = await fetch('/api/ai/voice', {
                 method: 'POST',
