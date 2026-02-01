@@ -1,11 +1,11 @@
 // api/c/[code].js
 // Короткие ссылки CardGift
-// v4.0 - ДОБАВЛЕНО: thumbnailUrl для видео-превью
+// v5.0 - ИСПРАВЛЕНО: передаём ref при редиректе на card-viewer
 
 module.exports = async function handler(req, res) {
-    const { code } = req.query;
+    const { code, ref } = req.query;  // Получаем ref из URL!
     
-    console.log('🔗 Short link request:', code);
+    console.log('🔗 Short link request:', code, 'ref:', ref || 'none');
     
     if (!code || code.length < 4) {
         return res.status(400).send('Invalid code');
@@ -139,8 +139,14 @@ module.exports = async function handler(req, res) {
         debugInfo.push('Fallback: SVG generator');
     }
     
-    const viewerUrl = `${baseUrl}/card-viewer.html?sc=${code}`;
-    const shortUrl = `${baseUrl}/c/${code}`;
+    // ═══════════════════════════════════════════════════════════
+    // ВАЖНО: Передаём ref в card-viewer чтобы цепочка не рвалась!
+    // ═══════════════════════════════════════════════════════════
+    let viewerUrl = `${baseUrl}/card-viewer.html?sc=${code}`;
+    if (ref) {
+        viewerUrl += `&ref=${encodeURIComponent(ref)}`;
+    }
+    const shortUrl = `${baseUrl}/c/${code}${ref ? '?ref=' + encodeURIComponent(ref) : ''}`;
     
     console.log('📋 Final OG:', title.substring(0, 30), '| Found:', cardFound);
     
