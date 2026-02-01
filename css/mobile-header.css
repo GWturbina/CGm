@@ -1,28 +1,29 @@
 /* =====================================================
-   COLLAPSIBLE HEADER FOR MOBILE
-   Сворачиваемый хедер на мобильных устройствах
+   MOBILE HEADER v2.0 - КОМПАКТНЫЙ ХЕДЕР
    
-   Подключение:
-   <link rel="stylesheet" href="css/mobile-header.css">
-   <script src="js/mobile-header.js"></script>
+   Изменения:
+   - На мобилках хедер СВЁРНУТ по умолчанию
+   - Компактная панель статуса вместо огромного хедера
+   - Автоскрытие при скролле вниз
+   - Появление при скролле вверх
    ===================================================== */
 
-/* ===== Кнопка сворачивания ===== */
+/* ===== КНОПКА МЕНЮ (показываем на мобилках) ===== */
 .header-collapse-btn {
     display: none;
     position: fixed;
     top: 10px;
     right: 10px;
     z-index: 1001;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     background: linear-gradient(135deg, #FFD700, #FFA500);
     border: none;
     border-radius: 50%;
     color: #000;
-    font-size: 18px;
+    font-size: 20px;
     cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 15px rgba(0,0,0,0.4);
     transition: all 0.3s ease;
 }
 
@@ -35,93 +36,250 @@
     color: #fff;
 }
 
-/* ===== На мобилке показываем кнопку ===== */
+/* ===== КОМПАКТНАЯ СТАТУС-ПАНЕЛЬ ===== */
+.header-mini-status {
+    display: none;
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    right: 60px; /* место для кнопки меню */
+    z-index: 1000;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #fff;
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.header-mini-status .mini-logo {
+    font-size: 14px;
+    font-weight: 600;
+    color: #FFD700;
+}
+
+.header-mini-status .mini-credits {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+}
+
+.header-mini-status .mini-credits span {
+    padding: 2px 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+}
+
+/* ===== МОБИЛЬНЫЕ СТИЛИ ===== */
 @media (max-width: 768px) {
+    
+    /* Показываем кнопку меню и мини-статус */
     .header-collapse-btn {
         display: flex;
         align-items: center;
         justify-content: center;
     }
     
-    /* Когда хедер свёрнут */
-    .mobile-header-collapsed .dashboard-header,
-    .mobile-header-collapsed .studio-header,
-    .mobile-header-collapsed .page-header,
-    .mobile-header-collapsed header {
-        transform: translateY(-100%);
-        opacity: 0;
-        pointer-events: none;
-    }
-    
-    /* Анимация для хедера */
+    /* ПО УМОЛЧАНИЮ хедер СКРЫТ на мобилках */
     .dashboard-header,
     .studio-header,
     .page-header,
-    header {
+    header:not(.header-mini-status) {
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
         transition: transform 0.3s ease, opacity 0.3s ease;
     }
     
-    /* Когда хедер свёрнут - добавляем отступ сверху */
-    .mobile-header-collapsed main,
-    .mobile-header-collapsed .main-content,
-    .mobile-header-collapsed .studio-main,
-    .mobile-header-collapsed .content-tabs {
-        margin-top: 0 !important;
-        padding-top: 60px !important;
-    }
-    
-    /* Мини-индикатор статуса когда свёрнуто */
+    /* Мини-статус показан по умолчанию */
     .header-mini-status {
-        display: none;
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        z-index: 1000;
-        background: rgba(0,0,0,0.8);
-        backdrop-filter: blur(10px);
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 12px;
-        color: #fff;
-        gap: 10px;
-        align-items: center;
+        display: flex;
     }
     
-    .mobile-header-collapsed .header-mini-status {
-        display: flex;
+    /* Когда хедер РАЗВЁРНУТ (класс на body) */
+    body.mobile-header-expanded .dashboard-header,
+    body.mobile-header-expanded .studio-header,
+    body.mobile-header-expanded .page-header,
+    body.mobile-header-expanded header:not(.header-mini-status) {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    /* Когда развёрнут - скрываем мини-статус */
+    body.mobile-header-expanded .header-mini-status {
+        display: none;
+    }
+    
+    /* Контент - отступ только для мини-статуса */
+    main,
+    .main-content,
+    .studio-main,
+    .content-tabs,
+    .dashboard-content {
+        padding-top: 50px !important;
+        margin-top: 0 !important;
+        transition: padding-top 0.3s ease;
+    }
+    
+    /* Когда развёрнут - больший отступ для полного хедера */
+    body.mobile-header-expanded main,
+    body.mobile-header-expanded .main-content,
+    body.mobile-header-expanded .studio-main,
+    body.mobile-header-expanded .content-tabs,
+    body.mobile-header-expanded .dashboard-content {
+        padding-top: 120px !important;
     }
 }
 
-/* ===== Стили для компактного хедера ===== */
+/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ ===== */
 @media (max-width: 480px) {
-    /* Ещё более компактный вид */
-    .dashboard-header,
-    .studio-header {
-        padding: 10px 15px;
-        flex-wrap: wrap;
-        gap: 8px;
+    
+    .header-mini-status {
+        padding: 6px 10px;
+        font-size: 11px;
+        right: 55px;
     }
     
-    .header-left,
-    .header-right {
+    .header-mini-status .mini-logo {
+        font-size: 12px;
+    }
+    
+    .header-mini-status .mini-credits span {
+        padding: 1px 4px;
+        font-size: 10px;
+    }
+    
+    .header-collapse-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    /* Компактный хедер когда развёрнут */
+    body.mobile-header-expanded .dashboard-header,
+    body.mobile-header-expanded .studio-header {
+        padding: 8px 12px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    body.mobile-header-expanded .header-left,
+    body.mobile-header-expanded .header-right {
         flex: 1;
         min-width: 100%;
         justify-content: center;
     }
     
-    .wallet-card {
+    body.mobile-header-expanded .wallet-card {
         width: 100%;
-        margin: 5px 0;
+        margin: 4px 0;
+        padding: 8px;
     }
     
-    .limits-display {
+    body.mobile-header-expanded .limits-display {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 8px;
+        gap: 6px;
     }
     
-    .limit-item {
-        padding: 6px 10px;
+    body.mobile-header-expanded .limit-item {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}
+
+/* ===== AUTO-HIDE ПРИ СКРОЛЛЕ ===== */
+/* Класс добавляется через JS при скролле вниз */
+body.header-hidden .header-mini-status {
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+body.header-hidden .header-collapse-btn {
+    top: -50px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+/* При скролле вверх - показываем обратно */
+body:not(.header-hidden) .header-mini-status,
+body:not(.header-hidden) .header-collapse-btn {
+    transition: all 0.3s ease;
+}
+
+/* ===== ДЕСКТОП - ОБЫЧНОЕ ПОВЕДЕНИЕ ===== */
+@media (min-width: 769px) {
+    .header-collapse-btn {
+        display: none !important;
+    }
+    
+    .header-mini-status {
+        display: none !important;
+    }
+    
+    .dashboard-header,
+    .studio-header,
+    .page-header,
+    header {
+        transform: none !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* ===== АНИМАЦИИ ===== */
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ===== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ AI STUDIO ===== */
+@media (max-width: 768px) {
+    /* Табы - компактнее */
+    .tab-btn {
+        padding: 8px 12px;
         font-size: 12px;
+    }
+    
+    /* Генерация - компактнее */
+    .generation-card {
+        padding: 12px;
+    }
+    
+    .generation-card textarea {
+        min-height: 80px;
+    }
+    
+    /* Кнопки генерации */
+    .btn-generate {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    /* Результаты */
+    .result-area {
+        padding: 12px;
+    }
+    
+    .result-area img {
+        max-height: 300px;
     }
 }
