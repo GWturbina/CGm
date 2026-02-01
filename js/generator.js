@@ -2416,6 +2416,17 @@ async function createCard() {
             creatorLevel: userLevel,
             walletAddress: userWalletAddress,
             
+            // ═══════════════════════════════════════════════════════════
+            // OWNER GW ID - для реферальной ссылки!
+            // Это главное поле для передачи в registration.html
+            // Приоритет: localStorage > currentUser > ref из URL (fallback)
+            // ═══════════════════════════════════════════════════════════
+            owner_gw_id: localStorage.getItem('cardgift_gw_id') || 
+                         (currentUser?.gwId) || 
+                         (currentUser?.gw_id) ||
+                         new URLSearchParams(window.location.search).get('ref') ||
+                         null,
+            
             // Текст (оба варианта для совместимости)
             greetingText: greetingText,
             greeting: greetingText,
