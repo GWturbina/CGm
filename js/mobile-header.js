@@ -1,134 +1,205 @@
 /* =====================================================
-   MOBILE HEADER - JavaScript
-   Сворачиваемый хедер на мобильных устройствах
+   MOBILE HEADER v2.0 - АВТОСКРЫТИЕ И КОМПАКТНОСТЬ
+   
+   Функции:
+   - Хедер свёрнут по умолчанию на мобилках
+   - Кнопка для разворачивания/сворачивания
+   - Автоскрытие при скролле вниз
+   - Появление при скролле вверх
+   - Мини-статус панель с кредитами
    ===================================================== */
 
-(function() {
-    'use strict';
+const MobileHeader = {
+    isExpanded: false,
+    lastScrollY: 0,
+    scrollThreshold: 50,
     
-    // Ждём загрузки DOM
-    document.addEventListener('DOMContentLoaded', initMobileHeader);
+    init() {
+        // Проверяем мобильное устройство
+        if (window.innerWidth > 768) {
+            console.log('📱 MobileHeader: Desktop mode, skipping');
+            return;
+        }
+        
+        console.log('📱 MobileHeader v2.0 initializing...');
+        
+        // Создаём элементы UI
+        this.createUI();
+        
+        // Обработчики событий
+        this.bindEvents();
+        
+        // Обновляем мини-статус
+        this.updateMiniStatus();
+        
+        console.log('✅ MobileHeader initialized');
+    },
     
-    function initMobileHeader() {
-        // Только для мобильных
-        if (window.innerWidth > 768) return;
+    createUI() {
+        // Проверяем что элементы ещё не созданы
+        if (document.querySelector('.header-collapse-btn')) return;
         
-        console.log('📱 Mobile header initialized');
+        // Кнопка сворачивания/разворачивания
+        const btn = document.createElement('button');
+        btn.className = 'header-collapse-btn collapsed';
+        btn.innerHTML = '☰';
+        btn.setAttribute('aria-label', 'Toggle header');
+        btn.onclick = () => this.toggleHeader();
+        document.body.appendChild(btn);
         
-        // Создаём кнопку сворачивания
-        const collapseBtn = document.createElement('button');
-        collapseBtn.className = 'header-collapse-btn';
-        collapseBtn.innerHTML = '▲';
-        collapseBtn.title = 'Свернуть/развернуть меню';
-        collapseBtn.setAttribute('aria-label', 'Свернуть меню');
-        
-        // Создаём мини-статус (показывается когда хедер свёрнут)
+        // Мини-статус панель
         const miniStatus = document.createElement('div');
         miniStatus.className = 'header-mini-status';
         miniStatus.innerHTML = `
-            <span class="mini-wallet" id="miniWallet">...</span>
-            <span class="mini-level" id="miniLevel"></span>
+            <span class="mini-logo">🎴 CardGift</span>
+            <div class="mini-credits">
+                <span id="miniCreditsText">📝∞</span>
+                <span id="miniCreditsImage">🎨3</span>
+                <span id="miniCreditsVoice">🎤3</span>
+            </div>
         `;
-        
-        document.body.appendChild(collapseBtn);
         document.body.appendChild(miniStatus);
         
-        // Состояние
-        let isCollapsed = localStorage.getItem('mobileHeaderCollapsed') === 'true';
-        
-        // Применяем сохранённое состояние
-        if (isCollapsed) {
-            document.body.classList.add('mobile-header-collapsed');
-            collapseBtn.innerHTML = '▼';
-            collapseBtn.classList.add('collapsed');
+        // Добавляем style если нет
+        if (!document.querySelector('link[href*="mobile-header"]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'css/mobile-header-v2.css';
+            document.head.appendChild(link);
         }
-        
-        // Обработчик клика
-        collapseBtn.addEventListener('click', function() {
-            isCollapsed = !isCollapsed;
-            
-            if (isCollapsed) {
-                document.body.classList.add('mobile-header-collapsed');
-                collapseBtn.innerHTML = '▼';
-                collapseBtn.classList.add('collapsed');
-            } else {
-                document.body.classList.remove('mobile-header-collapsed');
-                collapseBtn.innerHTML = '▲';
-                collapseBtn.classList.remove('collapsed');
+    },
+    
+    bindEvents() {
+        // Скролл - автоскрытие
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    this.handleScroll();
+                    ticking = false;
+                });
+                ticking = true;
             }
-            
-            // Сохраняем состояние
-            localStorage.setItem('mobileHeaderCollapsed', isCollapsed);
-            
-            // Обновляем мини-статус
-            updateMiniStatus();
-        });
+        }, { passive: true });
         
-        // Обновление мини-статуса
-        function updateMiniStatus() {
-            const walletEl = document.getElementById('walletAddress') || 
-                            document.querySelector('.wallet-address');
-            const levelEl = document.getElementById('userLevel') ||
-                           document.querySelector('.user-level');
-            
-            const miniWallet = document.getElementById('miniWallet');
-            const miniLevel = document.getElementById('miniLevel');
-            
-            if (miniWallet && walletEl) {
-                const walletText = walletEl.textContent || '';
-                miniWallet.textContent = walletText.includes('...') ? walletText : '💳';
-            }
-            
-            if (miniLevel && levelEl) {
-                miniLevel.textContent = levelEl.textContent || '';
-            }
-        }
-        
-        // Обновляем статус при загрузке
-        setTimeout(updateMiniStatus, 2000);
-        
-        // Автоматически сворачиваем при скролле вниз
-        let lastScrollY = window.scrollY;
-        let scrollTimeout;
-        
-        window.addEventListener('scroll', function() {
-            clearTimeout(scrollTimeout);
-            
-            scrollTimeout = setTimeout(function() {
-                const currentScrollY = window.scrollY;
-                
-                // Если скроллим вниз и прошли 100px - сворачиваем
-                if (currentScrollY > lastScrollY && currentScrollY > 100 && !isCollapsed) {
-                    // Не сворачиваем автоматически, только показываем подсказку
-                }
-                
-                // Если скроллим вверх до самого верха - разворачиваем
-                if (currentScrollY < 50 && isCollapsed) {
-                    // Можно автоматически развернуть
-                    // document.body.classList.remove('mobile-header-collapsed');
-                    // collapseBtn.innerHTML = '▲';
-                    // collapseBtn.classList.remove('collapsed');
-                    // isCollapsed = false;
-                }
-                
-                lastScrollY = currentScrollY;
-            }, 100);
-        });
-        
-        // При изменении размера окна
-        window.addEventListener('resize', function() {
+        // Изменение размера окна
+        window.addEventListener('resize', () => {
             if (window.innerWidth > 768) {
-                document.body.classList.remove('mobile-header-collapsed');
-                collapseBtn.style.display = 'none';
-                miniStatus.style.display = 'none';
-            } else {
-                collapseBtn.style.display = 'flex';
-                if (isCollapsed) {
-                    document.body.classList.add('mobile-header-collapsed');
-                }
+                // Десктоп - сбрасываем
+                document.body.classList.remove('mobile-header-expanded', 'header-hidden');
             }
         });
+        
+        // Обновление кредитов (слушаем события от AIStudio)
+        window.addEventListener('credits-updated', () => this.updateMiniStatus());
+        
+        // Клик вне хедера - закрыть
+        document.addEventListener('click', (e) => {
+            if (this.isExpanded && 
+                !e.target.closest('.dashboard-header') && 
+                !e.target.closest('.studio-header') &&
+                !e.target.closest('.header-collapse-btn')) {
+                this.collapseHeader();
+            }
+        });
+    },
+    
+    handleScroll() {
+        if (window.innerWidth > 768) return;
+        
+        const currentScrollY = window.scrollY;
+        const delta = currentScrollY - this.lastScrollY;
+        
+        // Скролл вниз > threshold - скрываем
+        if (delta > this.scrollThreshold && currentScrollY > 100) {
+            document.body.classList.add('header-hidden');
+        }
+        
+        // Скролл вверх - показываем
+        if (delta < -this.scrollThreshold || currentScrollY < 50) {
+            document.body.classList.remove('header-hidden');
+        }
+        
+        this.lastScrollY = currentScrollY;
+    },
+    
+    toggleHeader() {
+        if (this.isExpanded) {
+            this.collapseHeader();
+        } else {
+            this.expandHeader();
+        }
+    },
+    
+    expandHeader() {
+        this.isExpanded = true;
+        document.body.classList.add('mobile-header-expanded');
+        
+        const btn = document.querySelector('.header-collapse-btn');
+        if (btn) {
+            btn.classList.remove('collapsed');
+            btn.innerHTML = '✕';
+        }
+    },
+    
+    collapseHeader() {
+        this.isExpanded = false;
+        document.body.classList.remove('mobile-header-expanded');
+        
+        const btn = document.querySelector('.header-collapse-btn');
+        if (btn) {
+            btn.classList.add('collapsed');
+            btn.innerHTML = '☰';
+        }
+    },
+    
+    updateMiniStatus() {
+        // Получаем данные из AIStudio если доступен
+        if (window.AIStudio) {
+            const textEl = document.getElementById('miniCreditsText');
+            const imageEl = document.getElementById('miniCreditsImage');
+            const voiceEl = document.getElementById('miniCreditsVoice');
+            
+            if (textEl) textEl.textContent = '📝∞';
+            
+            if (imageEl) {
+                const imgRem = AIStudio.getRemainingCredits?.('image') || '3';
+                imageEl.textContent = `🎨${imgRem}`;
+            }
+            
+            if (voiceEl) {
+                const voiceRem = AIStudio.getRemainingCredits?.('voice') || '3';
+                voiceEl.textContent = `🎤${voiceRem}`;
+            }
+        }
+        
+        // Получаем данные из localStorage как fallback
+        else {
+            const today = new Date().toISOString().split('T')[0];
+            const key = `ai_studio_daily_guest_${today}`;
+            const saved = localStorage.getItem(key);
+            
+            if (saved) {
+                try {
+                    const usage = JSON.parse(saved);
+                    const imageEl = document.getElementById('miniCreditsImage');
+                    const voiceEl = document.getElementById('miniCreditsVoice');
+                    
+                    if (imageEl) imageEl.textContent = `🎨${3 - (usage.image || 0)}`;
+                    if (voiceEl) voiceEl.textContent = `🎤${3 - (usage.voice || 0)}`;
+                } catch (e) {}
+            }
+        }
     }
-})();
+};
 
-console.log('📱 Mobile Header v1.0 loaded');
+// Автоинициализация
+document.addEventListener('DOMContentLoaded', () => {
+    // Небольшая задержка для загрузки CSS
+    setTimeout(() => MobileHeader.init(), 100);
+});
+
+// Экспорт
+window.MobileHeader = MobileHeader;
+
+console.log('📱 MobileHeader v2.0 loaded');
