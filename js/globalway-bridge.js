@@ -1,6 +1,8 @@
 /* =====================================================
    CARDGIFT - GLOBALWAY BRIDGE INTEGRATION
-   v2.0 - Полная интеграция с уровнями 1-12
+   v2.1 - Полная интеграция с уровнями 1-12
+        - Использует CONFIG для LEVEL_PRICES
+        - Убрано дублирование констант
    ===================================================== */
 
 const GlobalWayBridge = {
@@ -16,27 +18,30 @@ const GlobalWayBridge = {
     CHAIN_ID: 204, // opBNB Mainnet
     RPC_URL: 'https://opbnb-mainnet-rpc.bnbchain.org',
     
-    // ROOT спонсор (для компрессии когда никого нет в цепочке)
-    ROOT_GW_ID: 'GW9729645',
+    // ROOT спонсор - берём из CONFIG
+    get ROOT_GW_ID() {
+        return window.CONFIG?.ROOT_GW_ID || 'GW9729645';
+    },
     ROOT_GW_NUMERIC_ID: 9729645, // Числовой ID для контракта
     
     // ═══════════════════════════════════════════════════════════
-    // ЦЕНЫ УРОВНЕЙ (в BNB/opBNB)
+    // ЦЕНЫ УРОВНЕЙ - БЕРЁМ ИЗ CONFIG! (Единственный источник)
     // ═══════════════════════════════════════════════════════════
     
-    LEVEL_PRICES: {
-        1: '0.0015',
-        2: '0.003',
-        3: '0.006',
-        4: '0.012',
-        5: '0.024',
-        6: '0.048',
-        7: '0.096',
-        8: '0.192',
-        9: '0.384',
-        10: '0.768',
-        11: '1.536',
-        12: '3.072'
+    get LEVEL_PRICES() {
+        if (window.CONFIG?.LEVEL_PRICES) {
+            // Конвертируем числа в строки для совместимости
+            const prices = {};
+            for (let i = 1; i <= 12; i++) {
+                prices[i] = String(window.CONFIG.LEVEL_PRICES[i]);
+            }
+            return prices;
+        }
+        // Fallback
+        return {
+            1: '0.0015', 2: '0.003', 3: '0.006', 4: '0.012', 5: '0.024', 6: '0.048',
+            7: '0.096', 8: '0.192', 9: '0.384', 10: '0.768', 11: '1.536', 12: '3.072'
+        };
     },
     
     // Токены GWT за уровень
@@ -207,15 +212,11 @@ const GlobalWayBridge = {
      * @returns {number} Уровень 0-12 (0 = не активирован)
      */
     async getUserLevel(walletAddress) {
-        // Проверяем FOUNDERS/OWNER сначала (hardcoded для гарантии)
+        // Проверяем DEV кошельки через CONFIG (OWNER + соавторы = уровень 12)
         var wallet = walletAddress.toLowerCase();
-        var ownerAddresses = [
-            '0x7bcd1753868895971e12448412cb3216d47884c8', // Owner 1
-            '0x03284a899147f5a07f82c622f34df92198671635'  // Owner 2
-        ];
         
-        if (ownerAddresses.includes(wallet)) {
-            console.log('👑 Owner detected, level 12');
+        if (window.CONFIG && CONFIG.isDevWallet(wallet)) {
+            console.log('👑 DEV wallet detected, level 12');
             return 12;
         }
         
@@ -766,8 +767,16 @@ async function findGlobalWaySponsor(userCgId, supabase) {
         }
     }
     
-    // Если никого не нашли - рандомизация из двух спонсоров
-    const randomSponsors = [7346221, 1514866]; // GW7346221 и GW1514866
+    // Если никого не нашли - рандомизация из соавторов
+    // Берём GW ID соавторов из CONFIG
+    let randomSponsors = [7346221, 1514866, 7649513]; // Default
+    
+    if (window.CONFIG?.COAUTHORS) {
+        randomSponsors = CONFIG.COAUTHORS
+            .map(c => GlobalWayBridge.parseGwId(c.gwId))
+            .filter(id => id !== null);
+    }
+    
     const randomSponsor = randomSponsors[Math.floor(Math.random() * randomSponsors.length)];
     console.log('⚠️ GW спонсор не найден, используем рандомный:', 'GW' + randomSponsor);
     return randomSponsor;
@@ -913,4 +922,4 @@ window.GlobalWayBridge = GlobalWayBridge;
 window.findGlobalWaySponsor = findGlobalWaySponsor;
 window.activateWithAutoRegistration = activateWithAutoRegistration;
 
-console.log('🌉 GlobalWayBridge v2.1 loaded (Levels 1-12, Compression, Aliases)');
+console.log('🌉 GlobalWayBridge v2.2 loaded (Uses CONFIG, DEV wallets from CONFIG)');
