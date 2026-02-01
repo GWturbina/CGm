@@ -535,22 +535,48 @@ function goToGenerator() {
 }
 window.goToGenerator = goToGenerator;
 
-// ============ СИСТЕМНАЯ СТАТИСТИКА (для авторов) ============
+// ============ СИСТЕМНАЯ СТАТИСТИКА (для OWNER и соавторов) ============
 
 /**
- * Проверяет является ли текущий пользователь автором/соавтором
+ * Проверяет является ли текущий пользователь OWNER или соавтором
+ * Статистика доступна всем DEV кошелькам
  */
 function isCoauthor() {
-    if (!window.CONFIG || !CONFIG.COAUTHORS) return false;
+    const currentWallet = localStorage.getItem('cg_wallet_address') || 
+                          localStorage.getItem('cardgift_wallet') || '';
     
-    const currentCgId = window.currentCgId || localStorage.getItem('cardgift_cg_id');
-    const currentWallet = (localStorage.getItem('cardgift_wallet') || '').toLowerCase();
+    if (!currentWallet) return false;
     
-    return CONFIG.COAUTHORS.some(author => 
-        author.cgId === currentCgId || 
-        author.wallet.toLowerCase() === currentWallet
-    );
+    // Используем CONFIG для проверки
+    if (window.CONFIG) {
+        // OWNER имеет доступ к статистике
+        if (CONFIG.isOwner && CONFIG.isOwner(currentWallet)) return true;
+        // Соавторы тоже имеют доступ к статистике
+        if (CONFIG.isCoauthor && CONFIG.isCoauthor(currentWallet)) return true;
+        // Или проверяем DEV кошельки
+        if (CONFIG.isDevWallet && CONFIG.isDevWallet(currentWallet)) return true;
+    }
+    
+    return false;
 }
+
+/**
+ * Проверяет является ли текущий пользователь OWNER (для админки)
+ * Админка доступна ТОЛЬКО OWNER!
+ */
+function hasAdminAccess() {
+    const currentWallet = localStorage.getItem('cg_wallet_address') || 
+                          localStorage.getItem('cardgift_wallet') || '';
+    
+    if (!currentWallet) return false;
+    
+    if (window.CONFIG && CONFIG.isOwner) {
+        return CONFIG.isOwner(currentWallet);
+    }
+    
+    return false;
+}
+window.hasAdminAccess = hasAdminAccess;
 
 /**
  * Загружает системную статистику из Supabase
