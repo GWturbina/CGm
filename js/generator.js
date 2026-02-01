@@ -2417,13 +2417,18 @@ async function createCard() {
             walletAddress: userWalletAddress,
             
             // ═══════════════════════════════════════════════════════════
-            // OWNER GW ID - для реферальной ссылки!
+            // OWNER ID - для реферальной ссылки!
             // Это главное поле для передачи в registration.html
-            // Приоритет: localStorage > currentUser > ref из URL (fallback)
+            // Приоритет: GW ID > CG ID > temp_id > ref из URL
             // ═══════════════════════════════════════════════════════════
             owner_gw_id: localStorage.getItem('cardgift_gw_id') || 
+                         localStorage.getItem('cardgift_cg_id') ||
+                         localStorage.getItem('cardgift_temp_id') ||
                          (currentUser?.gwId) || 
                          (currentUser?.gw_id) ||
+                         (currentUser?.cgId) ||
+                         (currentUser?.cg_id) ||
+                         (currentUser?.temp_id) ||
                          new URLSearchParams(window.location.search).get('ref') ||
                          null,
             
