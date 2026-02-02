@@ -18,7 +18,7 @@ const TrialAccess = {
         trialDays: 30,
         minLevelForTrial: 4,
         maxTrialLevel: 7,  // До AI Studio включительно
-        academyLaunchDate: '2026-01-30T00:00:00Z', // Дата запуска Академии
+        academyLaunchDate: '2026-02-02T00:00:00Z', // Дата запуска Академии
         storageKey: 'cardgift_trial'
     },
     
