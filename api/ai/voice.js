@@ -191,10 +191,29 @@ module.exports = async function handler(req, res) {
             'voice-f7': '96XEXOjZRHooATdYA8FY',
             'voice-f8': 'BEprpS2vpgM32yNJpTXq',
             'voice-f9': '7eVMgwCnXydb3CikjV7a',
-            'voice-f10': 'kdVjFjOXaqExaDvXZECX'
+            'voice-f10': 'kdVjFjOXaqExaDvXZECX',
+            // Английские
+            'adam': 'pNInz6obpgDQGcFmaJgB',
+            'antoni': 'ErXwobaYiN019PkySvjV',
+            'arnold': 'VR6AewLTigWG4xSOukaG',
+            'josh': 'TxGEqnHWrfWFTfGW9XjX',
+            'sam': 'yoZ06aMxZJJ28mfd3POQ',
+            'rachel': '21m00Tcm4TlvDq8ikWAM',
+            'domi': 'AZnzlk1XvdvUeBnXmlld',
+            'bella': 'EXAVITQu4vr4xnSDxMaL',
+            'elli': 'MF3mGyEYCl7XYWbV9V6O'
         };
         
-        const voiceId = voiceMap[voice] || voiceMap['alex-nekrasov'];
+        // Проверяем - это короткое имя или уже реальный ElevenLabs ID?
+        // Реальные ID ElevenLabs имеют длину 20+ символов
+        let voiceId;
+        if (voice.length >= 20) {
+            // Это уже реальный ElevenLabs ID
+            voiceId = voice;
+        } else {
+            // Это короткое имя - маппим в реальный ID
+            voiceId = voiceMap[voice] || voiceMap['alex-nekrasov'];
+        }
         
         // Настройки эмоций влияют на stability и style
         const emotionSettings = {
