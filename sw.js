@@ -1,11 +1,11 @@
 /* =====================================================
-   CARDGIFT - SERVICE WORKER v3.0
+   CARDGIFT - SERVICE WORKER v4.0
    PWA, Offline support, Push notifications, Background sync
    
    Обновлено: Февраль 2026
    ===================================================== */
 
-const CACHE_VERSION = 'v3.0';
+const CACHE_VERSION = 'v4.0';
 const CACHE_NAME = `cardgift-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -75,8 +75,6 @@ const PRECACHE_ASSETS = [
     '/js/contacts-service.js',
     '/js/mailings.js',
     '/js/surveys.js',
-    '/js/mobile-header.js',
-    '/js/mobile-wallet-helper.js',
     
     // PWA
     '/manifest.json',
