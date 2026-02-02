@@ -654,43 +654,6 @@ window.DEV_WALLETS = DEV_WALLETS;
 window.CENTRAL_WALLET = CENTRAL_WALLET;
 window.commonTranslations = commonTranslations;
 
-// ═══════════════════════════════════════════════════════════
-// НАВИГАЦИЯ ПО УРОВНЮ
-// ВРЕМЕННО ОТКЛЮЧЕНО - показываем все пункты всем
-// ═══════════════════════════════════════════════════════════
-
-function updateNavigationByLevel(userLevel = 0) {
-    // ВРЕМЕННО: Показываем ВСЕ пункты меню всем пользователям
-    // Фильтрация отключена пока не исправим определение уровня
-    document.querySelectorAll('.nav-item[data-level]').forEach(item => {
-        item.style.display = '';
-        item.classList.remove('nav-locked');
-    });
-    console.log('🔓 Navigation: showing all items (filtering disabled)');
-}
-
-// Автоматический вызов при изменении данных пользователя
-function initNavigationWatcher() {
-    // Проверяем уровень при загрузке
-    const checkAndUpdate = () => {
-        updateNavigationByLevel(0);
-    };
-    
-    // Вызываем при загрузке DOM
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(checkAndUpdate, 500);
-        });
-    } else {
-        setTimeout(checkAndUpdate, 500);
-    }
-}
-
-// Запускаем наблюдатель
-initNavigationWatcher();
-
-window.updateNavigationByLevel = updateNavigationByLevel;
-
 console.log('✅ CardGift Common JS v3.0 loaded');
 console.log('   CONFIG loaded:', !!window.CONFIG);
 console.log('   OWNER:', window.CONFIG?.OWNER?.wallet?.slice(0,10) + '...');
