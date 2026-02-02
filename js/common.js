@@ -654,6 +654,80 @@ window.DEV_WALLETS = DEV_WALLETS;
 window.CENTRAL_WALLET = CENTRAL_WALLET;
 window.commonTranslations = commonTranslations;
 
+// ═══════════════════════════════════════════════════════════
+// НАВИГАЦИЯ ПО УРОВНЮ
+// Скрывает/показывает пункты меню в зависимости от уровня пользователя
+// ═══════════════════════════════════════════════════════════
+
+function updateNavigationByLevel(userLevel = 0) {
+    const level = parseInt(userLevel) || 0;
+    
+    // Обрабатываем все nav-item с data-level
+    document.querySelectorAll('.nav-item[data-level]').forEach(item => {
+        const requiredLevel = parseInt(item.dataset.level) || 0;
+        
+        // Показываем если уровень 0 (доступно всем) или уровень пользователя >= требуемого
+        if (requiredLevel === 0 || level >= requiredLevel) {
+            item.style.display = '';
+            item.classList.remove('nav-locked');
+        } else {
+            // Скрываем недоступные пункты
+            item.style.display = 'none';
+            item.classList.add('nav-locked');
+        }
+    });
+    
+    console.log('🔓 Navigation updated for level:', level);
+}
+
+// Автоматический вызов при изменении данных пользователя
+function initNavigationWatcher() {
+    // Проверяем уровень при загрузке
+    const checkAndUpdate = () => {
+        let level = 0;
+        
+        // Приоритет: GlobalWay bridge → currentUser → localStorage
+        if (window.GlobalWayBridge?.state?.level) {
+            level = window.GlobalWayBridge.state.level;
+        } else if (window.currentUser?.level) {
+            level = window.currentUser.level;
+        } else {
+            const savedLevel = localStorage.getItem('userLevel') || 
+                             localStorage.getItem('cardgift_user_level') ||
+                             localStorage.getItem('gw_level');
+            if (savedLevel) level = parseInt(savedLevel);
+        }
+        
+        // DEV кошельки - максимальный уровень
+        const wallet = window.currentUser?.wallet || 
+                      localStorage.getItem('walletAddress') ||
+                      localStorage.getItem('cardgift_wallet');
+        if (wallet && isDevWallet(wallet)) {
+            level = 12;
+        }
+        
+        updateNavigationByLevel(level);
+    };
+    
+    // Вызываем при загрузке DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkAndUpdate, 500);
+        });
+    } else {
+        setTimeout(checkAndUpdate, 500);
+    }
+    
+    // Вызываем повторно через 2 сек (после загрузки данных)
+    setTimeout(checkAndUpdate, 2000);
+    setTimeout(checkAndUpdate, 5000);
+}
+
+// Запускаем наблюдатель
+initNavigationWatcher();
+
+window.updateNavigationByLevel = updateNavigationByLevel;
+
 console.log('✅ CardGift Common JS v3.0 loaded');
 console.log('   CONFIG loaded:', !!window.CONFIG);
 console.log('   OWNER:', window.CONFIG?.OWNER?.wallet?.slice(0,10) + '...');
