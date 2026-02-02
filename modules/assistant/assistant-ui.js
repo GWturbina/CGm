@@ -598,9 +598,75 @@ class AssistantUI {
                 if (result.success) {
                     this.showNotification('success', 'Задание выполнено!', `+${result.points} очков`);
                     this.updateUI();
+                } else if (result.reason === 'not_verified') {
+                    // Задание не прошло верификацию - показываем подсказку
+                    this.showVerificationError(task, result);
+                } else {
+                    this.showNotification('error', 'Ошибка', result.reason || 'Не удалось выполнить задание');
                 }
             }
         }
+    }
+    
+    showVerificationError(task, result) {
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:99999999;padding:20px;';
+        
+        let progressHtml = '';
+        if (result.current !== undefined && result.required !== undefined) {
+            const percent = Math.min(100, Math.round((result.current / result.required) * 100));
+            progressHtml = `
+                <div style="margin: 16px 0;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;">
+                        <span>Прогресс:</span>
+                        <span style="font-weight:600;">${result.current} / ${result.required}</span>
+                    </div>
+                    <div style="background:#e2e8f0;border-radius:10px;height:12px;overflow:hidden;">
+                        <div style="background:linear-gradient(90deg,#f59e0b,#eab308);height:100%;width:${percent}%;transition:width 0.3s;"></div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        modal.innerHTML = `
+            <div style="background:#1e1b4b;border-radius:20px;padding:28px;max-width:380px;color:white;text-align:center;">
+                <div style="font-size:48px;margin-bottom:16px;">🤔</div>
+                <h3 style="margin:0 0 12px;font-size:20px;">Сначала выполни задание!</h3>
+                <p style="margin:0 0 16px;color:#a5b4fc;font-size:15px;">${task.title}</p>
+                
+                <div style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px;margin-bottom:16px;text-align:left;">
+                    <p style="margin:0;color:#fca5a5;font-size:14px;">${result.message}</p>
+                </div>
+                
+                ${progressHtml}
+                
+                <div style="background:rgba(99,102,241,0.2);border-radius:12px;padding:16px;margin-bottom:20px;text-align:left;">
+                    <p style="margin:0;color:#c7d2fe;font-size:13px;">
+                        💡 <strong>Подсказка:</strong><br>
+                        ${this.getTaskHint(task)}
+                    </p>
+                </div>
+                
+                <button id="modal-close" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;font-size:16px;font-weight:600;cursor:pointer;">
+                    Понятно, сделаю! 💪
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        modal.querySelector('#modal-close').onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    }
+    
+    getTaskHint(task) {
+        const hints = {
+            'd1_t4': 'Отправь открытку друзьям через WhatsApp, Telegram или соцсети. Когда они откроют и оставят контакт - задание засчитается!',
+            'd2_t3': 'Перейди в раздел "Блог" и создай свою страницу с фото и описанием.',
+            'd3_t2': 'Открой "Генератор" и создай свою уникальную открытку.',
+            'd4_t2': 'Нужно минимум 5 контактов в CRM. Отправляй открытки и собирай лидов!',
+            'd5_t2': 'Перейди в раздел "Опросы" и создай свой первый опрос для сбора контактов.'
+        };
+        return hints[task.id] || task.hint || 'Выполни действие и возвращайся!';
     }
     
     handleAction(action) {
