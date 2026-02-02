@@ -267,6 +267,26 @@ class VirtualAssistant {
             return { success: false, reason: 'task_not_found' };
         }
         
+        // ═══════════════════════════════════════════════════════════════
+        // ВЕРИФИКАЦИЯ ЗАДАНИЯ ЧЕРЕЗ API (если не autoVerified)
+        // ═══════════════════════════════════════════════════════════════
+        if (!data.autoVerified && !data.skipVerification) {
+            const verification = await this.verifyTask(taskId);
+            
+            if (!verification.verified) {
+                console.log('❌ Task not verified:', taskId, verification.message);
+                return { 
+                    success: false, 
+                    reason: 'not_verified',
+                    message: verification.message || 'Задание не выполнено. Сначала выполни действие!',
+                    current: verification.current,
+                    required: verification.required
+                };
+            }
+            
+            console.log('✅ Task verified:', taskId, verification.message);
+        }
+        
         const points = task.points || 0;
         this.state.totalPoints += points;
         this.state.completedTasks.push(taskId);
@@ -284,6 +304,56 @@ class VirtualAssistant {
             totalPoints: this.state.totalPoints,
             task: task
         };
+    }
+    
+    // Верификация задания через API
+    async verifyTask(taskId) {
+        try {
+            const response = await fetch('/api/verify-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    taskId: taskId,
+                    userId: this.userId
+                })
+            });
+            
+            if (!response.ok) {
+                console.warn('Verify API error, allowing task');
+                return { verified: true };
+            }
+            
+            const result = await response.json();
+            return result;
+            
+        } catch (error) {
+            console.warn('Verify task error:', error);
+            // При ошибке API - разрешаем (fallback)
+            return { verified: true };
+        }
+    }
+    
+    // Получить статистику пользователя
+    async getUserStats() {
+        try {
+            const response = await fetch('/api/verify-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'getStats',
+                    userId: this.userId
+                })
+            });
+            
+            if (!response.ok) return null;
+            
+            const result = await response.json();
+            return result.stats;
+            
+        } catch (error) {
+            console.warn('Get stats error:', error);
+            return null;
+        }
     }
     
     findTask(taskId) {
