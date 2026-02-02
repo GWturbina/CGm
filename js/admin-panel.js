@@ -1,11 +1,13 @@
 /* =====================================================
-   CARDGIFT - ADMIN PANEL JAVASCRIPT v1.5
+   CARDGIFT - ADMIN PANEL JAVASCRIPT v2.0
+   
+   ВАЖНО: Проверка доступа теперь через SecureAuth!
+   Старая проверка через localStorage ОТКЛЮЧЕНА.
    
    Функции админ-панели:
-   - Проверка прав доступа
    - Управление новостями
    - Управление командой
-   - НОВОЕ: Управление доступами/ролями
+   - Управление доступами/ролями
    - Чат команды
    - Начисление кредитов
    - Логирование действий
@@ -62,89 +64,35 @@ let teamMembersList = [];
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🛡️ Admin Panel v1.5 initializing...');
+    console.log('🛡️ Admin Panel v2.0 initializing...');
     
-    // Загружаем новости для колокольчика сразу
+    // Загружаем новости для колокольчика
     setTimeout(loadUserNews, 2000);
     
-    // Проверяем доступ к админке с интервалом пока не найдём кошелёк
-    let attempts = 0;
-    const checkInterval = setInterval(() => {
-        attempts++;
-        const wallet = localStorage.getItem('cardgift_wallet') ||
-                      localStorage.getItem('walletAddress') || 
-                      window.userWalletAddress;
-        
-        if (wallet) {
-            clearInterval(checkInterval);
-            console.log('🛡️ Wallet found on attempt', attempts, ':', wallet);
-            checkAdminAccess();
-        } else if (attempts >= 20) {
-            clearInterval(checkInterval);
-            console.log('🛡️ No wallet after 20 attempts, admin hidden');
-        }
-    }, 500);
+    // ⚠️ СТАРАЯ ПРОВЕРКА ОТКЛЮЧЕНА!
+    // Проверка доступа теперь через secure-admin-access.js
+    // который использует SecureAuth с подписью кошелька
+    
+    console.log('🛡️ Waiting for SecureAuth to check access...');
 });
 
 /**
- * Проверка прав доступа к админке
+ * СТАРАЯ ФУНКЦИЯ - ОТКЛЮЧЕНА!
+ * Проверка теперь через secure-admin-access.js → checkAdminAccessSecure()
+ * 
+ * Эта функция оставлена только для совместимости,
+ * но она будет перезаписана в secure-admin-access.js
  */
 async function checkAdminAccess() {
-    try {
-        // Ищем кошелёк во всех возможных местах
-        const walletAddress = localStorage.getItem('cardgift_wallet') ||
-                             localStorage.getItem('walletAddress') || 
-                             localStorage.getItem('connectedWallet') ||
-                             window.userWalletAddress || 
-                             (typeof walletState !== 'undefined' && walletState.load()?.address);
-        
-        if (!walletAddress) {
-            console.log('🛡️ No wallet connected, admin hidden');
-            return;
-        }
-        
-        const normalizedWallet = walletAddress.toLowerCase();
-        console.log('🛡️ Checking admin access for:', normalizedWallet);
-        console.log('🛡️ Owner wallet is:', OWNER_WALLET);
-        
-        // 1. Проверяем Owner
-        if (normalizedWallet === OWNER_WALLET) {
-            console.log('👑 Owner detected! Full admin access granted');
-            currentAdminUser = {
-                wallet_address: normalizedWallet,
-                role: 'owner',
-                name: 'Owner',
-                permissions: ['all'],
-                is_active: true
-            };
-            showAdminAccess('owner');
-            return;
-        }
-        
-        // 2. Проверяем в таблице team_members
-        if (typeof SupabaseClient !== 'undefined' && SupabaseClient.client) {
-            const { data, error } = await SupabaseClient.client
-                .from('team_members')
-                .select('*')
-                .ilike('wallet_address', normalizedWallet)
-                .eq('is_active', true)
-                .single();
-            
-            if (data && !error) {
-                console.log('👥 Team member detected:', data.role);
-                currentAdminUser = data;
-                showAdminAccess(data.role, data.permissions);
-                return;
-            }
-        }
-        
-        console.log('🛡️ No admin access for:', normalizedWallet);
-        hideAdminAccess();
-        
-    } catch (e) {
-        console.error('Admin check error:', e);
-        hideAdminAccess();
+    console.log('🛡️ checkAdminAccess() called - redirecting to SecureAuth...');
+    
+    // Если SecureAuth загружен - используем его
+    if (window.SecureAuth && typeof checkAdminAccessSecure === 'function') {
+        return await checkAdminAccessSecure();
     }
+    
+    // Иначе - ничего не делаем, ждём SecureAuth
+    console.log('⏳ Waiting for SecureAuth...');
 }
 
 /**
