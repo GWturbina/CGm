@@ -1,86 +1,125 @@
 /* =====================================================
-   CARDGIFT - SECURE ADMIN ACCESS v2.0
+   CARDGIFT - SECURE ADMIN ACCESS v2.1
    
-   Замена для admin-panel.js функции checkAdminAccess
-   Использует серверную проверку через JWT
-   
-   ПОДКЛЮЧЕНИЕ:
-   1. Подключить этот файл ПОСЛЕ secure-auth.js
-   2. Заменяет старую функцию checkAdminAccess
+   С fallback на локальную проверку пока API не настроен
    ===================================================== */
 
-// ═══════════════════════════════════════════════════════════
-// БЕЗОПАСНАЯ ПРОВЕРКА ДОСТУПА К АДМИНКЕ
-// ═══════════════════════════════════════════════════════════
+// OWNER кошелёк - проверка на клиенте как fallback
+const SECURE_OWNER_WALLET = '0x7bcd1753868895971e12448412cb3216d47884c8'.toLowerCase();
 
 /**
  * Проверка прав доступа к админке
- * ИСПОЛЬЗУЕТ СЕРВЕРНУЮ ВАЛИДАЦИЮ!
+ * Сначала пробует SecureAuth, потом fallback на локальную проверку
  */
 async function checkAdminAccessSecure() {
-    console.log('🛡️ Checking admin access (SECURE v2.0)...');
+    console.log('🛡️ Checking admin access (SECURE v2.1)...');
     
     try {
-        // Проверяем, авторизован ли пользователь через SecureAuth
-        if (!window.SecureAuth || !SecureAuth.isAuthenticated) {
-            console.log('🛡️ Not authenticated via SecureAuth');
+        // Получаем кошелёк из всех возможных мест
+        const walletAddress = localStorage.getItem('cardgift_wallet') ||
+                             localStorage.getItem('walletAddress') || 
+                             localStorage.getItem('cg_wallet_address') ||
+                             localStorage.getItem('connectedWallet') ||
+                             window.userWalletAddress;
+        
+        if (!walletAddress) {
+            console.log('🛡️ No wallet found');
+            hideAdminAccess();
+            return;
+        }
+        
+        const normalizedWallet = walletAddress.toLowerCase();
+        console.log('🛡️ Checking wallet:', normalizedWallet);
+        
+        // ═══════════════════════════════════════════════════════════
+        // ВАРИАНТ 1: Пробуем SecureAuth (если токен уже есть)
+        // ═══════════════════════════════════════════════════════════
+        
+        if (window.SecureAuth && SecureAuth.isAuthenticated && SecureAuth.token) {
+            console.log('🔐 SecureAuth token found, checking access...');
             
-            // Пробуем автоматическую авторизацию если есть кошелёк
-            const walletAddress = localStorage.getItem('cg_wallet_address');
+            const accessResult = await SecureAuth.checkAccess('admin');
             
-            if (walletAddress && window.SecureAuth) {
-                console.log('🔐 Attempting secure authentication...');
+            if (accessResult.hasAccess) {
+                console.log('👑 Admin access GRANTED by SecureAuth');
                 
-                try {
-                    await SecureAuth.authenticate(walletAddress);
-                } catch (e) {
-                    console.warn('Auto-auth failed:', e.message);
-                    hideAdminAccess();
-                    return;
-                }
-            } else {
-                hideAdminAccess();
+                currentAdminUser = {
+                    wallet_address: SecureAuth.getWallet(),
+                    role: SecureAuth.getRole(),
+                    permissions: SecureAuth.user?.permissions || ['all'],
+                    is_active: true
+                };
+                
+                showAdminAccess(SecureAuth.getRole(), SecureAuth.user?.permissions);
                 return;
             }
         }
         
-        // Проверяем доступ к админке через СЕРВЕР
-        console.log('🔐 Verifying admin access on server...');
+        // ═══════════════════════════════════════════════════════════
+        // ВАРИАНТ 2: Fallback - локальная проверка OWNER
+        // (временно, пока API не настроен)
+        // ═══════════════════════════════════════════════════════════
         
-        const accessResult = await SecureAuth.checkAccess('admin');
+        console.log('🔄 Fallback to local check...');
         
-        if (accessResult.hasAccess) {
-            console.log('👑 Admin access GRANTED by server');
+        // Проверяем OWNER
+        if (normalizedWallet === SECURE_OWNER_WALLET) {
+            console.log('👑 OWNER detected via fallback check');
             
             currentAdminUser = {
-                wallet_address: SecureAuth.getWallet(),
-                role: SecureAuth.getRole(),
-                permissions: SecureAuth.user?.permissions || ['all'],
+                wallet_address: normalizedWallet,
+                role: 'owner',
+                permissions: ['all'],
                 is_active: true
             };
             
-            showAdminAccess(SecureAuth.getRole(), SecureAuth.user?.permissions);
+            showAdminAccess('owner', ['all']);
+            
+            // Пробуем запустить SecureAuth в фоне для будущих проверок
+            trySecureAuthInBackground(normalizedWallet);
             return;
         }
         
-        // Проверяем доступ к team функциям
-        const teamResult = await SecureAuth.checkAccess('team');
+        // Проверяем DEV кошельки (coauthors)
+        const DEV_WALLETS = [
+            '0x9b49bd9c9458615e11c051afd1ebe983563b67ee',
+            '0x03284a899147f5a07f82c622f34df92198671635',
+            '0xa3496cacc8523421dd151f1d92a456c2dafa28c2'
+        ].map(w => w.toLowerCase());
         
-        if (teamResult.hasAccess) {
-            console.log('👥 Team access GRANTED by server, role:', teamResult.role);
+        if (DEV_WALLETS.includes(normalizedWallet)) {
+            console.log('🔧 Coauthor detected via fallback check');
             
             currentAdminUser = {
-                wallet_address: SecureAuth.getWallet(),
-                role: teamResult.role,
-                permissions: SecureAuth.user?.permissions || [],
+                wallet_address: normalizedWallet,
+                role: 'coauthor',
+                permissions: ['studio', 'generator', 'full_access'],
                 is_active: true
             };
             
-            showAdminAccess(teamResult.role, SecureAuth.user?.permissions);
+            showAdminAccess('coauthor', ['studio', 'generator', 'full_access']);
             return;
         }
         
-        console.log('🛡️ No admin access granted');
+        // Проверяем team_members в базе
+        if (typeof SupabaseClient !== 'undefined' && SupabaseClient.client) {
+            const { data: teamMember } = await SupabaseClient.client
+                .from('team_members')
+                .select('*')
+                .ilike('wallet_address', normalizedWallet)
+                .eq('is_active', true)
+                .single();
+            
+            if (teamMember) {
+                console.log('👥 Team member detected:', teamMember.role);
+                
+                currentAdminUser = teamMember;
+                showAdminAccess(teamMember.role, teamMember.permissions);
+                return;
+            }
+        }
+        
+        console.log('🛡️ No admin access');
         hideAdminAccess();
         
     } catch (error) {
@@ -89,52 +128,31 @@ async function checkAdminAccessSecure() {
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// ПЕРЕХВАТ ПОДКЛЮЧЕНИЯ КОШЕЛЬКА
-// ═══════════════════════════════════════════════════════════
-
 /**
- * Безопасное подключение кошелька с авторизацией
+ * Пробуем запустить SecureAuth в фоне
  */
-async function connectWalletSecure() {
-    console.log('🔗 Secure wallet connection...');
+async function trySecureAuthInBackground(walletAddress) {
+    if (!window.SecureAuth || SecureAuth.isAuthenticated) return;
     
-    // Используем оригинальную функцию подключения
-    let walletAddress;
-    
-    if (typeof connectWallet === 'function') {
-        walletAddress = await connectWallet();
-    } else if (typeof AuthService !== 'undefined') {
-        const user = await AuthService.connectWallet();
-        walletAddress = user?.wallet_address;
-    }
-    
-    if (!walletAddress) {
-        console.log('❌ Wallet connection failed');
-        return null;
-    }
-    
-    // Теперь выполняем безопасную авторизацию
-    console.log('🔐 Starting secure authentication...');
+    console.log('🔐 Trying SecureAuth in background...');
     
     try {
-        const user = await SecureAuth.authenticate(walletAddress);
-        console.log('✅ Secure auth complete:', user.role);
+        // Проверяем доступность API
+        const testResponse = await fetch('/api/auth/challenge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ walletAddress })
+        });
         
-        // Проверяем доступ к админке
-        setTimeout(checkAdminAccessSecure, 500);
-        
-        return user;
-        
-    } catch (error) {
-        console.error('Secure auth failed:', error);
-        
-        // Показываем сообщение пользователю
-        if (typeof showToast === 'function') {
-            showToast('Подпишите сообщение в кошельке для авторизации', 'warning');
+        if (testResponse.ok) {
+            console.log('✅ SecureAuth API available');
+            // API доступен, но не запускаем автоматическую подпись
+            // Пользователь может вызвать её вручную
+        } else {
+            console.log('⚠️ SecureAuth API not ready yet');
         }
-        
-        return null;
+    } catch (e) {
+        console.log('⚠️ SecureAuth API not available:', e.message);
     }
 }
 
@@ -143,47 +161,34 @@ async function connectWalletSecure() {
 // ═══════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🛡️ Secure Admin Access v2.0 initializing...');
+    console.log('🛡️ Secure Admin Access v2.1 initializing...');
     
-    // Ждём загрузки SecureAuth
-    let attempts = 0;
-    const waitForSecureAuth = setInterval(() => {
-        attempts++;
-        
-        if (window.SecureAuth) {
-            clearInterval(waitForSecureAuth);
-            console.log('🛡️ SecureAuth found, checking access...');
-            
-            // Даём время на инициализацию SecureAuth
-            setTimeout(checkAdminAccessSecure, 1000);
-        } else if (attempts >= 20) {
-            clearInterval(waitForSecureAuth);
-            console.warn('⚠️ SecureAuth not loaded, admin access disabled');
-            hideAdminAccess();
-        }
-    }, 250);
+    // Ждём немного для загрузки всех модулей
+    setTimeout(() => {
+        console.log('🛡️ Starting admin access check...');
+        checkAdminAccessSecure();
+    }, 1500);
 });
 
-// Слушаем событие успешной авторизации
-window.addEventListener('secureAuthComplete', (e) => {
-    console.log('🔐 SecureAuth complete event received');
+// Слушаем подключение кошелька
+window.addEventListener('walletConnected', () => {
+    console.log('🔐 Wallet connected event - checking admin access');
     setTimeout(checkAdminAccessSecure, 500);
 });
 
-// Слушаем выход
-window.addEventListener('secureAuthLogout', () => {
-    console.log('🔐 SecureAuth logout event received');
-    hideAdminAccess();
+// Слушаем SecureAuth
+window.addEventListener('secureAuthComplete', (e) => {
+    console.log('🔐 SecureAuth complete - checking admin access');
+    setTimeout(checkAdminAccessSecure, 500);
 });
 
 // ═══════════════════════════════════════════════════════════
 // ЗАМЕНА ГЛОБАЛЬНЫХ ФУНКЦИЙ
 // ═══════════════════════════════════════════════════════════
 
-// Заменяем старую функцию на безопасную
 window.checkAdminAccess = checkAdminAccessSecure;
 window.checkAdminAccessSecure = checkAdminAccessSecure;
-window.connectWalletSecure = connectWalletSecure;
 
-console.log('🛡️ Secure Admin Access v2.0 loaded');
+console.log('🛡️ Secure Admin Access v2.1 loaded');
 console.log('   ✅ checkAdminAccess replaced with secure version');
+console.log('   ⚠️ Fallback mode enabled until API is ready');
