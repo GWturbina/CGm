@@ -992,48 +992,65 @@
     }
     
     async function markAllRead() {
-        const gwId = window.userGwId || window.displayId;
-        if (!gwId) return;
-        
         try {
-            // Отмечаем новости
+            // ═══════════════════════════════════════════════════════════
+            // НОВОСТИ - используем localStorage (как в markNewsRead)
+            // ═══════════════════════════════════════════════════════════
             const newsIds = state.data.news.filter(n => !n.isRead).map(n => n.id);
             if (newsIds.length > 0) {
-                for (const newsId of newsIds) {
-                    await supabase
-                        .from('news_read_status')
-                        .upsert({
-                            user_gw_id: gwId,
-                            news_id: newsId,
-                            read_at: new Date().toISOString()
-                        }, { onConflict: 'user_gw_id,news_id' });
+                const readIds = JSON.parse(localStorage.getItem('readNewsIds') || '[]');
+                newsIds.forEach(id => {
+                    if (!readIds.includes(id)) {
+                        readIds.push(id);
+                    }
+                });
+                localStorage.setItem('readNewsIds', JSON.stringify(readIds));
+                console.log('🔔 Marked', newsIds.length, 'news as read in localStorage');
+            }
+            
+            // ═══════════════════════════════════════════════════════════
+            // СООБЩЕНИЯ - Supabase (если есть gwId)
+            // ═══════════════════════════════════════════════════════════
+            const gwId = getUserGwId();
+            const sb = getSupabase();
+            
+            if (gwId && sb) {
+                const msgIds = state.data.messages.filter(m => !m.is_read).map(m => m.id);
+                if (msgIds.length > 0) {
+                    await sb
+                        .from('internal_messages')
+                        .update({ is_read: true })
+                        .in('id', msgIds);
+                    console.log('🔔 Marked', msgIds.length, 'messages as read');
+                }
+                
+                // ═══════════════════════════════════════════════════════════
+                // СИСТЕМНЫЕ УВЕДОМЛЕНИЯ - Supabase
+                // ═══════════════════════════════════════════════════════════
+                const notifIds = state.data.notifications.filter(n => !n.is_read).map(n => n.id);
+                if (notifIds.length > 0) {
+                    await sb
+                        .from('notifications')
+                        .update({ is_read: true })
+                        .in('id', notifIds);
+                    console.log('🔔 Marked', notifIds.length, 'notifications as read');
                 }
             }
             
-            // Отмечаем сообщения
-            const msgIds = state.data.messages.filter(m => !m.is_read).map(m => m.id);
-            if (msgIds.length > 0) {
-                await supabase
-                    .from('internal_messages')
-                    .update({ is_read: true })
-                    .in('id', msgIds);
-            }
+            // Обновляем локальное состояние сразу
+            state.data.news.forEach(n => n.isRead = true);
+            state.data.messages.forEach(m => m.is_read = true);
+            state.data.notifications.forEach(n => n.is_read = true);
             
-            // Отмечаем уведомления
-            const notifIds = state.data.notifications.filter(n => !n.is_read).map(n => n.id);
-            if (notifIds.length > 0) {
-                await supabase
-                    .from('notifications')
-                    .update({ is_read: true })
-                    .in('id', notifIds);
-            }
+            state.counts.news = 0;
+            state.counts.messages = 0;
+            state.counts.notifications = 0;
             
-            // Перезагружаем данные
-            await loadAllNotifications();
+            // Обновляем UI
             updateBellBadge();
             renderTab(state.activeTab);
             
-            showToast('Все уведомления отмечены как прочитанные', 'success');
+            showToast('✅ Все уведомления отмечены как прочитанные', 'success');
             
         } catch (e) {
             console.error('Error marking all as read:', e);
