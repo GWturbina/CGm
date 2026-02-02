@@ -164,7 +164,16 @@ module.exports = async function handler(req, res) {
         // Используем ключ пользователя или серверный
         const apiKey = userApiKey || process.env.ELEVENLABS_API_KEY;
         
+        // ДИАГНОСТИКА - проверяем наличие ключа
+        console.log('🔑 ElevenLabs API key check:', {
+            hasUserKey: !!userApiKey,
+            hasEnvKey: !!process.env.ELEVENLABS_API_KEY,
+            keyLength: apiKey ? apiKey.length : 0,
+            keyPrefix: apiKey ? apiKey.substring(0, 5) + '...' : 'NONE'
+        });
+        
         if (!apiKey) {
+            console.error('❌ No ElevenLabs API key found!');
             return res.status(500).json({ error: 'API key not configured' });
         }
         
@@ -253,17 +262,28 @@ module.exports = async function handler(req, res) {
         
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            console.error('ElevenLabs error:', err);
+            console.error('❌ ElevenLabs error:', {
+                status: response.status,
+                error: err,
+                voiceId: voiceId,
+                keyUsed: apiKey ? apiKey.substring(0, 8) + '...' : 'NONE'
+            });
             
             if (response.status === 401) {
-                return res.status(401).json({ error: 'Неверный API ключ ElevenLabs' });
+                return res.status(401).json({ 
+                    error: 'Неверный API ключ ElevenLabs',
+                    debug: {
+                        hasKey: !!apiKey,
+                        keyLength: apiKey ? apiKey.length : 0
+                    }
+                });
             }
             if (response.status === 400) {
                 return res.status(400).json({ error: err.detail?.message || 'Ошибка запроса' });
             }
             
             return res.status(response.status).json({ 
-                error: err.detail?.message || 'Ошибка ElevenLabs' 
+                error: err.detail?.message || err.detail || 'Ошибка ElevenLabs' 
             });
         }
         
