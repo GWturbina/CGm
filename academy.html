@@ -478,7 +478,7 @@
                     <div class="step-content">
                         <h4>🤖 Запусти бота</h4>
                         <p>Напоминания о заданиях, прогресс, мотивация</p>
-                        <a href="https://t.me/CardGift_Notify_bot" target="_blank" class="telegram-btn telegram-btn-bot">
+                        <a id="telegramBotLink" href="https://t.me/CardGift_Notify_Bot" target="_blank" class="telegram-btn telegram-btn-bot">
                             🤖 Открыть бота
                         </a>
                     </div>
@@ -1268,8 +1268,31 @@
             Academy.startTrial();
         }
         
+        // Обновление ссылки на Telegram бота с gwId пользователя
+        function updateTelegramBotLink() {
+            const botLink = document.getElementById('telegramBotLink');
+            if (!botLink) return;
+            
+            // Получаем gwId пользователя
+            const gwId = window.currentGwId || 
+                        window.currentDisplayId || 
+                        localStorage.getItem('cardgift_display_id') ||
+                        localStorage.getItem('userGwId') ||
+                        localStorage.getItem('cardgift_temp_id');
+            
+            if (gwId) {
+                // Формируем ссылку с параметром start
+                botLink.href = `https://t.me/CardGift_Notify_Bot?start=${gwId}`;
+                console.log('🤖 Telegram bot link updated:', botLink.href);
+            }
+        }
+        
         // Инициализация
-        document.addEventListener('DOMContentLoaded', () => Academy.init());
+        document.addEventListener('DOMContentLoaded', () => {
+            Academy.init();
+            // Обновляем ссылку на бота после небольшой задержки (ждём загрузку данных пользователя)
+            setTimeout(updateTelegramBotLink, 1000);
+        });
     </script>
 </body>
 </html>
