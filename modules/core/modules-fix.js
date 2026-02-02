@@ -403,22 +403,46 @@ function showSection(sectionId) {
 
 // ============ ЗАМКИ И УРОВНИ ============
 function updateAccessLocks() {
+    // Сначала инициализируем триал если ещё не сделано
+    if (typeof TrialAccess !== 'undefined' && window.currentUserLevel >= 4) {
+        const userId = window.currentGwId || window.currentDisplayId || window.currentTempId;
+        const registrationDate = localStorage.getItem('cardgift_registration_date') || null;
+        
+        if (!TrialAccess.state.actualLevel) {
+            TrialAccess.init(window.currentUserLevel, userId, registrationDate);
+            window.currentEffectiveLevel = TrialAccess.state.effectiveLevel;
+            
+            // Показываем триал-бейдж если активен
+            if (TrialAccess.state.isTrialActive) {
+                showTrialBadge(TrialAccess.state);
+            }
+            
+            console.log('🎫 Trial check: actual=' + window.currentUserLevel + ', effective=' + window.currentEffectiveLevel);
+        }
+    } else {
+        window.currentEffectiveLevel = window.currentUserLevel;
+    }
+    
+    // Используем effectiveLevel для проверки доступа
+    var effectiveLevel = window.currentEffectiveLevel || window.currentUserLevel || 0;
+    
     document.querySelectorAll('.nav-item').forEach(function(item) {
         var requiredLevel = parseInt(item.dataset.level) || 0;
         var lock = item.querySelector('.nav-lock');
         
         if (lock) {
-            lock.style.display = window.currentUserLevel >= requiredLevel ? 'none' : 'inline';
+            lock.style.display = effectiveLevel >= requiredLevel ? 'none' : 'inline';
         }
         
-        item.classList.toggle('locked', window.currentUserLevel < requiredLevel);
+        item.classList.toggle('locked', effectiveLevel < requiredLevel);
     });
     
     updateSectionRestrictions();
 }
 
 function updateSectionRestrictions() {
-    var level = window.currentUserLevel || 0;
+    // Используем effectiveLevel (с учётом триала) вместо просто currentUserLevel
+    var level = window.currentEffectiveLevel || window.currentUserLevel || 0;
     
     var referralRestricted = document.getElementById('referralRestricted');
     if (referralRestricted) {
@@ -449,7 +473,14 @@ function updateSectionRestrictions() {
         if (mailingsRestricted) mailingsRestricted.style.display = level >= 6 ? 'none' : 'block';
     }
     
-    console.log('🔓 Section restrictions updated for level:', level);
+    // AI Studio (уровень 7)
+    var studioSection = document.getElementById('section-studio') || document.getElementById('section-ai-studio');
+    if (studioSection) {
+        var studioRestricted = studioSection.querySelector('.restricted-block');
+        if (studioRestricted) studioRestricted.style.display = level >= 7 ? 'none' : 'block';
+    }
+    
+    console.log('🔓 Section restrictions updated for level:', level, '(effective, actual=' + window.currentUserLevel + ')');
 }
 
 function updateLevelButtons() {
