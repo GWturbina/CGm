@@ -1,11 +1,11 @@
 /* =====================================================
-   CARDGIFT - SERVICE WORKER v2.0
+   CARDGIFT - SERVICE WORKER v3.0
    PWA, Offline support, Push notifications, Background sync
    
-   Обновлено: Январь 2026
+   Обновлено: Февраль 2026
    ===================================================== */
 
-const CACHE_VERSION = 'v2.2';
+const CACHE_VERSION = 'v3.0';
 const CACHE_NAME = `cardgift-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -19,6 +19,7 @@ const PRECACHE_ASSETS = [
     '/card-viewer.html',
     '/registration.html',
     '/ai-studio.html',
+    '/academy.html',
     '/blog.html',
     '/survey.html',
     '/offline.html',
@@ -42,30 +43,48 @@ const PRECACHE_ASSETS = [
     '/js/wallet-state.js',
     '/js/wallet.js',
     '/js/translations.js',
+    '/js/id-linking-service.js',
+    '/js/globalway-bridge.js',
+    '/js/content-filter.js',
+    
+    // AI Studio
+    '/js/ai-studio.js',
+    '/js/voices-data.js',
+    '/js/music-data.js',
+    
+    // Virtual Assistant
+    '/js/lessons-data.js',
+    '/js/lessons-data-extended.js',
+    '/modules/assistant/assistant.js',
+    '/modules/assistant/assistant-ui.js',
+    '/modules/assistant/assistant-init.js',
+    '/modules/assistant/dashboard-integration.js',
     
     // Dashboard модули
-    '/modules/core/dashboard-core.js',
-    '/modules/mobile/mobile.js',
+    '/modules/core/modules-fix.js',
     '/modules/contacts/contacts.js',
     '/modules/archive/archive.js',
     '/modules/referrals/referrals.js',
-    '/modules/blog/blog.js',
+    '/modules/analytics/analytics.js',
     '/modules/panel/panel.js',
-    '/modules/upgrade/upgrade.js',
-    '/modules/modals/modals.js',
     
     // Другие важные JS
     '/js/generator.js',
+    '/js/card-viewer.js',
     '/js/cardService.js',
-    '/js/globalway-bridge.js',
     '/js/contacts-service.js',
+    '/js/mailings.js',
+    '/js/surveys.js',
+    '/js/mobile-header.js',
+    '/js/mobile-wallet-helper.js',
     
     // PWA
     '/manifest.json',
     
     // Иконки (основные)
     '/icons/icon-192.png',
-    '/icons/icon-512.png'
+    '/icons/icon-512.png',
+    '/icons/icon-72.png'
 ];
 
 // Ресурсы которые НЕ кэшируем
