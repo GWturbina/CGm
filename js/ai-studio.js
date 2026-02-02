@@ -833,12 +833,118 @@ const AIStudio = {
         if (saved) this.config.CUSTOM_VOICES = JSON.parse(saved);
     },
     
-    getAllVoices() { return [...this.config.VOICES_LIBRARY, ...this.config.CUSTOM_VOICES]; },
+    // Получить все голоса - из voices-data.js или из встроенного конфига
+    getAllVoices() { 
+        // Приоритет: VOICES_DATA из voices-data.js
+        if (window.getAllVoices && typeof window.getAllVoices === 'function') {
+            return window.getAllVoices();
+        }
+        // Fallback на встроенный конфиг
+        return [...this.config.VOICES_LIBRARY, ...this.config.CUSTOM_VOICES]; 
+    },
+    
+    // Тест голоса - воспроизведение примера
+    async testVoice(voiceId) {
+        const text = 'Привет! Это тестовое сообщение для проверки голоса.';
+        
+        this.showLoading('🎤 Тест голоса...');
+        
+        try {
+            const response = await fetch('/api/ai/voice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    text, 
+                    voice: voiceId,
+                    wallet: this.state.walletAddress
+                })
+            });
+            
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Error');
+            
+            // Воспроизводим аудио
+            const audioBlob = new Blob(
+                [Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0))], 
+                { type: 'audio/mpeg' }
+            );
+            const audio = new Audio(URL.createObjectURL(audioBlob));
+            audio.play();
+            
+            this.showNotification('🎤 Воспроизведение...', 'success');
+            
+        } catch (e) {
+            this.showNotification('❌ ' + e.message, 'error');
+        } finally {
+            this.hideLoading();
+        }
+    },
     
     updateVoiceSelect() {
         const select = document.getElementById('voiceSelect');
         if (!select) return;
-        select.innerHTML = this.getAllVoices().map(v => `<option value="${v.id}">${v.name} (${v.gender === 'male' ? '♂' : '♀'})</option>`).join('');
+        
+        const voices = this.getAllVoices();
+        
+        // Группируем голоса
+        if (window.VOICES_DATA) {
+            // Используем категории из voices-data.js
+            let html = '';
+            
+            // Славянские голоса
+            if (VOICES_DATA.slavic?.length) {
+                html += '<optgroup label="🇺🇦🇷🇺 Украинские/Русские">';
+                VOICES_DATA.slavic.forEach(v => {
+                    html += `<option value="${v.id}">${v.name} ${v.gender === 'male' ? '♂' : '♀'}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            // Дополнительные мужские
+            if (VOICES_DATA.maleExtra?.length) {
+                html += '<optgroup label="♂ Мужские (дополнительные)">';
+                VOICES_DATA.maleExtra.forEach(v => {
+                    html += `<option value="${v.id}">${v.name}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            // Дополнительные женские
+            if (VOICES_DATA.femaleExtra?.length) {
+                html += '<optgroup label="♀ Женские (дополнительные)">';
+                VOICES_DATA.femaleExtra.forEach(v => {
+                    html += `<option value="${v.id}">${v.name}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            // Английские
+            if (VOICES_DATA.english?.length) {
+                html += '<optgroup label="🇬🇧 English">';
+                VOICES_DATA.english.forEach(v => {
+                    html += `<option value="${v.id}">${v.name} ${v.gender === 'male' ? '♂' : '♀'}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            // Кастомные
+            if (VOICES_DATA.custom?.length) {
+                html += '<optgroup label="⭐ Мои голоса">';
+                VOICES_DATA.custom.forEach(v => {
+                    html += `<option value="${v.id}">${v.name}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            select.innerHTML = html;
+        } else {
+            // Fallback - простой список
+            select.innerHTML = voices.map(v => 
+                `<option value="${v.id}">${v.name} (${v.gender === 'male' ? '♂' : '♀'})</option>`
+            ).join('');
+        }
+        
+        console.log('🎙️ Voice select updated:', voices.length, 'voices');
     },
     
     showAuthorTools() {
