@@ -311,7 +311,7 @@ const MobileWalletHelper = {
         }
     },
     
-    // Инициализация - проверяем нужно ли показать модалку
+    // Инициализация - ОТКЛЮЧЕНО чтобы не мешать пользователям в SafePal
     init() {
         console.log('📱 MobileWalletHelper initializing...');
         console.log('   isMobile:', this.isMobile());
@@ -319,24 +319,10 @@ const MobileWalletHelper = {
         console.log('   isInSafePal:', this.isInSafePal());
         console.log('   isInTelegram:', this.isInTelegram());
         
-        // Показываем модалку только если:
-        // 1. Мобильное устройство
-        // 2. Нет window.ethereum (не в кошельке)
-        // 3. Не уже отказался (localStorage)
-        if (this.isMobile() && !this.hasWallet()) {
-            const dismissed = localStorage.getItem('safepal_modal_dismissed');
-            const dismissedTime = dismissed ? parseInt(dismissed) : 0;
-            const hoursSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60);
-            
-            // Показываем снова через 24 часа
-            if (!dismissed || hoursSinceDismissed > 24) {
-                setTimeout(() => {
-                    this.showModal();
-                }, this.config.showDelay);
-            }
-        }
+        // ОТКЛЮЧЕНО - модалка мешает пользователям в SafePal
+        // Автопоказ отключен, можно вызвать вручную: MobileWalletHelper.showModal()
         
-        console.log('✅ MobileWalletHelper ready');
+        console.log('✅ MobileWalletHelper ready (auto-show disabled)');
     },
     
     // Запомнить что пользователь отказался
