@@ -725,7 +725,7 @@
                     <h4>📊 Как распределяются деньги?</h4>
                     <p style="margin-bottom: 15px; color: var(--text-secondary);">
                         Программное обеспечение пишется ОДИН раз, но клонируется БЕСКОНЕЧНО. 
-                        Поэтому 100% стоимости идёт на МАРКЕТИНГ — то есть ТЕБЕ!
+                        Поэтому 100% стоимости идёт на МАРКЕТИНГ - то есть ТЕБЕ!
                     </p>
                     
                     <div class="income-source">
@@ -886,7 +886,7 @@
                                 <div class="leader-name">Загрузка...</div>
                                 <div class="leader-stats">День 1 • 0 очков</div>
                             </div>
-                            <div class="leader-points">—</div>
+                            <div class="leader-points">-</div>
                         </div>
                     </div>
                 </div>
@@ -1197,34 +1197,44 @@
             loadState();
             renderDays();
             
-            // Render leaderboard (demo)
+            // Render leaderboard (реальные данные будут загружаться из базы)
             const leaderboard = document.getElementById('leaderboardList');
+            
+            // Получаем gwId пользователя
+            const userGwId = localStorage.getItem('cardgift_display_id') || 
+                            localStorage.getItem('userGwId') || 
+                            'Участник';
+            
+            // Показываем только текущего пользователя пока нет данных из базы
             leaderboard.innerHTML = `
-                <div class="leader-item">
-                    <div class="leader-rank">1</div>
+                <div class="leader-item" style="background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); border: 1px solid rgba(255,215,0,0.3);">
+                    <div class="leader-rank" style="background: linear-gradient(135deg, #FFD700, #F59E0B);">1</div>
                     <div class="leader-info">
-                        <div class="leader-name">Александр П.</div>
-                        <div class="leader-stats">День 21 • 4250 очков</div>
-                    </div>
-                    <div class="leader-points">$1,200</div>
-                </div>
-                <div class="leader-item">
-                    <div class="leader-rank">2</div>
-                    <div class="leader-info">
-                        <div class="leader-name">Мария К.</div>
-                        <div class="leader-stats">День 18 • 3800 очков</div>
-                    </div>
-                    <div class="leader-points">$950</div>
-                </div>
-                <div class="leader-item">
-                    <div class="leader-rank">3</div>
-                    <div class="leader-info">
-                        <div class="leader-name">Вы</div>
+                        <div class="leader-name">ID: ${userGwId}</div>
                         <div class="leader-stats">День ${state.currentDay} • ${state.totalPoints} очков</div>
                     </div>
-                    <div class="leader-points">—</div>
+                    <div class="leader-points" style="color: #FFD700;">🚀</div>
+                </div>
+                <div class="leader-item" style="opacity: 0.5;">
+                    <div class="leader-rank">2</div>
+                    <div class="leader-info">
+                        <div class="leader-name">Ожидаем участников...</div>
+                        <div class="leader-stats">Стань первым!</div>
+                    </div>
+                    <div class="leader-points">-</div>
+                </div>
+                <div class="leader-item" style="opacity: 0.3;">
+                    <div class="leader-rank">3</div>
+                    <div class="leader-info">
+                        <div class="leader-name">Место свободно</div>
+                        <div class="leader-stats">Присоединяйся!</div>
+                    </div>
+                    <div class="leader-points">-</div>
                 </div>
             `;
+            
+            // TODO: Загрузить реальный лидерборд из Supabase
+            // loadLeaderboardFromDB();
         });
     </script>
 </body>
