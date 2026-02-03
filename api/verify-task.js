@@ -257,7 +257,7 @@ export default async function handler(req, res) {
                 result = { verified: true, message: 'Unknown task type - allowed' };
         }
         
-        return res.status(200).json({ success: true, taskId, ...result });
+        return res.status(200).json({ success: true, taskId, userId, gwId: withGW(userId), ...result });
     } catch (error) {
         console.error('Verify task error:', error);
         return res.status(500).json({ error: error.message });
