@@ -656,7 +656,16 @@ const AIStudio = {
                 })
             });
             
-            const data = await response.json();
+            // Защита от не-JSON ответов (HTML ошибка Vercel и т.д.)
+            const contentType = response.headers.get('content-type') || '';
+            let data;
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const rawText = await response.text();
+                console.error('❌ Non-JSON response:', rawText.substring(0, 200));
+                throw new Error('Сервер вернул ошибку. Код: ' + response.status);
+            }
             if (!response.ok) throw new Error(data.error || 'Error');
             
             if (!await this.useCredit('voice')) throw new Error('Credit error');
@@ -861,7 +870,8 @@ const AIStudio = {
                 })
             });
             
-            const data = await response.json();
+            const data = await response.json().catch(() => null);
+            if (!data) throw new Error('Сервер вернул ошибку. Код: ' + response.status);
             if (!response.ok) throw new Error(data.error || 'Error');
             
             // Воспроизводим аудио
