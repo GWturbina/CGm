@@ -698,8 +698,8 @@ export default async function handler(req, res) {
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    // GET = диагностика
-    if (req.method === 'GET') {
+    // GET без ?run = диагностика, GET с ?run=true = запуск рассылки
+    if (req.method === 'GET' && !req.query.run) {
         try {
             const { data: subs, error: subErr } = await supabase
                 .from('cardgift_bot_subscribers')
@@ -719,7 +719,8 @@ export default async function handler(req, res) {
             
             return res.status(200).json({
                 status: 'ok',
-                version: '2.0',
+                version: '2.1',
+                hint: 'Add ?run=true to trigger reminders manually',
                 hasBotToken: !!process.env.CARDGIFT_BOT_TOKEN,
                 hasSupabaseKey: !!supabaseKey,
                 subscribers: {
@@ -748,12 +749,14 @@ export default async function handler(req, res) {
         }
     }
     
-    // Проверка авторизации (только для POST/Cron)
-    const authKey = req.headers['x-cron-key'] || req.query.key;
-    const expectedKey = process.env.CRON_SECRET_KEY;
-    
-    if (expectedKey && authKey !== expectedKey) {
-        return res.status(401).json({ error: 'Unauthorized' });
+    // Проверка авторизации (только для POST/Cron, GET ?run=true пропускаем)
+    if (req.method !== 'GET') {
+        const authKey = req.headers['x-cron-key'] || req.query.key;
+        const expectedKey = process.env.CRON_SECRET_KEY;
+        
+        if (expectedKey && authKey !== expectedKey) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
     }
     
     // Определяем время суток (UTC)
