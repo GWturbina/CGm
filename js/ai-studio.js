@@ -88,11 +88,12 @@ const AIStudio = {
         },
         
         VOICES_LIBRARY: [
-            { id: 'alex-nekrasov', name: 'Алекс Некрасов', gender: 'male', language: 'ru' },
-            { id: 'taras-boyko', name: 'Тарас Бойко', gender: 'male', language: 'ua' },
-            { id: 'vladimir', name: 'Владимир', gender: 'male', language: 'ru' },
-            { id: 'evgeniy', name: 'Евгений', gender: 'male', language: 'ru' },
-            { id: 'anna-stepanenko', name: 'Анна Степаненко', gender: 'female', language: 'ua' },
+            { id: 'h9NSQvWZaC4NFusYsxT9', name: 'Артем Клопотенко', gender: 'male', language: 'ua' },
+            { id: 'TEyBWD5tAHAWqAGEv6yI', name: 'Євген Василенко', gender: 'male', language: 'ua' },
+            { id: 'B31Kx7rXmNnYqp1QWHR2', name: 'Володимир', gender: 'male', language: 'ua' },
+            { id: '96XEXOjZRHooATdYA8FY', name: 'Софія', gender: 'female', language: 'ua' },
+            { id: '2o2uQnlGaNuV3ObRpxXt', name: 'Анна Степаненко', gender: 'female', language: 'ua' },
+            { id: 'txnCCHHGKmYIwrn7HfHQ', name: 'Александр Власов', gender: 'male', language: 'ru' },
         ],
         
         CUSTOM_VOICES: []
@@ -888,32 +889,49 @@ const AIStudio = {
         
         // Группируем голоса
         if (window.VOICES_DATA) {
-            // Используем категории из voices-data.js
             let html = '';
             
-            // Славянские голоса
-            if (VOICES_DATA.slavic?.length) {
-                html += '<optgroup label="🇺🇦🇷🇺 Украинские/Русские">';
-                VOICES_DATA.slavic.forEach(v => {
-                    html += `<option value="${v.id}">${v.name} ${v.gender === 'male' ? '♂' : '♀'}</option>`;
+            // Украинские мужские
+            if (VOICES_DATA.ukrainian_male?.length) {
+                html += '<optgroup label="🇺🇦 Українські ♂">';
+                VOICES_DATA.ukrainian_male.forEach(v => {
+                    html += `<option value="${v.id}">♂ ${v.name}</option>`;
                 });
                 html += '</optgroup>';
             }
             
-            // Дополнительные мужские
-            if (VOICES_DATA.maleExtra?.length) {
-                html += '<optgroup label="♂ Мужские (дополнительные)">';
-                VOICES_DATA.maleExtra.forEach(v => {
-                    html += `<option value="${v.id}">${v.name}</option>`;
+            // Украинские женские
+            if (VOICES_DATA.ukrainian_female?.length) {
+                html += '<optgroup label="🇺🇦 Українські ♀">';
+                VOICES_DATA.ukrainian_female.forEach(v => {
+                    html += `<option value="${v.id}">♀ ${v.name}</option>`;
                 });
                 html += '</optgroup>';
             }
             
-            // Дополнительные женские
-            if (VOICES_DATA.femaleExtra?.length) {
-                html += '<optgroup label="♀ Женские (дополнительные)">';
-                VOICES_DATA.femaleExtra.forEach(v => {
-                    html += `<option value="${v.id}">${v.name}</option>`;
+            // Русские мужские
+            if (VOICES_DATA.russian_male?.length) {
+                html += '<optgroup label="🇷🇺 Русские ♂">';
+                VOICES_DATA.russian_male.forEach(v => {
+                    html += `<option value="${v.id}">♂ ${v.name}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            // Русские женские
+            if (VOICES_DATA.russian_female?.length) {
+                html += '<optgroup label="🇷🇺 Русские ♀">';
+                VOICES_DATA.russian_female.forEach(v => {
+                    html += `<option value="${v.id}">♀ ${v.name}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            // Казахские/Киргизские
+            if (VOICES_DATA.kazakh_kyrgyz?.length) {
+                html += '<optgroup label="🇰🇿🇰🇬 Қазақ / Кыргыз">';
+                VOICES_DATA.kazakh_kyrgyz.forEach(v => {
+                    html += `<option value="${v.id}">${v.gender === 'male' ? '♂' : '♀'} ${v.name}</option>`;
                 });
                 html += '</optgroup>';
             }
@@ -922,7 +940,16 @@ const AIStudio = {
             if (VOICES_DATA.english?.length) {
                 html += '<optgroup label="🇬🇧 English">';
                 VOICES_DATA.english.forEach(v => {
-                    html += `<option value="${v.id}">${v.name} ${v.gender === 'male' ? '♂' : '♀'}</option>`;
+                    html += `<option value="${v.id}">${v.gender === 'male' ? '♂' : '♀'} ${v.name}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            // Немецкие
+            if (VOICES_DATA.german?.length) {
+                html += '<optgroup label="🇩🇪 Deutsch">';
+                VOICES_DATA.german.forEach(v => {
+                    html += `<option value="${v.id}">${v.gender === 'male' ? '♂' : '♀'} ${v.name}</option>`;
                 });
                 html += '</optgroup>';
             }
@@ -931,14 +958,22 @@ const AIStudio = {
             if (VOICES_DATA.custom?.length) {
                 html += '<optgroup label="⭐ Мои голоса">';
                 VOICES_DATA.custom.forEach(v => {
-                    html += `<option value="${v.id}">${v.name}</option>`;
+                    html += `<option value="${v.id}">${v.gender === 'male' ? '♂' : '♀'} ${v.name}</option>`;
+                });
+                html += '</optgroup>';
+            }
+            
+            // Обратная совместимость со старыми категориями
+            if (VOICES_DATA.slavic?.length && !VOICES_DATA.ukrainian_male?.length) {
+                html += '<optgroup label="🇺🇦🇷🇺 Украинские/Русские">';
+                VOICES_DATA.slavic.forEach(v => {
+                    html += `<option value="${v.id}">${v.name} ${v.gender === 'male' ? '♂' : '♀'}</option>`;
                 });
                 html += '</optgroup>';
             }
             
             select.innerHTML = html;
         } else {
-            // Fallback - простой список
             select.innerHTML = voices.map(v => 
                 `<option value="${v.id}">${v.name} (${v.gender === 'male' ? '♂' : '♀'})</option>`
             ).join('');
