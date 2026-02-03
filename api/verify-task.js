@@ -254,30 +254,73 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         const userId = req.query.userId || 'unknown';
         try {
-            const { data: contacts, error: cErr } = await supabase
-                .from('contacts')
-                .select('id, owner_gw_id, name, created_at')
-                .eq('owner_gw_id', userId)
-                .limit(10);
+            // 1. Ищем контакты в разных таблицах
+            const tables = {};
             
-            const { data: blog, error: bErr } = await supabase
-                .from('blogs')
-                .select('id, owner_gw_id, title, created_at')
-                .eq('owner_gw_id', userId)
-                .limit(5);
+            for (const tbl of ['contacts', 'contact', 'user_contacts', 'cardgift_contacts', 'sent_cards', 'card_views', 'card_recipients']) {
+                try {
+                    const { data, error } = await supabase.from(tbl).select('*').limit(1);
+                    if (!error) {
+                        tables[tbl] = { exists: true, columns: data?.[0] ? Object.keys(data[0]) : [], sample: data?.[0] || null };
+                    } else {
+                        tables[tbl] = { exists: false, error: error.message };
+                    }
+                } catch(e) {
+                    tables[tbl] = { exists: false, error: e.message };
+                }
+            }
             
-            const { data: cards, error: cardsErr } = await supabase
-                .from('cards')
-                .select('id, owner_gw_id, title, created_at')
-                .eq('owner_gw_id', userId)
-                .limit(5);
+            // 2. Ищем блоги
+            for (const tbl of ['blogs', 'blog', 'user_blogs', 'blog_posts', 'posts']) {
+                try {
+                    const { data, error } = await supabase.from(tbl).select('*').limit(1);
+                    if (!error) {
+                        tables[tbl] = { exists: true, columns: data?.[0] ? Object.keys(data[0]) : [], sample: data?.[0] || null };
+                    }
+                } catch(e) {}
+            }
+            
+            // 3. Ищем открытки
+            for (const tbl of ['cards', 'card', 'cardgift_cards', 'greeting_cards', 'user_cards']) {
+                try {
+                    const { data, error } = await supabase.from(tbl).select('*').limit(1);
+                    if (!error) {
+                        tables[tbl] = { exists: true, columns: data?.[0] ? Object.keys(data[0]) : [], sample: data?.[0] || null };
+                    }
+                } catch(e) {}
+            }
+            
+            // 4. Ищем пользователей 
+            for (const tbl of ['users']) {
+                try {
+                    const { data, error } = await supabase.from(tbl).select('*').eq('gw_id', userId).limit(1);
+                    if (!error) {
+                        tables['users_for_' + userId] = { exists: true, columns: data?.[0] ? Object.keys(data[0]) : [], sample: data?.[0] || null };
+                    }
+                } catch(e) {}
+            }
+            
+            // 5. Ищем контакты по разным полям
+            const contactSearch = {};
+            if (tables.contacts?.exists) {
+                const cols = tables.contacts.columns;
+                for (const col of cols) {
+                    if (col.includes('gw') || col.includes('owner') || col.includes('user') || col.includes('sender')) {
+                        try {
+                            const { data, count } = await supabase.from('contacts').select('*', { count: 'exact' }).eq(col, userId).limit(3);
+                            if (data?.length > 0) {
+                                contactSearch[col] = { found: data.length, total: count, sample: data[0] };
+                            }
+                        } catch(e) {}
+                    }
+                }
+            }
             
             return res.status(200).json({
                 status: 'ok',
                 userId,
-                contacts: { count: contacts?.length || 0, error: cErr?.message, data: contacts || [] },
-                blog: { count: blog?.length || 0, error: bErr?.message, data: blog || [] },
-                cards: { count: cards?.length || 0, error: cardsErr?.message, data: cards || [] }
+                tables,
+                contactSearch
             });
         } catch (e) {
             return res.status(200).json({ status: 'error', error: e.message, userId });
