@@ -88,8 +88,10 @@ export default async function handler(req, res) {
             }
             
             // Сохранить подписчика
+            // ⭐ FIX: Сохраняем gwId КАК ЕСТЬ (без обрезки GW prefix)
+            // Это совпадёт с тем что сохраняет academy.html в user_progress
             const subData = {
-                user_gw_id: userGwId.replace('GW', ''),
+                user_gw_id: userGwId,
                 telegram_id: userId,
                 telegram_username: username,
                 telegram_first_name: firstName,
