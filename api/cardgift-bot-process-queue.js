@@ -41,6 +41,22 @@ async function sendTelegramMessage(chatId, text, buttonText, buttonUrl) {
 }
 
 export default async function handler(req, res) {
+    // GET = диагностика
+    if (req.method === 'GET') {
+        const { data: pending } = await supabase
+            .from('cardgift_bot_queue')
+            .select('id, message_type, status')
+            .eq('status', 'pending')
+            .limit(10);
+        
+        return res.status(200).json({
+            status: 'ok',
+            hasBotToken: !!BOT_TOKEN,
+            pendingMessages: pending?.length || 0,
+            pending: pending || []
+        });
+    }
+    
     if (!BOT_TOKEN) {
         return res.status(500).json({ error: 'Bot token not configured' });
     }
