@@ -845,7 +845,6 @@ export default async function handler(req, res) {
             }
             
             // 4. Проверяем не отправляли ли уже сегодня такое сообщение
-            const today = new Date().toISOString().split('T')[0];
             const { data: existing } = await supabase
                 .from('cardgift_bot_queue')
                 .select('id')
