@@ -53,14 +53,19 @@ class VirtualAssistant {
         console.log('🤖 VirtualAssistant initialized');
     }
     
-    // ⭐ НОВЫЙ МЕТОД: Правильное получение Supabase клиента
+    // ⭐ ИСПРАВЛЕНО v1.2: Правильное получение Supabase клиента
     getSupabaseClient(providedClient) {
         // Если передан клиент напрямую с методом from
         if (providedClient && typeof providedClient.from === 'function') {
             return providedClient;
         }
         
-        // Проверяем window.SupabaseClient (обёртка CardGift)
+        // ⭐ FIX: Проверяем window.SupabaseClient.client (реальный клиент CardGift)
+        if (window.SupabaseClient?.client && typeof window.SupabaseClient.client.from === 'function') {
+            return window.SupabaseClient.client;
+        }
+        
+        // Проверяем window.SupabaseClient.getClient()
         if (window.SupabaseClient && typeof window.SupabaseClient.getClient === 'function') {
             const client = window.SupabaseClient.getClient();
             if (client && typeof client.from === 'function') {
