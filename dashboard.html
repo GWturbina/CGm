@@ -2914,18 +2914,21 @@ CENTRAL_CG_ID: <span id="centralIdDisplay">7346221</span>
    <script src="modules/assistant/assistant-init.js?v=2"></script>
    <script src="modules/assistant/dashboard-integration.js?v=2"></script>
    <script src="modules/assistant/dashboard-integration.js?v=2"></script>
-    <!-- Supabase fix for assistant -->
+<!-- Supabase fix for assistant -->
 <script>
-window.addEventListener('load', function() {
-    setTimeout(function() {
-        if (window.virtualAssistant && !window.virtualAssistant.supabase) {
-            if (window.SupabaseClient?.client?.from) {
+(function() {
+    var patchInterval = setInterval(function() {
+        if (window.virtualAssistant && window.SupabaseClient?.client?.from) {
+            if (!window.virtualAssistant.supabase) {
                 window.virtualAssistant.supabase = window.SupabaseClient.client;
                 console.log('✅ Supabase client patched for assistant');
             }
+            clearInterval(patchInterval);
         }
-    }, 3000);
-});
+    }, 1000);
+    // Остановить через 30 секунд в любом случае
+    setTimeout(function() { clearInterval(patchInterval); }, 30000);
+})();
 </script>
    <!-- Knowledge Base - кнопка "Как пользоваться" -->
    <script src="js/knowledge-base.js"></script>
