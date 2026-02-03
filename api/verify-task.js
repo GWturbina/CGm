@@ -243,11 +243,45 @@ const TASK_VERIFICATION = {
 export default async function handler(req, res) {
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
+    }
+    
+    // GET = диагностика: /api/verify-task?userId=7346221
+    if (req.method === 'GET') {
+        const userId = req.query.userId || 'unknown';
+        try {
+            const { data: contacts, error: cErr } = await supabase
+                .from('contacts')
+                .select('id, owner_gw_id, name, created_at')
+                .eq('owner_gw_id', userId)
+                .limit(10);
+            
+            const { data: blog, error: bErr } = await supabase
+                .from('blogs')
+                .select('id, owner_gw_id, title, created_at')
+                .eq('owner_gw_id', userId)
+                .limit(5);
+            
+            const { data: cards, error: cardsErr } = await supabase
+                .from('cards')
+                .select('id, owner_gw_id, title, created_at')
+                .eq('owner_gw_id', userId)
+                .limit(5);
+            
+            return res.status(200).json({
+                status: 'ok',
+                userId,
+                contacts: { count: contacts?.length || 0, error: cErr?.message, data: contacts || [] },
+                blog: { count: blog?.length || 0, error: bErr?.message, data: blog || [] },
+                cards: { count: cards?.length || 0, error: cardsErr?.message, data: cards || [] }
+            });
+        } catch (e) {
+            return res.status(200).json({ status: 'error', error: e.message, userId });
+        }
     }
     
     if (req.method !== 'POST') {
