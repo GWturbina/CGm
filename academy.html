@@ -872,12 +872,13 @@
                 
                 console.log('📋 Loading user data for:', this.state.walletAddress);
                 
-                // Проверяем DEV WALLET
-                if (this.config.DEV_WALLETS.includes(this.state.walletAddress)) {
+                // Проверяем DEV WALLET — даём полный доступ, но ТОЖЕ ищем реальный gwId
+                const isDev = this.config.DEV_WALLETS.includes(this.state.walletAddress);
+                if (isDev) {
                     console.log('🔧 Dev wallet - full access');
                     this.state.level = 12;
                     this.state.gwId = 'DEV';
-                    return;
+                    // НЕ делаем return — продолжаем искать реальный gwId ниже
                 }
                 
                 // 1. ГЛАВНЫЙ ИСТОЧНИК: Supabase таблица users
@@ -891,9 +892,15 @@
                             .single();
                         
                         if (data && !error) {
-                            this.state.gwId = data.gw_id;
-                            this.state.level = data.gw_level || 0;
-                            console.log('✅ Data from Supabase:', { gwId: this.state.gwId, level: this.state.level });
+                            if (isDev) {
+                                // DEV: сохраняем реальный gwId отдельно, level оставляем 12
+                                this.state.realGwId = data.gw_id;
+                                console.log('✅ DEV wallet real gwId:', data.gw_id);
+                            } else {
+                                this.state.gwId = data.gw_id;
+                                this.state.level = data.gw_level || 0;
+                            }
+                            console.log('✅ Data from Supabase:', { gwId: data.gw_id, level: data.gw_level });
                             return;
                         } else {
                             console.log('⚠️ Supabase query result:', error?.message || 'no data');
@@ -903,12 +910,14 @@
                     }
                 }
                 
+                // Если DEV и Supabase не дал gwId — возвращаемся
+                if (isDev) return;
+                
                 // 2. Fallback - GlobalWayBridge через RPC (работает без Web3!)
                 if (typeof GlobalWayBridge !== 'undefined' && !this.state.gwId) {
                     try {
                         console.log('📡 Trying GlobalWayBridge RPC...');
                         
-                        // getUserLevel работает через RPC с ethers.js
                         const level = await GlobalWayBridge.getUserLevel(this.state.walletAddress);
                         if (level) {
                             this.state.level = level;
