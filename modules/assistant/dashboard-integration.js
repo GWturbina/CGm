@@ -114,21 +114,30 @@
     function getUserId() {
         // Пробуем разные источники
         if (window.currentUser?.gw_id) return window.currentUser.gw_id;
+        if (window.currentUser?.userId) return window.currentUser.userId;
+        if (window.currentUser?.id) return window.currentUser.id;
         if (window.currentUser?.cg_id) return window.currentUser.cg_id;
-        if (window.currentUser?.temp_id) return window.currentUser.temp_id;
+        
+        // Из глобальных переменных dashboard
+        if (window.currentGwId) return window.currentGwId;
+        if (window.currentDisplayId) return window.currentDisplayId;
         
         // Из localStorage
         try {
             const stored = localStorage.getItem('currentUser');
             if (stored) {
                 const user = JSON.parse(stored);
-                if (user.gw_id) return user.gw_id;
-                if (user.cg_id) return user.cg_id;
-                if (user.temp_id) return user.temp_id;
+                // ⭐ FIX: поле userId, не только gw_id
+                const foundId = user.gw_id || user.userId || user.id || user.cg_id;
+                if (foundId) return foundId;
             }
         } catch (e) {}
         
-        // Генерируем временный
+        // Отдельные ключи
+        const gwId = localStorage.getItem('gwId') || localStorage.getItem('userGwId');
+        if (gwId) return gwId;
+        
+        // Генерируем временный (последний вариант)
         let tempId = localStorage.getItem('assistant_temp_id');
         if (!tempId) {
             tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
