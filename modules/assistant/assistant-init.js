@@ -157,11 +157,22 @@ const AssistantInit = {
         if (window.currentUser?.gw_id) {
             return window.currentUser.gw_id;
         }
+        if (window.currentUser?.userId) {
+            return window.currentUser.userId;
+        }
+        if (window.currentUser?.id) {
+            return window.currentUser.id;
+        }
         if (window.currentUser?.cg_id) {
             return window.currentUser.cg_id;
         }
-        if (window.currentUser?.temp_id) {
-            return window.currentUser.temp_id;
+        
+        // 1.5. Из глобальных переменных dashboard
+        if (window.currentGwId) {
+            return window.currentGwId;
+        }
+        if (window.currentDisplayId) {
+            return window.currentDisplayId;
         }
         
         // 2. Из localStorage
@@ -169,9 +180,15 @@ const AssistantInit = {
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
-                return user.gw_id || user.cg_id || user.temp_id;
+                // ⭐ FIX: В localStorage currentUser поле называется userId, не gw_id
+                const foundId = user.gw_id || user.userId || user.id || user.cg_id;
+                if (foundId) return foundId;
             } catch (e) {}
         }
+        
+        // 2.5 Отдельные ключи localStorage
+        const gwId = localStorage.getItem('gwId') || localStorage.getItem('userGwId') || localStorage.getItem('cardgift_user_id');
+        if (gwId) return gwId;
         
         // 3. Из URL параметров (для тестирования)
         const params = new URLSearchParams(window.location.search);
@@ -179,7 +196,7 @@ const AssistantInit = {
             return params.get('user_id');
         }
         
-        // 4. Генерируем временный ID
+        // 4. Генерируем временный ID (последний вариант)
         let tempId = localStorage.getItem('assistant_temp_id');
         if (!tempId) {
             tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
