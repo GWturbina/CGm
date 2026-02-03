@@ -41,8 +41,8 @@ async function sendTelegramMessage(chatId, text, buttonText, buttonUrl) {
 }
 
 export default async function handler(req, res) {
-    // GET = диагностика
-    if (req.method === 'GET') {
+    // GET без ?run = диагностика, GET с ?run=true = отправка очереди
+    if (req.method === 'GET' && !req.query.run) {
         const { data: pending } = await supabase
             .from('cardgift_bot_queue')
             .select('id, message_type, status')
@@ -51,6 +51,7 @@ export default async function handler(req, res) {
         
         return res.status(200).json({
             status: 'ok',
+            hint: 'Add ?run=true to process queue now',
             hasBotToken: !!BOT_TOKEN,
             pendingMessages: pending?.length || 0,
             pending: pending || []
