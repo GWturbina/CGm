@@ -253,77 +253,85 @@ export default async function handler(req, res) {
     // GET = диагностика: /api/verify-task?userId=7346221
     if (req.method === 'GET') {
         const userId = req.query.userId || 'unknown';
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        
+        let output = `=== VERIFY-TASK DIAGNOSTICS ===\nuserId: ${userId}\n\n`;
+        
         try {
-            // 1. Ищем контакты в разных таблицах
-            const tables = {};
+            // Ищем таблицы
+            const allTables = [
+                'contacts', 'contact', 'user_contacts', 'cardgift_contacts',
+                'sent_cards', 'card_views', 'card_recipients',
+                'blogs', 'blog', 'user_blogs', 'blog_posts', 'posts',
+                'cards', 'card', 'cardgift_cards', 'greeting_cards', 'user_cards',
+                'users'
+            ];
             
-            for (const tbl of ['contacts', 'contact', 'user_contacts', 'cardgift_contacts', 'sent_cards', 'card_views', 'card_recipients']) {
+            for (const tbl of allTables) {
                 try {
                     const { data, error } = await supabase.from(tbl).select('*').limit(1);
                     if (!error) {
-                        tables[tbl] = { exists: true, columns: data?.[0] ? Object.keys(data[0]) : [], sample: data?.[0] || null };
-                    } else {
-                        tables[tbl] = { exists: false, error: error.message };
-                    }
-                } catch(e) {
-                    tables[tbl] = { exists: false, error: e.message };
-                }
-            }
-            
-            // 2. Ищем блоги
-            for (const tbl of ['blogs', 'blog', 'user_blogs', 'blog_posts', 'posts']) {
-                try {
-                    const { data, error } = await supabase.from(tbl).select('*').limit(1);
-                    if (!error) {
-                        tables[tbl] = { exists: true, columns: data?.[0] ? Object.keys(data[0]) : [], sample: data?.[0] || null };
+                        const cols = data?.[0] ? Object.keys(data[0]).join(', ') : '(empty table)';
+                        output += `✅ ${tbl}: ${cols}\n`;
                     }
                 } catch(e) {}
             }
             
-            // 3. Ищем открытки
-            for (const tbl of ['cards', 'card', 'cardgift_cards', 'greeting_cards', 'user_cards']) {
-                try {
-                    const { data, error } = await supabase.from(tbl).select('*').limit(1);
-                    if (!error) {
-                        tables[tbl] = { exists: true, columns: data?.[0] ? Object.keys(data[0]) : [], sample: data?.[0] || null };
-                    }
-                } catch(e) {}
-            }
+            output += `\n=== SEARCHING CONTACTS FOR userId=${userId} ===\n`;
             
-            // 4. Ищем пользователей 
-            for (const tbl of ['users']) {
-                try {
-                    const { data, error } = await supabase.from(tbl).select('*').eq('gw_id', userId).limit(1);
-                    if (!error) {
-                        tables['users_for_' + userId] = { exists: true, columns: data?.[0] ? Object.keys(data[0]) : [], sample: data?.[0] || null };
-                    }
-                } catch(e) {}
-            }
-            
-            // 5. Ищем контакты по разным полям
-            const contactSearch = {};
-            if (tables.contacts?.exists) {
-                const cols = tables.contacts.columns;
-                for (const col of cols) {
-                    if (col.includes('gw') || col.includes('owner') || col.includes('user') || col.includes('sender')) {
+            // Ищем контакты по всем возможным полям
+            try {
+                const { data: allContacts } = await supabase.from('contacts').select('*').limit(3);
+                if (allContacts?.length > 0) {
+                    const cols = Object.keys(allContacts[0]);
+                    output += `contacts columns: ${cols.join(', ')}\n`;
+                    output += `contacts sample: ${JSON.stringify(allContacts[0])}\n\n`;
+                    
+                    // Ищем по каждому полю
+                    for (const col of cols) {
                         try {
-                            const { data, count } = await supabase.from('contacts').select('*', { count: 'exact' }).eq(col, userId).limit(3);
+                            const { data } = await supabase.from('contacts').select('*').eq(col, userId).limit(1);
                             if (data?.length > 0) {
-                                contactSearch[col] = { found: data.length, total: count, sample: data[0] };
+                                output += `FOUND by ${col}=${userId}: ${data.length} rows\n`;
+                            }
+                        } catch(e) {}
+                        // Также пробуем с GW префиксом
+                        try {
+                            const { data } = await supabase.from('contacts').select('*').eq(col, 'GW' + userId).limit(1);
+                            if (data?.length > 0) {
+                                output += `FOUND by ${col}=GW${userId}: ${data.length} rows\n`;
                             }
                         } catch(e) {}
                     }
+                } else {
+                    output += `contacts: table empty or not accessible\n`;
                 }
+            } catch(e) {
+                output += `contacts error: ${e.message}\n`;
             }
             
-            return res.status(200).json({
-                status: 'ok',
-                userId,
-                tables,
-                contactSearch
-            });
+            output += `\n=== CARDS TABLE ===\n`;
+            try {
+                const { data } = await supabase.from('cards').select('*').limit(1);
+                if (data?.length > 0) {
+                    output += `cards columns: ${Object.keys(data[0]).join(', ')}\n`;
+                    output += `cards sample: ${JSON.stringify(data[0]).substring(0, 500)}\n`;
+                }
+            } catch(e) { output += `cards: ${e.message}\n`; }
+            
+            output += `\n=== TOTAL ROWS ===\n`;
+            try {
+                const { count: cCount } = await supabase.from('contacts').select('*', { count: 'exact', head: true });
+                output += `contacts total: ${cCount}\n`;
+            } catch(e) {}
+            try {
+                const { count: cardsCount } = await supabase.from('cards').select('*', { count: 'exact', head: true });
+                output += `cards total: ${cardsCount}\n`;
+            } catch(e) {}
+            
+            return res.status(200).send(output);
         } catch (e) {
-            return res.status(200).json({ status: 'error', error: e.message, userId });
+            return res.status(200).send(output + `\nERROR: ${e.message}`);
         }
     }
     
