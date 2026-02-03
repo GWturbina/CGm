@@ -43,42 +43,43 @@
         if (typeof VirtualAssistant === 'undefined') missing.push('VirtualAssistant');
         if (typeof LessonsData === 'undefined') missing.push('LessonsData');
         
-        if (missing.length > 0) {
+        // ⭐ FIX: Также ждём пока userId будет доступен (не temp_)
+        const testId = getUserId();
+        const hasRealId = testId && !testId.startsWith('temp_') && !testId.startsWith('demo_');
+        
+        if (missing.length > 0 || !hasRealId) {
             retryCount++;
             
-            // ⭐ ПРОВЕРКА ЛИМИТА ПОПЫТОК
             if (retryCount > CONFIG.maxRetries) {
-                console.warn(`⚠️ Assistant: dependencies not loaded after ${CONFIG.maxRetries} attempts.`);
-                console.warn('Missing:', missing.join(', '));
-                console.info('💡 Assistant will not start. To enable, load these scripts:');
-                console.info('   - js/lessons-data.js');
-                console.info('   - js/modules/assistant/assistant.js');
-                console.info('   - js/modules/assistant/assistant-ui.js');
-                console.info('   - js/modules/assistant/assistant-init.js');
-                return; // ⭐ ПРЕКРАЩАЕМ попытки, не зацикливаемся!
+                if (missing.length > 0) {
+                    console.warn(`⚠️ Assistant: dependencies not loaded after ${CONFIG.maxRetries} attempts.`);
+                    console.warn('Missing:', missing.join(', '));
+                    return;
+                }
+                // Зависимости есть, но userId нет — запускаем с тем что есть
+                console.warn('⚠️ Assistant: no real userId found, starting with:', testId);
+            } else {
+                const waitFor = missing.length > 0 ? missing.join(', ') : 'userId (got: ' + testId + ')';
+                console.log(`⏳ Waiting for ${waitFor} (${retryCount}/${CONFIG.maxRetries})...`);
+                setTimeout(initAssistantIntegration, CONFIG.retryDelay);
+                return;
             }
-            
-            console.log(`⏳ Waiting for dependencies (${retryCount}/${CONFIG.maxRetries})...`);
-            setTimeout(initAssistantIntegration, CONFIG.retryDelay);
-            return;
         }
         
-        // ✅ Все зависимости загружены!
+        // ✅ Все зависимости и userId готовы!
         retryCount = 0;
-        console.log('✅ All dependencies loaded!');
-        
-        // Получаем userId из текущей сессии
         const userId = getUserId();
+        console.log('✅ All dependencies loaded! userId:', userId);
         
         // Запускаем помощника
         AssistantInit.start({
             userId: userId,
-            gwId: window.currentUser?.gw_id || null,
+            gwId: window.currentUser?.gw_id || window.currentUser?.userId || userId,
             position: 'bottom-right',
             assistantName: 'Помощник',
             
             onReady: (assistant, ui) => {
-                console.log('✅ Assistant ready!');
+                console.log('✅ Assistant ready! userId:', assistant.userId);
                 
                 // Привязываем события CardGift
                 bindCardGiftEvents();
