@@ -1,1062 +1,353 @@
-/* =====================================================
-   AI STUDIO v3.0 - ПОД РЕАЛЬНУЮ СТРУКТУРУ SUPABASE
-   
-   Таблица ai_credits:
-   - text_used, image_used, voice_used (счётчики за день)
-   - extra_credits (купленные кредиты)
-   - last_reset_date (дата сброса)
-   - daily_image_limit, daily_voice_limit (лимиты)
-   
-   Логика:
-   - Текст: БЕСПЛАТНО (безлимит)
-   - Картинки: 3/день (сгорают в полночь)
-   - Голос: 3/день (сгорают в полночь)
-   - extra_credits: купленные, НЕ сгорают
-   ===================================================== */
+// api/ai/voice.js
+// ElevenLabs Voice Generation - Extended Version with emotions, speed, languages
+// v2.0 - ДОБАВЛЕНА серверная проверка кредитов!
 
-const AIStudio = {
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// DEV кошельки - безлимит
+const DEV_WALLETS = [
+    '0x7bcd1753868895971e12448412cb3216d47884c8',
+    '0x9b49bd9c9458615e11c051afd1ebe983563b67ee',
+    '0x03284a899147f5a07f82c622f34df92198671635',
+    '0xa3496cacc8523421dd151f1d92a456c2dafa28c2'
+];
+
+// Проверка и списание кредита
+async function checkAndUseCredit(wallet, type) {
+    if (!wallet || !SUPABASE_URL || !SUPABASE_KEY) {
+        console.log('⚠️ No wallet or Supabase config - allowing');
+        return { allowed: true, reason: 'no_check' };
+    }
     
-    state: {
-        cgId: null,
-        gwId: null,
-        walletAddress: null,
-        level: 0,
-        hasAccess: true,
-        
-        // Кредиты (из Supabase)
-        credits: {
-            textUsed: 0,
-            imageUsed: 0,
-            voiceUsed: 0,
-            extraCredits: 0,
-            dailyImageLimit: 3,
-            dailyVoiceLimit: 3,
-            lastResetDate: null
-        },
-        
-        // Для UI
-        limits: {
-            text:  { used: 0, max: 999 },
-            image: { used: 0, max: 3 },
-            voice: { used: 0, max: 3 },
-            video: { used: 0, max: 0 },
-            music: { used: 0, max: 999 }
-        },
-        
-        currentTab: 'text',
-        currentResult: null,
-        archive: []
-    },
+    const walletLower = wallet.toLowerCase();
     
-    config: {
-        MIN_LEVEL_OWN_API: 8,
-        
-        LIMITS_BY_LEVEL: {
-            0:  { image: 3,  voice: 3 },
-            1:  { image: 3,  voice: 3 },
-            2:  { image: 3,  voice: 3 },
-            3:  { image: 3,  voice: 3 },
-            4:  { image: 5,  voice: 5 },
-            5:  { image: 8,  voice: 8 },
-            6:  { image: 10, voice: 10 },
-            7:  { image: 15, voice: 15 },
-            8:  { image: 20, voice: 20 },
-            9:  { image: 30, voice: 30 },
-            10: { image: 40, voice: 40 },
-            11: { image: 50, voice: 50 },
-            12: { image: 100, voice: 100 }
-        },
-        
-        TEMPLATES: {
-            text: [
-                { id: 'birthday', icon: '🎂', name: 'День рождения', prompt: 'Напиши теплое поздравление с днём рождения' },
-                { id: 'newyear', icon: '🎄', name: 'Новый год', prompt: 'Напиши поздравление с Новым годом' },
-                { id: 'thanks', icon: '🙏', name: 'Благодарность', prompt: 'Напиши благодарственное письмо' },
-                { id: 'invite', icon: '💌', name: 'Приглашение', prompt: 'Напиши приглашение на мероприятие' },
-                { id: 'motivation', icon: '💪', name: 'Мотивация', prompt: 'Напиши мотивационный пост' },
-                { id: 'business', icon: '💼', name: 'Бизнес', prompt: 'Напиши деловое предложение' },
-                { id: 'club', icon: '🚀', name: 'GlobalWay', prompt: 'Напиши приглашение в GlobalWay клуб' }
-            ],
-            image: [
-                { id: 'abstract', icon: '🎨', name: 'Абстракция', prompt: 'Абстрактный градиент' },
-                { id: 'neon', icon: '💜', name: 'Неон', prompt: 'Неоновые волны' },
-                { id: 'sunset', icon: '🌅', name: 'Закат', prompt: 'Красивый закат' }
-            ],
-            voice: [
-                { id: 'greeting', icon: '👋', name: 'Приветствие', prompt: 'Привет! Рад тебя приветствовать!' }
-            ]
-        },
-        
-        VOICES_LIBRARY: [
-            { id: 'h9NSQvWZaC4NFusYsxT9', name: 'Артем Клопотенко', gender: 'male', language: 'ua' },
-            { id: 'TEyBWD5tAHAWqAGEv6yI', name: 'Євген Василенко', gender: 'male', language: 'ua' },
-            { id: 'B31Kx7rXmNnYqp1QWHR2', name: 'Володимир', gender: 'male', language: 'ua' },
-            { id: '96XEXOjZRHooATdYA8FY', name: 'Софія', gender: 'female', language: 'ua' },
-            { id: '2o2uQnlGaNuV3ObRpxXt', name: 'Анна Степаненко', gender: 'female', language: 'ua' },
-            { id: 'txnCCHHGKmYIwrn7HfHQ', name: 'Александр Власов', gender: 'male', language: 'ru' },
-        ],
-        
-        CUSTOM_VOICES: []
-    },
+    // DEV кошельки - безлимит
+    if (DEV_WALLETS.includes(walletLower)) {
+        return { allowed: true, reason: 'dev_wallet' };
+    }
     
-    get DEV_WALLETS() {
-        if (window.CONFIG?.DEV_WALLETS) {
-            return window.CONFIG.DEV_WALLETS.map(w => w.toLowerCase());
-        }
-        return [
-            '0x7bcd1753868895971e12448412cb3216d47884c8',
-            '0x9b49bd9c9458615e11c051afd1ebe983563b67ee',
-            '0x03284a899147f5a07f82c622f34df92198671635',
-            '0xa3496cacc8523421dd151f1d92a456c2dafa28c2'
-        ];
-    },
-    
-    async init() {
-        console.log('🎬 AI Studio v3.2 initializing...');
-        
-        this.showMainContent();
-        await this.autoConnectWallet();
-        await this.loadUserData();
-        await this.loadCredits();
-        
-        this.initTabs();
-        this.initTemplates();
-        this.initGenerators();
-        this.initCustomVoices();
-        this.updateVoiceSelect();
-        this.updateUI();
-        this.showCreditsInfo();
-        this.updateApiButtonVisibility();
-        
-        if (this.isAuthor()) this.showAuthorTools();
-        
-        console.log('✅ AI Studio v3.2 initialized');
-        console.log('📊 Credits:', this.state.credits);
-        console.log('📊 Limits:', this.state.limits);
-    },
-    
-    // Показать/скрыть кнопку настроек API
-    updateApiButtonVisibility() {
-        const canUse = this.canUseOwnApi();
-        const btnApi = document.getElementById('btnSettingsApi');
-        if (btnApi) {
-            btnApi.style.display = canUse ? 'inline-flex' : 'none';
-            console.log('🔑 API Settings button:', canUse ? 'visible' : 'hidden', 
-                        '(level:', this.state.level, ', isAuthor:', this.isAuthor(), ')');
-        }
-        
-        // Также вызываем HTML функцию если есть
-        if (typeof window.updateClearButtonsVisibility === 'function') {
-            window.updateClearButtonsVisibility();
-        }
-    },
-    
-    async autoConnectWallet() {
-        if (typeof window.ethereum === 'undefined') return;
-        
-        try {
-            let accounts = await window.ethereum.request({ method: 'eth_accounts' });
-            if (!accounts?.length) {
-                accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            }
-            if (accounts?.length) {
-                this.state.walletAddress = accounts[0].toLowerCase();
-                console.log('💳 Wallet:', this.state.walletAddress);
-                
-                // Слушаем изменения аккаунта
-                window.ethereum.on('accountsChanged', async (newAccounts) => {
-                    if (newAccounts?.length) {
-                        this.state.walletAddress = newAccounts[0].toLowerCase();
-                        await this.loadUserData();
-                        await this.loadCredits();
-                        this.updateUI();
-                        this.showCreditsInfo();
-                        this.updateApiButtonVisibility();
-                    }
-                });
-            }
-        } catch (e) {
-            console.log('⚠️ Wallet error:', e.message);
-        }
-    },
-    
-    async connectWallet() {
-        if (typeof window.ethereum === 'undefined') {
-            this.showNotification('Установите SafePal или MetaMask', 'error');
-            return null;
-        }
-        
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            if (accounts?.length) {
-                this.state.walletAddress = accounts[0].toLowerCase();
-                await this.loadUserData();
-                await this.loadCredits();
-                this.updateUI();
-                this.showCreditsInfo();
-                this.updateApiButtonVisibility();  // Обновляем видимость кнопки API
-                this.showNotification('✅ Кошелёк подключен', 'success');
-                return this.state.walletAddress;
-            }
-        } catch (e) {
-            this.showNotification('Ошибка подключения', 'error');
-        }
-        return null;
-    },
-    
-    async loadUserData() {
-        if (!this.state.walletAddress) {
-            this.state.level = 0;
-            return;
-        }
-        
-        if (this.DEV_WALLETS.includes(this.state.walletAddress)) {
-            this.state.level = 12;
-            this.state.cgId = 'DEV';
-            return;
-        }
-        
-        if (window.SupabaseClient?.client) {
-            try {
-                const { data } = await SupabaseClient.client
-                    .from('users')
-                    .select('temp_id, gw_id, gw_level')
-                    .eq('wallet_address', this.state.walletAddress)
-                    .limit(1);
-                
-                if (data?.length) {
-                    this.state.cgId = data[0].temp_id;
-                    this.state.gwId = data[0].gw_id;
-                    this.state.level = data[0].gw_level || 0;
+    try {
+        // Получаем запись из ai_credits
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+            {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
                 }
-            } catch (e) {
-                console.warn('User load error:', e);
             }
+        );
+        
+        const data = await response.json();
+        
+        if (!data || data.length === 0) {
+            // Нет записи - создаём с 3 кредитами
+            await createCreditsRecord(walletLower);
+            return { allowed: true, reason: 'new_user' };
         }
         
-        if (this.state.level === 0 && window.GlobalWayBridge) {
-            try {
-                const level = await GlobalWayBridge.getUserMaxLevel(this.state.walletAddress);
-                if (level > 0) this.state.level = level;
-            } catch (e) {}
-        }
-    },
-    
-    async loadCredits() {
-        console.log('📊 Loading credits for wallet:', this.state.walletAddress);
+        const record = data[0];
+        const today = new Date().toISOString().split('T')[0];
+        const field = type === 'image' ? 'image_used' : 'voice_used';
+        const limitField = type === 'image' ? 'daily_image_limit' : 'daily_voice_limit';
         
-        if (!this.state.walletAddress) {
-            console.log('⚠️ No wallet, using localStorage');
-            this.loadCreditsFromLocalStorage();
-            return;
+        // Проверяем сброс дневного лимита
+        let usedToday = record[field] || 0;
+        if (record.last_reset_date !== today) {
+            usedToday = 0;
         }
         
-        if (this.isAuthor()) {
-            console.log('👑 Author detected - unlimited credits');
-            this.state.credits = {
-                textUsed: 0, imageUsed: 0, voiceUsed: 0,
-                extraCredits: 999999,
-                dailyImageLimit: 999999,
-                dailyVoiceLimit: 999999,
-                lastResetDate: new Date().toISOString().split('T')[0]
-            };
-            this.syncLimitsFromCredits();
-            this.updateApiButtonVisibility();  // Показываем кнопку API для авторов
-            return;
+        const dailyLimit = record[limitField] || 3;
+        
+        if (usedToday >= dailyLimit) {
+            return { allowed: false, reason: 'limit_exceeded', used: usedToday, limit: dailyLimit };
         }
         
-        // Сначала устанавливаем дефолтные лимиты по уровню
-        const imageLimit = this.getLimitByLevel('image');
-        const voiceLimit = this.getLimitByLevel('voice');
-        console.log('📊 Level:', this.state.level, '→ Limits: image=', imageLimit, 'voice=', voiceLimit);
-        
-        this.state.credits = {
-            textUsed: 0, imageUsed: 0, voiceUsed: 0,
-            extraCredits: 0,
-            dailyImageLimit: imageLimit,
-            dailyVoiceLimit: voiceLimit,
-            lastResetDate: new Date().toISOString().split('T')[0]
+        // Списываем кредит
+        const updateData = {
+            [field]: usedToday + 1,
+            last_reset_date: today,
+            updated_at: new Date().toISOString()
         };
-        this.syncLimitsFromCredits();
         
-        // Пробуем загрузить из Supabase
-        if (window.SupabaseClient?.client) {
-            try {
-                const { data, error } = await SupabaseClient.client
-                    .from('ai_credits')
-                    .select('*')
-                    .eq('wallet_address', this.state.walletAddress)
-                    .limit(1);
-                
-                if (error) {
-                    console.warn('Credits load error:', error);
-                    this.saveCreditsToLocalStorage();
-                    return;
+        await fetch(
+            `${SUPABASE_URL}/rest/v1/ai_credits?wallet_address=eq.${walletLower}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(updateData)
+            }
+        );
+        
+        return { allowed: true, reason: 'credit_used', used: usedToday + 1, limit: dailyLimit };
+        
+    } catch (e) {
+        console.error('Credit check error:', e);
+        return { allowed: true, reason: 'error_fallback' };
+    }
+}
+
+async function createCreditsRecord(wallet) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    await fetch(
+        `${SUPABASE_URL}/rest/v1/ai_credits`,
+        {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                wallet_address: wallet,
+                text_used: 0,
+                image_used: 0,
+                voice_used: 0,
+                extra_credits: 0,
+                daily_image_limit: 3,
+                daily_voice_limit: 3,
+                last_reset_date: today,
+                created_at: new Date().toISOString()
+            })
+        }
+    );
+}
+
+module.exports = async function handler(req, res) {
+    // CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    // GET = диагностика
+    if (req.method === 'GET') {
+        return res.status(200).json({
+            status: 'ok',
+            version: '2.1',
+            hasElevenLabsKey: !!process.env.ELEVENLABS_API_KEY,
+            keyLength: process.env.ELEVENLABS_API_KEY ? process.env.ELEVENLABS_API_KEY.length : 0,
+            hasSupabaseUrl: !!SUPABASE_URL,
+            hasSupabaseKey: !!SUPABASE_KEY,
+            nodeVersion: process.version,
+            timestamp: new Date().toISOString()
+        });
+    }
+    
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+    
+    try {
+        const { 
+            text, 
+            voice = 'adam', 
+            language = 'ru',
+            emotion = 'neutral',
+            speed = 1.0,
+            stability = 0.5,
+            clarity = 0.75,
+            userApiKey,
+            wallet
+        } = req.body;
+        
+        if (!text) {
+            return res.status(400).json({ error: 'Text required' });
+        }
+        
+        // СЕРВЕРНАЯ ПРОВЕРКА КРЕДИТОВ
+        const creditCheck = await checkAndUseCredit(wallet, 'voice');
+        if (!creditCheck.allowed) {
+            return res.status(403).json({ 
+                error: `🎤 Лимит исчерпан! Использовано ${creditCheck.used}/${creditCheck.limit} за сегодня`,
+                creditError: true
+            });
+        }
+        
+        // Используем ключ пользователя или серверный
+        const apiKey = userApiKey || process.env.ELEVENLABS_API_KEY;
+        
+        // ДИАГНОСТИКА - проверяем наличие ключа
+        console.log('🔑 ElevenLabs API key check:', {
+            hasUserKey: !!userApiKey,
+            hasEnvKey: !!process.env.ELEVENLABS_API_KEY,
+            keyLength: apiKey ? apiKey.length : 0,
+            keyPrefix: apiKey ? apiKey.substring(0, 5) + '...' : 'NONE'
+        });
+        
+        if (!apiKey) {
+            console.error('❌ No ElevenLabs API key found!');
+            return res.status(500).json({ error: 'API key not configured' });
+        }
+        
+        // Маппинг голосов ElevenLabs v2.0
+        const voiceMap = {
+            // 🇺🇦 Украинские мужские
+            'artem-klopotenko': 'h9NSQvWZaC4NFusYsxT9',
+            'evgeniy-shevchenko': 'Ntd0iVwICtUtA6Fvx27M',
+            'yevhen-vasilenko': 'TEyBWD5tAHAWqAGEv6yI',
+            'bogdan': 'jn6ifzU1eO5tfUZ2ZJVg',
+            'volodymyr': 'B31Kx7rXmNnYqp1QWHR2',
+            'roman': 'YNU4vLsch5CerDqxgcFS',
+            'anton': '4nLP0u2B3yI0lyzATFnN',
+            'leonid-drapei': 'eLDtXX7z65CuLasDRxrP',
+            'stanislav-ua': 'WAkiH8uTgFArLLKVWgeS',
+            'dosye': 'O1OT3UVaYNvH7ZvGCx5x',
+            // 🇺🇦 Украинские женские
+            'sofiia': '96XEXOjZRHooATdYA8FY',
+            'evelina': '0CH1jv2shWMGGZ3uM0rX',
+            'anna-stepanenko': '2o2uQnlGaNuV3ObRpxXt',
+            'kristi': 'U4IxWQ3B5B0suleGgLcn',
+            'kira': '2HWb7sZSrZqPB8HOI0KI',
+            'torri-miles': 'a30ekmfK56EKHR341YaO',
+            'alisa': 'KBxO1LTAD4PE7D9rqUeb',
+            'mariya-maro': '2OXYbN1uGomXXJtv9Dq6',
+            'tonya': 'bg0e02brzo3RVUEbuZeo',
+            'alena': 'BEprpS2vpgM32yNJpTXq',
+            // 🇷🇺 Русские мужские
+            'arthur': 'iYMRkaJMA0qIuY9moBHL',
+            'leonid': 'UIaC9QMb6UP5hfzy6uOD',
+            'stanislav': 'ogi2DyUAKJb7CEdqqvlU',
+            'alex-t': 'tVMeJ1ODl31s5JrEseFK',
+            'nester-surovy': 'pM78bgjPVk0JXtaEnFoj',
+            'alex-bell': 'TUQNWEvVPBLzMBSVDPUA',
+            'alexander': 'bqbHGIIO5oETYIqhWmfk',
+            'alexandr-vlasov': 'txnCCHHGKmYIwrn7HfHQ',
+            'arcad': 'kuR1PV7xDOsP38QMSEvD',
+            'dmitry': 'vnUSJFFoxRr5JFjw51pu',
+            // 🇷🇺 Русские женские
+            'rina': 'ycbyWsnf4hqZgdpKHqiU',
+            'sweetie-fox': 'foZmP0ldhGob3fHgegm1',
+            'ariana': 'xyu8HSCv1JYrhLx4m8UG',
+            'daria-reels': 'grmBv5c5ZJVFgXpRWyp7',
+            'nina': 'N8lIVPsFkvOoqev5Csxo',
+            'alina': 'dVRDrbP5ULGXB94se4KZ',
+            'vika-grib': 'gelrownZgbRhxH6LI78J',
+            'mariia': 'EDpEYNf6XIeKYRzYcx4I',
+            'natalia': 'dHAwRJVaEPhU907QLTPW',
+            'liza': 'KzqxCy7zSSePwgb1Cz0Q',
+            // 🇬🇧 Английские
+            'adam': 'pNInz6obpgDQGcFmaJgB',
+            'antoni': 'ErXwobaYiN019PkySvjV',
+            'arnold': 'VR6AewLTigWG4xSOukaG',
+            'josh': 'TxGEqnHWrfWFTfGW9XjX',
+            'sam': 'yoZ06aMxZJJ28mfd3POQ',
+            'rachel': '21m00Tcm4TlvDq8ikWAM',
+            'domi': 'AZnzlk1XvdvUeBnXmlld',
+            'bella': 'EXAVITQu4vr4xnSDxMaL',
+            'elli': 'MF3mGyEYCl7XYWbV9V6O',
+            // Обратная совместимость со старыми именами
+            'alex-nekrasov': 'h9NSQvWZaC4NFusYsxT9',
+            'taras-boyko': '2o2uQnlGaNuV3ObRpxXt',
+            'vladimir': 'B31Kx7rXmNnYqp1QWHR2',
+            'evgeniy': 'TEyBWD5tAHAWqAGEv6yI',
+            'leonid-drapey': 'eLDtXX7z65CuLasDRxrP'
+        };
+        
+        // Проверяем - это короткое имя или уже реальный ElevenLabs ID?
+        // Реальные ID ElevenLabs имеют длину 20+ символов
+        let voiceId;
+        if (voice.length >= 20) {
+            // Это уже реальный ElevenLabs ID
+            voiceId = voice;
+        } else {
+            // Это короткое имя - маппим в реальный ID
+            voiceId = voiceMap[voice] || voiceMap['artem-klopotenko'];
+        }
+        
+        // Настройки эмоций влияют на stability и style
+        const emotionSettings = {
+            'neutral': { stability: 0.5, style: 0.0 },
+            'happy': { stability: 0.3, style: 0.6 },
+            'sad': { stability: 0.7, style: 0.3 },
+            'excited': { stability: 0.2, style: 0.8 },
+            'serious': { stability: 0.8, style: 0.1 },
+            'friendly': { stability: 0.4, style: 0.5 },
+            'calm': { stability: 0.9, style: 0.0 },
+            'professional': { stability: 0.7, style: 0.2 }
+        };
+        
+        const emotionConfig = emotionSettings[emotion] || emotionSettings['neutral'];
+        
+        // Финальные настройки голоса
+        const finalStability = stability !== undefined ? stability : emotionConfig.stability;
+        const finalStyle = emotionConfig.style;
+        
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'xi-api-key': apiKey
+            },
+            body: JSON.stringify({
+                text: text,
+                model_id: 'eleven_multilingual_v2',
+                voice_settings: {
+                    stability: finalStability,
+                    similarity_boost: clarity,
+                    style: finalStyle,
+                    use_speaker_boost: true
                 }
-                
-                if (data?.length) {
-                    const record = data[0];
-                    const today = new Date().toISOString().split('T')[0];
-                    
-                    console.log('✅ Credits found in Supabase:', record);
-                    
-                    if (record.last_reset_date !== today) {
-                        await this.resetDailyCredits();
-                        this.state.credits = {
-                            textUsed: 0, imageUsed: 0, voiceUsed: 0,
-                            extraCredits: record.extra_credits || 0,
-                            dailyImageLimit: record.daily_image_limit || imageLimit,
-                            dailyVoiceLimit: record.daily_voice_limit || voiceLimit,
-                            lastResetDate: today
-                        };
-                    } else {
-                        this.state.credits = {
-                            textUsed: record.text_used || 0,
-                            imageUsed: record.image_used || 0,
-                            voiceUsed: record.voice_used || 0,
-                            extraCredits: record.extra_credits || 0,
-                            dailyImageLimit: record.daily_image_limit || imageLimit,
-                            dailyVoiceLimit: record.daily_voice_limit || voiceLimit,
-                            lastResetDate: record.last_reset_date
-                        };
+            })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            console.error('❌ ElevenLabs error:', {
+                status: response.status,
+                error: err,
+                voiceId: voiceId,
+                keyUsed: apiKey ? apiKey.substring(0, 8) + '...' : 'NONE'
+            });
+            
+            if (response.status === 401) {
+                return res.status(401).json({ 
+                    error: 'Неверный API ключ ElevenLabs',
+                    debug: {
+                        hasKey: !!apiKey,
+                        keyLength: apiKey ? apiKey.length : 0
                     }
-                    this.syncLimitsFromCredits();
-                } else {
-                    console.log('📝 No credits record, creating new one...');
-                    await this.createCreditsRecord();
-                    this.syncLimitsFromCredits();
-                }
-                
-            } catch (e) {
-                console.warn('Credits exception:', e);
-                this.saveCreditsToLocalStorage();
-            }
-        } else {
-            console.log('⚠️ Supabase not available, using localStorage');
-            this.saveCreditsToLocalStorage();
-        }
-    },
-    
-    async createCreditsRecord() {
-        if (!window.SupabaseClient?.client || !this.state.walletAddress) return;
-        
-        const today = new Date().toISOString().split('T')[0];
-        const imageLimit = this.getLimitByLevel('image');
-        const voiceLimit = this.getLimitByLevel('voice');
-        
-        try {
-            await SupabaseClient.client
-                .from('ai_credits')
-                .insert({
-                    wallet_address: this.state.walletAddress,
-                    text_used: 0,
-                    image_used: 0,
-                    voice_used: 0,
-                    extra_credits: 0,
-                    daily_image_limit: imageLimit,
-                    daily_voice_limit: voiceLimit,
-                    last_reset_date: today
                 });
-            
-            this.state.credits = {
-                textUsed: 0, imageUsed: 0, voiceUsed: 0,
-                extraCredits: 0,
-                dailyImageLimit: imageLimit,
-                dailyVoiceLimit: voiceLimit,
-                lastResetDate: today
-            };
-            
-            console.log('✅ Credits record created');
-        } catch (e) {
-            console.warn('Create credits error:', e);
-        }
-    },
-    
-    async resetDailyCredits() {
-        if (!window.SupabaseClient?.client || !this.state.walletAddress) return;
-        
-        const today = new Date().toISOString().split('T')[0];
-        
-        try {
-            await SupabaseClient.client
-                .from('ai_credits')
-                .update({
-                    text_used: 0,
-                    image_used: 0,
-                    voice_used: 0,
-                    last_reset_date: today,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('wallet_address', this.state.walletAddress);
-            
-            console.log('🔄 Daily credits reset');
-        } catch (e) {
-            console.warn('Reset credits error:', e);
-        }
-    },
-    
-    async useCredit(type) {
-        if (type === 'text') {
-            this.state.credits.textUsed++;
-            await this.saveCredits();
-            return true;
-        }
-        
-        if (this.isAuthor()) return true;
-        
-        if (type === 'image') {
-            const remaining = this.getRemainingCredits('image');
-            if (remaining <= 0) return false;
-            this.state.credits.imageUsed++;
-        } else if (type === 'voice') {
-            const remaining = this.getRemainingCredits('voice');
-            if (remaining <= 0) return false;
-            this.state.credits.voiceUsed++;
-        }
-        
-        await this.saveCredits();
-        this.syncLimitsFromCredits();
-        this.updateUI();
-        
-        return true;
-    },
-    
-    async saveCredits() {
-        this.saveCreditsToLocalStorage();
-        
-        if (window.SupabaseClient?.client && this.state.walletAddress) {
-            try {
-                await SupabaseClient.client
-                    .from('ai_credits')
-                    .update({
-                        text_used: this.state.credits.textUsed,
-                        image_used: this.state.credits.imageUsed,
-                        voice_used: this.state.credits.voiceUsed,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('wallet_address', this.state.walletAddress);
-            } catch (e) {
-                console.warn('Save credits error:', e);
             }
-        }
-    },
-    
-    loadCreditsFromLocalStorage() {
-        const today = new Date().toISOString().split('T')[0];
-        const key = `ai_credits_${this.state.walletAddress || 'guest'}_${today}`;
-        const saved = localStorage.getItem(key);
-        
-        if (saved) {
-            const data = JSON.parse(saved);
-            this.state.credits = {
-                textUsed: data.textUsed || 0,
-                imageUsed: data.imageUsed || 0,
-                voiceUsed: data.voiceUsed || 0,
-                extraCredits: data.extraCredits || 0,
-                dailyImageLimit: this.getLimitByLevel('image'),
-                dailyVoiceLimit: this.getLimitByLevel('voice'),
-                lastResetDate: today
-            };
-        } else {
-            this.state.credits = {
-                textUsed: 0, imageUsed: 0, voiceUsed: 0, extraCredits: 0,
-                dailyImageLimit: this.getLimitByLevel('image'),
-                dailyVoiceLimit: this.getLimitByLevel('voice'),
-                lastResetDate: today
-            };
-        }
-        
-        this.syncLimitsFromCredits();
-    },
-    
-    saveCreditsToLocalStorage() {
-        const today = new Date().toISOString().split('T')[0];
-        const key = `ai_credits_${this.state.walletAddress || 'guest'}_${today}`;
-        localStorage.setItem(key, JSON.stringify(this.state.credits));
-    },
-    
-    getLimitByLevel(type) {
-        const level = Math.min(this.state.level || 0, 12);
-        const limits = this.config.LIMITS_BY_LEVEL[level] || this.config.LIMITS_BY_LEVEL[0];
-        return limits[type] || 3;
-    },
-    
-    syncLimitsFromCredits() {
-        this.state.limits.text.used = this.state.credits.textUsed;
-        this.state.limits.text.max = 999;
-        this.state.limits.image.used = this.state.credits.imageUsed;
-        this.state.limits.image.max = this.state.credits.dailyImageLimit;
-        this.state.limits.voice.used = this.state.credits.voiceUsed;
-        this.state.limits.voice.max = this.state.credits.dailyVoiceLimit;
-    },
-    
-    canGenerate(type) {
-        if (type === 'text') return true;
-        if (this.isAuthor()) return true;
-        return this.getRemainingCredits(type) > 0;
-    },
-    
-    getRemainingCredits(type) {
-        if (type === 'text') return '∞';
-        if (this.isAuthor()) return '∞';
-        
-        if (type === 'image') {
-            const dailyRemaining = this.state.credits.dailyImageLimit - this.state.credits.imageUsed;
-            return Math.max(0, dailyRemaining) + (this.state.credits.extraCredits || 0);
-        }
-        
-        if (type === 'voice') {
-            const dailyRemaining = this.state.credits.dailyVoiceLimit - this.state.credits.voiceUsed;
-            return Math.max(0, dailyRemaining) + (this.state.credits.extraCredits || 0);
-        }
-        
-        return 0;
-    },
-    
-    isAuthor() {
-        return this.DEV_WALLETS.includes(this.state.walletAddress?.toLowerCase());
-    },
-    
-    checkContent(text) {
-        if (!text) return true;
-        
-        if (window.ContentFilter) {
-            const result = window.ContentFilter.check(text);
-            if (!result.allowed) {
-                this.showNotification('🚫 ' + result.reason, 'error');
-                return false;
+            if (response.status === 400) {
+                return res.status(400).json({ error: err.detail?.message || 'Ошибка запроса' });
             }
-            return true;
-        }
-        
-        const forbidden = ['хуй','пизд','блять','ебат','сука','мудак'];
-        const lower = text.toLowerCase();
-        for (const word of forbidden) {
-            if (lower.includes(word)) {
-                this.showNotification('🚫 Запрещённый контент', 'error');
-                return false;
-            }
-        }
-        return true;
-    },
-    
-    async generateText() {
-        const prompt = document.getElementById('textPrompt')?.value?.trim();
-        if (!prompt) { this.showNotification('Введите текст', 'error'); return; }
-        if (!this.checkContent(prompt)) return;
-        
-        this.showLoading('✨ Генерация текста...');
-        
-        try {
-            const style = document.getElementById('textStyle')?.value || 'greeting';
-            const response = await fetch('/api/ai/text', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, style })
+            
+            return res.status(response.status).json({ 
+                error: err.detail?.message || err.detail || 'Ошибка ElevenLabs' 
             });
-            
-            if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || 'Error');
-            
-            const data = await response.json();
-            if (!data.text) throw new Error('Empty response');
-            
-            this.showTextResult(data.text);
-            this.showNotification('✅ Текст готов!', 'success');
-            await this.useCredit('text');
-            
-        } catch (e) {
-            this.showNotification('❌ ' + e.message, 'error');
-        } finally {
-            this.hideLoading();
-        }
-    },
-    
-    async generateImage() {
-        if (!this.canGenerate('image')) {
-            this.showNotification('🎨 Лимит исчерпан!', 'error');
-            return;
         }
         
-        const prompt = document.getElementById('imagePrompt')?.value?.trim();
-        if (!prompt) { this.showNotification('Введите описание', 'error'); return; }
-        if (!this.checkContent(prompt)) return;
+        const audioBuffer = await response.arrayBuffer();
+        const base64Audio = Buffer.from(audioBuffer).toString('base64');
         
-        this.showLoading('🎨 Генерация...');
-        
-        try {
-            const format = document.getElementById('imageFormat')?.value || '1:1';
-            const style = document.getElementById('imageStyle')?.value || 'realistic';
-            const apiKeys = JSON.parse(localStorage.getItem('ai_studio_api_keys') || '{}');
-            const savedKey = apiKeys.openai || '';
-            // Используем ТОЛЬКО если ключ валидный (начинается с sk-)
-            const userApiKey = (this.canUseOwnApi() && savedKey.startsWith('sk-')) ? savedKey : null;
-            
-            const response = await fetch('/api/ai/image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prompt, 
-                    format, 
-                    style, 
-                    userApiKey,
-                    wallet: this.state.walletAddress  // Для серверной проверки кредитов
-                })
-            });
-            
-            const data = await response.json();
-            if (!response.ok || !data.imageUrl) throw new Error(data.error || 'Error');
-            
-            if (!await this.useCredit('image')) throw new Error('Credit error');
-            
-            this.showImageResult(data.imageUrl);
-            this.showNotification('✅ Готово!', 'success');
-            this.showCreditsInfo();
-            
-        } catch (e) {
-            this.showNotification('❌ ' + e.message, 'error');
-        } finally {
-            this.hideLoading();
-        }
-    },
-    
-    async generateVoice() {
-        if (!this.canGenerate('voice')) {
-            this.showNotification('🎤 Лимит исчерпан!', 'error');
-            return;
-        }
-        
-        const text = document.getElementById('voiceText')?.value?.trim();
-        if (!text) { this.showNotification('Введите текст', 'error'); return; }
-        if (text.length > 1000) { this.showNotification('Макс 1000 символов', 'error'); return; }
-        if (!this.checkContent(text)) return;
-        
-        this.showLoading('🎤 Генерация...');
-        
-        try {
-            const voice = document.getElementById('voiceSelect')?.value || 'alex-nekrasov';
-            const language = document.getElementById('voiceLanguage')?.value || 'ru';
-            const stability = (parseInt(document.getElementById('voiceStability')?.value) || 50) / 100;
-            const clarity = (parseInt(document.getElementById('voiceClarity')?.value) || 75) / 100;
-            const apiKeys = JSON.parse(localStorage.getItem('ai_studio_api_keys') || '{}');
-            const savedKey = apiKeys.elevenlabs || '';
-            // Используем ТОЛЬКО если ключ валидный (минимум 20 символов)
-            const userApiKey = (this.canUseOwnApi() && savedKey.length >= 20) ? savedKey : null;
-            
-            const response = await fetch('/api/ai/voice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    text, 
-                    voice, 
-                    language, 
-                    stability, 
-                    clarity, 
-                    userApiKey,
-                    wallet: this.state.walletAddress  // Для серверной проверки кредитов
-                })
-            });
-            
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Error');
-            
-            if (!await this.useCredit('voice')) throw new Error('Credit error');
-            
-            const audioBlob = new Blob([Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0))], { type: 'audio/mpeg' });
-            this.showVoiceResult(URL.createObjectURL(audioBlob));
-            this.showNotification('✅ Готово!', 'success');
-            this.showCreditsInfo();
-            
-        } catch (e) {
-            this.showNotification('❌ ' + e.message, 'error');
-        } finally {
-            this.hideLoading();
-        }
-    },
-    
-    canUseOwnApi() {
-        return this.isAuthor() || this.state.level >= this.config.MIN_LEVEL_OWN_API;
-    },
-    
-    showMainContent() {
-        const overlay = document.getElementById('accessCheck');
-        if (overlay) overlay.style.display = 'none';
-        const main = document.getElementById('mainContent');
-        if (main) main.style.display = 'block';
-    },
-    
-    updateUI() {
-        this.updateUserDisplay();
-        this.updateLimitsDisplay();
-        this.updateButtonsState();
-    },
-    
-    updateUserDisplay() {
-        const walletEl = document.getElementById('walletAddress');
-        const levelEl = document.getElementById('userLevel');
-        
-        if (this.state.walletAddress) {
-            if (walletEl) walletEl.textContent = this.state.walletAddress.slice(0, 6) + '...' + this.state.walletAddress.slice(-4);
-            if (levelEl) levelEl.textContent = `Level: ${this.state.level}`;
-        } else {
-            if (walletEl) walletEl.innerHTML = `<button onclick="AIStudio.connectWallet()" class="btn btn-sm">💳 Connect</button>`;
-            if (levelEl) levelEl.textContent = 'Гость';
-        }
-    },
-    
-    updateLimitsDisplay() {
-        const imgRem = this.getRemainingCredits('image');
-        const voiceRem = this.getRemainingCredits('voice');
-        
-        ['image', 'voice', 'text'].forEach(type => {
-            const el = document.getElementById(`${type}Limit`);
-            if (el) {
-                const val = el.querySelector('.limit-value');
-                if (val) val.textContent = type === 'text' ? '∞' : this.getRemainingCredits(type);
-            }
+        return res.status(200).json({
+            success: true,
+            audioBase64: base64Audio,
+            voiceId: voiceId
         });
         
-        const creditsEl = document.getElementById('creditsDisplay');
-        if (creditsEl) {
-            creditsEl.innerHTML = this.isAuthor() ? '👑 ∞' : `🎨${imgRem} 🎤${voiceRem}`;
-        }
-    },
-    
-    updateButtonsState() {
-        const textBtn = document.getElementById('generateTextBtn');
-        if (textBtn) textBtn.disabled = false;
-        
-        ['image', 'voice'].forEach(type => {
-            const btn = document.getElementById(`generate${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
-            if (btn) {
-                const can = this.canGenerate(type);
-                btn.disabled = !can;
-                btn.style.opacity = can ? '1' : '0.5';
-            }
-        });
-    },
-    
-    showCreditsInfo() {
-        const banner = document.getElementById('trialBanner') || document.getElementById('creditsBanner');
-        if (!banner) return;
-        
-        if (this.isAuthor()) {
-            banner.innerHTML = `<div style="background:linear-gradient(90deg,#FFD700,#FFA500);color:#000;padding:10px 20px;text-align:center;">👑 <strong>Автор</strong> — безлимит</div>`;
-        } else {
-            banner.innerHTML = `<div style="background:linear-gradient(90deg,#6366f1,#8b5cf6);color:white;padding:10px 20px;text-align:center;font-size:14px;">🎁 <strong>Бесплатно:</strong> 📝 Текст ∞ | 🎨 Картинки <strong>${this.getRemainingCredits('image')}</strong> | 🎤 Голос <strong>${this.getRemainingCredits('voice')}</strong> <span style="opacity:0.7;margin-left:10px;">(обновляются в полночь)</span></div>`;
-        }
-        banner.style.display = 'block';
-    },
-    
-    showTextResult(text) {
-        const area = document.getElementById('textResult');
-        const content = document.getElementById('textResultContent');
-        if (area) area.style.display = 'block';
-        if (content) content.textContent = text;
-        this.state.currentResult = { type: 'text', content: text };
-    },
-    
-    showImageResult(url) {
-        const area = document.getElementById('imageResult');
-        const preview = document.getElementById('imagePreview');
-        if (area) area.style.display = 'block';
-        if (preview) preview.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:12px;">`;
-        this.state.currentResult = { type: 'image', content: url };
-    },
-    
-    showVoiceResult(url) {
-        const area = document.getElementById('voiceResult');
-        const player = document.getElementById('voiceAudio');
-        if (area) area.style.display = 'block';
-        if (player) player.src = url;
-        this.state.currentResult = { type: 'voice', content: url };
-    },
-    
-    initTabs() {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (btn.classList.contains('disabled')) return;
-                this.switchTab(btn.dataset.tab);
-            });
-        });
-    },
-    
-    switchTab(tab) {
-        this.state.currentTab = tab;
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `${tab}Tab`));
-        this.renderTemplates(tab);
-    },
-    
-    initTemplates() { this.renderTemplates('text'); },
-    
-    renderTemplates(type) {
-        const container = document.getElementById('templatesList');
-        if (!container) return;
-        
-        const templates = this.config.TEMPLATES[type] || [];
-        container.innerHTML = templates.map(t => `<div class="template-item" data-prompt="${t.prompt}"><span class="template-icon">${t.icon}</span><span class="template-name">${t.name}</span></div>`).join('');
-        
-        container.querySelectorAll('.template-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const inputMap = { text: 'textPrompt', image: 'imagePrompt', voice: 'voiceText' };
-                const input = document.getElementById(inputMap[this.state.currentTab]);
-                if (input) input.value = item.dataset.prompt;
-            });
-        });
-    },
-    
-    initGenerators() {
-        document.getElementById('generateTextBtn')?.addEventListener('click', () => this.generateText());
-        document.getElementById('generateImageBtn')?.addEventListener('click', () => this.generateImage());
-        document.getElementById('generateVoiceBtn')?.addEventListener('click', () => this.generateVoice());
-        
-        document.getElementById('copyTextBtn')?.addEventListener('click', () => {
-            const text = document.getElementById('textResultContent')?.textContent;
-            if (text) { navigator.clipboard.writeText(text); this.showNotification('Скопировано!', 'success'); }
-        });
-        
-        document.getElementById('downloadImageBtn')?.addEventListener('click', () => {
-            if (this.state.currentResult?.content) this.downloadImage(this.state.currentResult.content);
-        });
-        
-        document.getElementById('downloadVoiceBtn')?.addEventListener('click', () => {
-            if (this.state.currentResult?.content) {
-                const a = document.createElement('a');
-                a.href = this.state.currentResult.content;
-                a.download = `voice-${Date.now()}.mp3`;
-                a.click();
-            }
-        });
-    },
-    
-    initCustomVoices() {
-        const saved = localStorage.getItem('ai_studio_custom_voices');
-        if (saved) this.config.CUSTOM_VOICES = JSON.parse(saved);
-    },
-    
-    // Получить все голоса - из voices-data.js или из встроенного конфига
-    getAllVoices() { 
-        // Приоритет: VOICES_DATA из voices-data.js
-        if (window.getAllVoices && typeof window.getAllVoices === 'function') {
-            return window.getAllVoices();
-        }
-        // Fallback на встроенный конфиг
-        return [...this.config.VOICES_LIBRARY, ...this.config.CUSTOM_VOICES]; 
-    },
-    
-    // Тест голоса - воспроизведение примера
-    async testVoice(voiceId) {
-        const text = 'Привет! Это тестовое сообщение для проверки голоса.';
-        
-        this.showLoading('🎤 Тест голоса...');
-        
+    } catch (error) {
+        console.error('Voice generation error:', error?.message || error, error?.stack || '');
         try {
-            const response = await fetch('/api/ai/voice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    text, 
-                    voice: voiceId,
-                    wallet: this.state.walletAddress
-                })
+            return res.status(500).json({ 
+                error: error?.message || 'Unknown server error',
+                stack: process.env.NODE_ENV !== 'production' ? error?.stack : undefined
             });
-            
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Error');
-            
-            // Воспроизводим аудио
-            const audioBlob = new Blob(
-                [Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0))], 
-                { type: 'audio/mpeg' }
-            );
-            const audio = new Audio(URL.createObjectURL(audioBlob));
-            audio.play();
-            
-            this.showNotification('🎤 Воспроизведение...', 'success');
-            
         } catch (e) {
-            this.showNotification('❌ ' + e.message, 'error');
-        } finally {
-            this.hideLoading();
+            // Если даже отправка ошибки не работает
+            return res.status(500).end();
         }
-    },
-    
-    updateVoiceSelect() {
-        const select = document.getElementById('voiceSelect');
-        if (!select) return;
-        
-        const voices = this.getAllVoices();
-        
-        // Группируем голоса
-        if (window.VOICES_DATA) {
-            let html = '';
-            
-            // Украинские мужские
-            if (VOICES_DATA.ukrainian_male?.length) {
-                html += '<optgroup label="🇺🇦 Українські ♂">';
-                VOICES_DATA.ukrainian_male.forEach(v => {
-                    html += `<option value="${v.id}">♂ ${v.name}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            // Украинские женские
-            if (VOICES_DATA.ukrainian_female?.length) {
-                html += '<optgroup label="🇺🇦 Українські ♀">';
-                VOICES_DATA.ukrainian_female.forEach(v => {
-                    html += `<option value="${v.id}">♀ ${v.name}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            // Русские мужские
-            if (VOICES_DATA.russian_male?.length) {
-                html += '<optgroup label="🇷🇺 Русские ♂">';
-                VOICES_DATA.russian_male.forEach(v => {
-                    html += `<option value="${v.id}">♂ ${v.name}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            // Русские женские
-            if (VOICES_DATA.russian_female?.length) {
-                html += '<optgroup label="🇷🇺 Русские ♀">';
-                VOICES_DATA.russian_female.forEach(v => {
-                    html += `<option value="${v.id}">♀ ${v.name}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            // Казахские/Киргизские
-            if (VOICES_DATA.kazakh_kyrgyz?.length) {
-                html += '<optgroup label="🇰🇿🇰🇬 Қазақ / Кыргыз">';
-                VOICES_DATA.kazakh_kyrgyz.forEach(v => {
-                    html += `<option value="${v.id}">${v.gender === 'male' ? '♂' : '♀'} ${v.name}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            // Английские
-            if (VOICES_DATA.english?.length) {
-                html += '<optgroup label="🇬🇧 English">';
-                VOICES_DATA.english.forEach(v => {
-                    html += `<option value="${v.id}">${v.gender === 'male' ? '♂' : '♀'} ${v.name}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            // Немецкие
-            if (VOICES_DATA.german?.length) {
-                html += '<optgroup label="🇩🇪 Deutsch">';
-                VOICES_DATA.german.forEach(v => {
-                    html += `<option value="${v.id}">${v.gender === 'male' ? '♂' : '♀'} ${v.name}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            // Кастомные
-            if (VOICES_DATA.custom?.length) {
-                html += '<optgroup label="⭐ Мои голоса">';
-                VOICES_DATA.custom.forEach(v => {
-                    html += `<option value="${v.id}">${v.gender === 'male' ? '♂' : '♀'} ${v.name}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            // Обратная совместимость со старыми категориями
-            if (VOICES_DATA.slavic?.length && !VOICES_DATA.ukrainian_male?.length) {
-                html += '<optgroup label="🇺🇦🇷🇺 Украинские/Русские">';
-                VOICES_DATA.slavic.forEach(v => {
-                    html += `<option value="${v.id}">${v.name} ${v.gender === 'male' ? '♂' : '♀'}</option>`;
-                });
-                html += '</optgroup>';
-            }
-            
-            select.innerHTML = html;
-        } else {
-            select.innerHTML = voices.map(v => 
-                `<option value="${v.id}">${v.name} (${v.gender === 'male' ? '♂' : '♀'})</option>`
-            ).join('');
-        }
-        
-        console.log('🎙️ Voice select updated:', voices.length, 'voices');
-    },
-    
-    showAuthorTools() {
-        setTimeout(() => {
-            const voiceTab = document.getElementById('voiceTab');
-            if (voiceTab && !voiceTab.querySelector('.author-tool-btn')) {
-                const btn = document.createElement('button');
-                btn.className = 'author-tool-btn';
-                btn.innerHTML = '🎙️ Управление голосами';
-                btn.style.cssText = 'margin:10px 0 20px;padding:12px 20px;background:linear-gradient(135deg,#FFD700,#FFA500);border:none;border-radius:8px;color:#000;font-weight:600;cursor:pointer;width:100%;';
-                btn.onclick = () => alert('Voice Manager - в разработке');
-                const card = voiceTab.querySelector('.generation-card');
-                if (card) card.insertBefore(btn, card.firstChild);
-            }
-        }, 1000);
-    },
-    
-    async downloadImage(url) {
-        try {
-            const response = await fetch('/api/ai/download-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageUrl: url })
-            });
-            const data = await response.json();
-            if (data.base64) {
-                const blob = new Blob([Uint8Array.from(atob(data.base64), c => c.charCodeAt(0))], { type: 'image/png' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `ai-studio-${Date.now()}.png`;
-                a.click();
-                this.showNotification('✅ Скачано!', 'success');
-            } else {
-                window.open(url, '_blank');
-            }
-        } catch (e) {
-            window.open(url, '_blank');
-        }
-    },
-    
-    addToCard(type) {
-        const content = this.state.currentResult?.content;
-        if (!content) { this.showNotification('Сначала сгенерируйте', 'error'); return; }
-        localStorage.setItem(`ai_studio_${type}_for_card`, content);
-        this.showNotification('✅ Сохранено', 'success');
-        setTimeout(() => window.location.href = `generator.html?from=ai&type=${type}`, 1000);
-    },
-    
-    showLoading(text) {
-        const modal = document.getElementById('loadingModal');
-        const textEl = document.getElementById('loadingText');
-        if (textEl) textEl.textContent = text || 'Загрузка...';
-        if (modal) modal.style.display = 'flex';
-    },
-    
-    hideLoading() {
-        const modal = document.getElementById('loadingModal');
-        if (modal) modal.style.display = 'none';
-    },
-    
-    showNotification(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.textContent = message;
-        toast.style.cssText = `position:fixed;bottom:20px;right:20px;padding:16px 24px;background:${type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#F59E0B'};color:white;border-radius:12px;font-size:14px;z-index:10000;`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
     }
 };
-
-window.AIStudio = AIStudio;
-
-document.addEventListener('DOMContentLoaded', () => {
-    AIStudio.init();
-    setTimeout(() => {
-        document.getElementById('useTextInCardBtn')?.addEventListener('click', () => AIStudio.addToCard('text'));
-        document.getElementById('useImageInCardBtn')?.addEventListener('click', () => AIStudio.addToCard('image'));
-    }, 1000);
-});
-
-console.log('🤖 AI Studio v3.0 loaded');
