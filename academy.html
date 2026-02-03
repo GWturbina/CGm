@@ -958,9 +958,19 @@
                     return;
                 }
                 
-                // DEV wallet
+                // DEV wallet - полный доступ + проверяем триал
                 if (this.state.gwId === 'DEV') {
                     this.state.hasAccess = true;
+                    // ⭐ FIX: Получаем реальный gwId из localStorage для бота
+                    const realGwId = localStorage.getItem('gwId') || 
+                                     localStorage.getItem('userGwId') ||
+                                     localStorage.getItem('cardgift_display_id');
+                    if (realGwId) {
+                        this.state.realGwId = realGwId;
+                        console.log('🔧 DEV wallet, real gwId:', realGwId);
+                    }
+                    // ⭐ FIX: Вызываем checkTrial для DEV кошельков тоже!
+                    this.checkTrial();
                     return;
                 }
                 
@@ -1012,36 +1022,39 @@
                 console.log('🚀 Starting 21-day training program...');
                 
                 const startDate = new Date().toISOString();
+                // Получаем рабочий gwId (реальный для DEV, обычный для остальных)
+                const effectiveGwId = this.state.realGwId || this.state.gwId;
                 
                 // 1. Сохраняем в localStorage
                 const trialKey = 'cardgift_trial_' + this.state.walletAddress;
                 localStorage.setItem(trialKey, JSON.stringify({
                     walletAddress: this.state.walletAddress,
+                    gwId: effectiveGwId,
                     startDate: startDate,
                     source: 'academy_button'
                 }));
                 
-                // 2. Сохраняем в Supabase
-                if (window.SupabaseClient?.client && this.state.gwId) {
-                    try {
-                        const { error } = await SupabaseClient.client
-                            .from('user_progress')
-                            .upsert({
-                                gw_id: this.state.gwId,
+                // 2. Сохраняем в Supabase (в ОБЕ таблицы для совместимости)
+                if (window.SupabaseClient?.client || supabaseClient) {
+                    const db = window.SupabaseClient?.client || supabaseClient;
+                    const gwIdToSave = effectiveGwId !== 'DEV' ? effectiveGwId : null;
+                    
+                    if (gwIdToSave) {
+                        try {
+                            // user_progress (для ассистента)
+                            await db.from('user_progress').upsert({
+                                user_id: gwIdToSave,
+                                gw_id: gwIdToSave,
                                 wallet_address: this.state.walletAddress,
                                 training_start_date: startDate,
                                 current_day: 1,
                                 program_status: 'active',
                                 updated_at: startDate
-                            }, { onConflict: 'gw_id' });
-                        
-                        if (error) {
-                            console.error('Supabase error:', error);
-                        } else {
-                            console.log('✅ Training start saved to Supabase');
+                            }, { onConflict: 'user_id' });
+                            console.log('✅ Saved to user_progress');
+                        } catch (e) {
+                            console.error('user_progress error:', e);
                         }
-                    } catch (e) {
-                        console.error('Error saving to Supabase:', e);
                     }
                 }
                 
@@ -1050,6 +1063,7 @@
                 this.state.trainingStartDate = startDate;
                 
                 // 3. Показываем модальное окно Telegram
+                this.updateTelegramBotLink();
                 this.showTelegramModal();
                 
                 this.updateUI();
@@ -1057,9 +1071,32 @@
             
             // Показать модальное окно подписки на Telegram
             showTelegramModal() {
+                // Обновляем ссылку на бота с gwId
+                this.updateTelegramBotLink();
+                
                 const modal = document.getElementById('telegramModal');
                 if (modal) {
                     modal.classList.add('active');
+                }
+            },
+            
+            // ⭐ НОВЫЙ МЕТОД: Обновляет ссылку на бота с gwId пользователя
+            updateTelegramBotLink() {
+                const botLink = document.getElementById('telegramBotLink');
+                if (!botLink) return;
+                
+                // Получаем gwId (реальный для DEV, обычный для остальных)
+                const gwId = this.state.realGwId || 
+                            (this.state.gwId !== 'DEV' ? this.state.gwId : null) ||
+                            localStorage.getItem('gwId') || 
+                            localStorage.getItem('userGwId') ||
+                            localStorage.getItem('cardgift_display_id');
+                
+                if (gwId) {
+                    botLink.href = `https://t.me/CardGift_Notify_Bot?start=${gwId}`;
+                    console.log('🤖 Bot link updated with gwId:', gwId);
+                } else {
+                    console.warn('⚠️ No gwId for bot link');
                 }
             },
             
@@ -1071,25 +1108,29 @@
                 }
             },
             
-            // Подтвердить подписку на Telegram (пока без проверки)
+            // Подтвердить подписку на Telegram
             async confirmTelegramSubscription() {
+                const effectiveGwId = this.state.realGwId || this.state.gwId;
+                
                 // Сохраняем что пользователь подтвердил подписку
                 const subKey = 'cardgift_telegram_' + this.state.walletAddress;
                 localStorage.setItem(subKey, JSON.stringify({
                     confirmed: true,
+                    gwId: effectiveGwId,
                     date: new Date().toISOString()
                 }));
                 
                 // Сохраняем в Supabase
-                if (window.SupabaseClient?.client && this.state.gwId) {
+                const db = window.SupabaseClient?.client || supabaseClient;
+                if (db && effectiveGwId && effectiveGwId !== 'DEV') {
                     try {
-                        await SupabaseClient.client
-                            .from('user_progress')
-                            .update({
-                                telegram_subscribed: true,
-                                telegram_subscribed_at: new Date().toISOString()
-                            })
-                            .eq('gw_id', this.state.gwId);
+                        await db.from('user_progress').upsert({
+                            user_id: effectiveGwId,
+                            gw_id: effectiveGwId,
+                            telegram_subscribed: true,
+                            telegram_subscribed_at: new Date().toISOString()
+                        }, { onConflict: 'user_id' });
+                        console.log('✅ Telegram subscription saved');
                     } catch (e) {
                         console.error('Error saving telegram status:', e);
                     }
@@ -1268,30 +1309,11 @@
             Academy.startTrial();
         }
         
-        // Обновление ссылки на Telegram бота с gwId пользователя
-        function updateTelegramBotLink() {
-            const botLink = document.getElementById('telegramBotLink');
-            if (!botLink) return;
-            
-            // Получаем gwId пользователя
-            const gwId = window.currentGwId || 
-                        window.currentDisplayId || 
-                        localStorage.getItem('cardgift_display_id') ||
-                        localStorage.getItem('userGwId') ||
-                        localStorage.getItem('cardgift_temp_id');
-            
-            if (gwId) {
-                // Формируем ссылку с параметром start
-                botLink.href = `https://t.me/CardGift_Notify_Bot?start=${gwId}`;
-                console.log('🤖 Telegram bot link updated:', botLink.href);
-            }
-        }
-        
         // Инициализация
-        document.addEventListener('DOMContentLoaded', () => {
-            Academy.init();
-            // Обновляем ссылку на бота после небольшой задержки (ждём загрузку данных пользователя)
-            setTimeout(updateTelegramBotLink, 1000);
+        document.addEventListener('DOMContentLoaded', async () => {
+            await Academy.init();
+            // Обновляем ссылку на бота ПОСЛЕ загрузки данных пользователя
+            Academy.updateTelegramBotLink();
         });
     </script>
 </body>
