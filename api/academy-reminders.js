@@ -695,7 +695,60 @@ async function addToQueue(userGwId, chatId, messageType, day) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default async function handler(req, res) {
-    // Проверка авторизации
+    // CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // GET = диагностика
+    if (req.method === 'GET') {
+        try {
+            const { data: subs, error: subErr } = await supabase
+                .from('cardgift_bot_subscribers')
+                .select('user_gw_id, telegram_chat_id, is_active')
+                .limit(20);
+            
+            const { data: progress, error: progErr } = await supabase
+                .from('user_progress')
+                .select('user_id, gw_id, current_day, program_status')
+                .limit(20);
+            
+            const { data: queue, error: queueErr } = await supabase
+                .from('cardgift_bot_queue')
+                .select('id, user_gw_id, message_type, status, created_at')
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            return res.status(200).json({
+                status: 'ok',
+                version: '2.0',
+                hasBotToken: !!process.env.CARDGIFT_BOT_TOKEN,
+                hasSupabaseKey: !!supabaseKey,
+                subscribers: {
+                    count: subs?.length || 0,
+                    error: subErr?.message || null,
+                    data: subs || []
+                },
+                progress: {
+                    count: progress?.length || 0,
+                    error: progErr?.message || null,
+                    data: progress || []
+                },
+                queue: {
+                    count: queue?.length || 0,
+                    error: queueErr?.message || null,
+                    data: queue || []
+                }
+            });
+        } catch (e) {
+            return res.status(200).json({ 
+                status: 'error', 
+                error: e.message,
+                hasBotToken: !!process.env.CARDGIFT_BOT_TOKEN,
+                hasSupabaseKey: !!supabaseKey
+            });
+        }
+    }
+    
+    // Проверка авторизации (только для POST/Cron)
     const authKey = req.headers['x-cron-key'] || req.query.key;
     const expectedKey = process.env.CRON_SECRET_KEY;
     
@@ -741,11 +794,27 @@ export default async function handler(req, res) {
         
         for (const sub of subscribers) {
             // 2. Получить прогресс пользователя
-            const { data: progress } = await supabase
-                .from('academy_progress')
-                .select('current_day, day_completed, last_completed_at')
-                .eq('user_gw_id', sub.user_gw_id)
+            // ⭐ FIX: Ищем в user_progress (туда сохраняет academy.html)
+            // Пробуем найти по user_id или gw_id (оба могут использоваться)
+            let progress = null;
+            
+            const { data: p1 } = await supabase
+                .from('user_progress')
+                .select('current_day, program_status, last_activity_at')
+                .eq('gw_id', sub.user_gw_id)
                 .single();
+            
+            if (p1) {
+                progress = p1;
+            } else {
+                // Fallback - пробуем user_id
+                const { data: p2 } = await supabase
+                    .from('user_progress')
+                    .select('current_day, program_status, last_activity_at')
+                    .eq('user_id', sub.user_gw_id)
+                    .single();
+                if (p2) progress = p2;
+            }
             
             if (!progress) {
                 // Нет прогресса — возможно не начал программу
@@ -754,10 +823,10 @@ export default async function handler(req, res) {
             }
             
             const currentDay = progress.current_day || 1;
-            const dayCompleted = progress.day_completed || false;
+            const isCompleted = progress.program_status === 'completed';
             
-            // Не отправляем если день > 21
-            if (currentDay > 21) {
+            // Не отправляем если день > 21 или программа завершена
+            if (currentDay > 21 || isCompleted) {
                 skipped++;
                 continue;
             }
@@ -765,8 +834,13 @@ export default async function handler(req, res) {
             // 3. Определяем какое сообщение отправить
             let msgType = messageType;
             
-            // Если день уже завершён — отправляем "completed" (только вечером)
-            if (dayCompleted && isEvening) {
+            // Проверяем была ли активность сегодня (день завершён)
+            const today = new Date().toISOString().split('T')[0];
+            const lastActivity = progress.last_activity_at || '';
+            const activityToday = lastActivity.startsWith(today);
+            
+            // Если день уже отработан сегодня — отправляем "completed" (только вечером)
+            if (activityToday && isEvening) {
                 msgType = 'completed';
             }
             
