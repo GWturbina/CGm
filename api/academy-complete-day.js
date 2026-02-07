@@ -124,7 +124,7 @@ export default async function handler(req, res) {
             .eq('user_gw_id', user_gw_id)
             .single();
         
-        // 2. Обновить или создать прогресс
+        // 2. Обновить или создать прогресс в academy_progress
         const progressData = {
             user_gw_id: user_gw_id,
             current_day: dayNum < 21 ? dayNum + 1 : 21,
@@ -146,6 +146,22 @@ export default async function handler(req, res) {
             if (progressError) {
                 console.error('Progress update error:', progressError);
             }
+        }
+        
+        // ⭐ FIX: Также обновляем user_progress (academy-reminders читает оттуда)
+        try {
+            await supabase
+                .from('user_progress')
+                .upsert({
+                    user_id: user_gw_id,
+                    gw_id: user_gw_id,
+                    current_day: dayNum < 21 ? dayNum + 1 : 21,
+                    program_status: dayNum >= 21 ? 'completed' : 'active',
+                    last_activity_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+            console.log('✅ user_progress also updated');
+        } catch (e2) {
+            console.warn('user_progress update failed (non-critical):', e2.message);
         }
         
         // 3. Сохранить отчёт если есть
