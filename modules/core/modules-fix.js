@@ -1378,157 +1378,393 @@ function closeUpgradeModal() {
     closeModal('upgradeModal');
 }
 
-// ============ LEVEL ACTIVATION (РАБОЧАЯ ВЕРСИЯ) ============
+// ============ LEVEL ACTIVATION (РАБОЧАЯ ВЕРСИЯ v2) ============
+
+/**
+ * Показать модальное окно активации уровня
+ * Полный flow: проверка кошелька → проверка сети → проверка регистрации → 
+ * показ спонсора → регистрация → активация уровня
+ */
 async function activateLevel(level) {
-    console.log('⬆️ Activate level:', level);
+    console.log('⬆️ activateLevel called:', level);
     
-    // 1. Проверяем подключение кошелька
-    if (!window.walletAddress || !window.walletConnected) {
-        showToast('Сначала подключите кошелёк SafePal', 'error');
-        showSection('wallet');
+    // ─── 1. ПРОВЕРКА КОШЕЛЬКА ───
+    var provider = null;
+    if (window.GlobalWayBridge) {
+        provider = GlobalWayBridge.getProvider();
+    }
+    if (!provider) {
+        provider = getWeb3Provider ? getWeb3Provider() : null;
+    }
+    
+    if (!provider) {
+        // Нет провайдера — предлагаем открыть в SafePal
+        var msg = '🔐 Для активации уровней необходим кошелёк SafePal.\n\n';
+        if (isMobile()) {
+            msg += 'Открыть эту страницу в приложении SafePal?';
+            if (confirm(msg)) {
+                openInSafePal();
+            }
+        } else {
+            msg += 'Установите расширение SafePal для браузера:\nhttps://www.safepal.com/download';
+            alert(msg);
+        }
         return;
     }
     
-    // 2. Проверяем что GlobalWayBridge доступен
-    if (!window.GlobalWayBridge) {
-        showToast('Ошибка: модуль GlobalWay не загружен', 'error');
-        return;
-    }
-    
-    // 3. Проверяем последовательность уровней
-    if (level > 1 && window.currentUserLevel < level - 1) {
-        showToast('Сначала активируйте уровень ' + (level - 1), 'error');
-        return;
-    }
-    
-    // Если уровень уже активирован
-    if (level <= window.currentUserLevel) {
-        showToast('Уровень ' + level + ' уже активирован', 'info');
-        return;
-    }
-    
-    // 4. Показываем подтверждение
-    var price = GlobalWayBridge.getLevelPrice(level);
-    var levelName = GlobalWayBridge.getLevelName(level);
-    
-    if (!confirm('Активировать уровень ' + level + ' (' + levelName + ')?\n\nСтоимость: ' + price + ' BNB + газ')) {
-        return;
-    }
-    
-    // 5. Проверяем сеть
-    var isCorrectNetwork = await GlobalWayBridge.checkNetwork();
-    if (!isCorrectNetwork) {
-        showToast('Переключение на opBNB...', 'info');
-        var switched = await GlobalWayBridge.switchToOpBNB();
-        if (!switched) {
-            showToast('Не удалось переключить сеть на opBNB', 'error');
+    // Получаем адрес кошелька
+    var walletAddr = window.walletAddress;
+    if (!walletAddr) {
+        try {
+            var accounts = await provider.request({ method: 'eth_accounts' });
+            if (!accounts || accounts.length === 0) {
+                accounts = await provider.request({ method: 'eth_requestAccounts' });
+            }
+            if (accounts && accounts[0]) {
+                walletAddr = accounts[0].toLowerCase();
+                window.walletAddress = walletAddr;
+                window.walletConnected = true;
+                localStorage.setItem('cardgift_wallet', walletAddr);
+                localStorage.setItem('cg_wallet_address', walletAddr);
+                console.log('✅ Кошелёк подключен:', walletAddr);
+            }
+        } catch (e) {
+            console.error('Wallet connect error:', e);
+            showToast('Ошибка подключения кошелька: ' + e.message, 'error');
             return;
         }
     }
     
-    // 6. Получаем Supabase клиент
-    var supabase = null;
-    if (window.SupabaseClient && SupabaseClient.client) {
-        supabase = SupabaseClient.client;
+    if (!walletAddr) {
+        showToast('Не удалось получить адрес кошелька', 'error');
+        showSection('wallet');
+        return;
     }
     
-    // 7. Получаем CG ID пользователя
-    var userCgId = window.currentCgId || window.currentDisplayId || window.currentTempId;
+    // ─── 2. ПРОВЕРКА GlobalWayBridge ───
+    if (!window.GlobalWayBridge) {
+        showToast('Ошибка: модуль GlobalWay не загружен. Обновите страницу.', 'error');
+        return;
+    }
     
-    // 8. Вызываем полный flow через activateWithAutoRegistration
-    if (typeof window.activateWithAutoRegistration === 'function') {
-        showToast('Начинаем активацию уровня ' + level + '...', 'info');
+    // ─── 3. ПРОВЕРКА ПОСЛЕДОВАТЕЛЬНОСТИ ───
+    if (level > 1 && window.currentUserLevel < level - 1) {
+        showToast('Сначала активируйте уровень ' + (level - 1), 'error');
+        return;
+    }
+    if (level <= window.currentUserLevel) {
+        showToast('Уровень ' + level + ' уже активирован ✅', 'info');
+        return;
+    }
+    
+    // ─── 4. ПРОВЕРКА СЕТИ ───
+    showToast('Проверка сети...', 'info');
+    try {
+        var chainId = await provider.request({ method: 'eth_chainId' });
+        var currentChainId = parseInt(chainId, 16);
+        console.log('🌐 Current chain:', currentChainId);
         
-        try {
-            var result = await window.activateWithAutoRegistration(
-                window.walletAddress,
-                level,
-                userCgId,
-                supabase,
-                function(status) {
-                    showToast(status, 'info');
-                    console.log('📋 Status:', status);
-                }
-            );
-            
-            if (result.success) {
-                showToast('✅ Уровень ' + level + ' активирован! TX: ' + (result.txHash || '').slice(0, 10) + '...', 'success');
-                
-                // Обновляем локальный уровень
-                window.currentUserLevel = level;
-                localStorage.setItem('cardgift_level', level);
-                
-                // Сохраняем GW ID если новый
-                if (result.newGwId) {
-                    window.currentGwId = 'GW' + result.newGwId;
-                    localStorage.setItem('cardgift_gw_id', window.currentGwId);
-                }
-                
-                // Обновляем UI
-                updateAccessLocks();
-                updateLevelButtons();
-                updateUserIds();
-                
-                // Очищаем кэш уровня в Bridge
-                if (GlobalWayBridge.cachedLevels) {
-                    delete GlobalWayBridge.cachedLevels[window.walletAddress.toLowerCase()];
-                }
-            } else {
-                showToast('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'), 'error');
-            }
-        } catch (err) {
-            console.error('activateLevel error:', err);
-            showToast('Ошибка: ' + err.message, 'error');
-        }
-    } else {
-        // Fallback — прямой вызов через GlobalWayBridge
-        showToast('Активация уровня ' + level + '...', 'info');
-        
-        try {
-            // Проверяем регистрацию
-            var isRegistered = await GlobalWayBridge.isRegisteredInGlobalWay(window.walletAddress);
-            
-            if (!isRegistered) {
-                showToast('Регистрация в GlobalWay...', 'info');
-                var sponsorId = GlobalWayBridge.ROOT_GW_NUMERIC_ID;
-                var regResult = await GlobalWayBridge.registerInGlobalWay(sponsorId);
-                
-                if (!regResult.success) {
-                    showToast('Ошибка регистрации: ' + regResult.error, 'error');
+        if (currentChainId !== 204) {
+            showToast('Переключение на opBNB...', 'info');
+            try {
+                await provider.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0xCC' }]
+                });
+            } catch (switchErr) {
+                if (switchErr.code === 4902) {
+                    await provider.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: '0xCC',
+                            chainName: 'opBNB Mainnet',
+                            nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+                            rpcUrls: ['https://opbnb-mainnet-rpc.bnbchain.org'],
+                            blockExplorerUrls: ['https://opbnbscan.com']
+                        }]
+                    });
+                } else {
+                    showToast('Не удалось переключить на сеть opBNB', 'error');
                     return;
                 }
-                
-                showToast('Ожидание подтверждения регистрации...', 'info');
-                await new Promise(function(r) { setTimeout(r, 4000); });
             }
-            
-            // Активируем уровень
-            var activateResult = await GlobalWayBridge.activateLevel(level);
-            
-            if (activateResult.success) {
-                showToast('✅ Уровень ' + level + ' активирован!', 'success');
-                window.currentUserLevel = level;
-                localStorage.setItem('cardgift_level', level);
-                updateAccessLocks();
-                updateLevelButtons();
-                updateUserIds();
-            } else {
-                showToast('❌ ' + activateResult.error, 'error');
-            }
-        } catch (err) {
-            console.error('activateLevel fallback error:', err);
-            showToast('Ошибка: ' + err.message, 'error');
+            showToast('✅ Сеть opBNB подключена', 'success');
         }
+    } catch (netErr) {
+        console.error('Network check error:', netErr);
+        showToast('Ошибка проверки сети: ' + netErr.message, 'error');
+        return;
+    }
+    
+    // ─── 5. ПРОВЕРКА РЕГИСТРАЦИИ В GLOBALWAY ───
+    showToast('Проверка регистрации в GlobalWay...', 'info');
+    var isRegistered = false;
+    try {
+        isRegistered = await GlobalWayBridge.isRegisteredInGlobalWay(walletAddr);
+        console.log('📋 isRegistered:', isRegistered);
+    } catch (e) {
+        console.warn('isRegistered check failed:', e);
+    }
+    
+    // ─── 6. ЕСЛИ НЕ ЗАРЕГИСТРИРОВАН — ПОКАЗЫВАЕМ МОДАЛКУ РЕГИСТРАЦИИ ───
+    if (!isRegistered) {
+        console.log('📋 User NOT registered — showing registration modal');
+        await showRegistrationModal(walletAddr, level);
+        return; // Регистрация продолжится в модалке
+    }
+    
+    // ─── 7. УЖЕ ЗАРЕГИСТРИРОВАН — АКТИВИРУЕМ УРОВЕНЬ ───
+    console.log('📋 User already registered — activating level', level);
+    await doActivateLevel(walletAddr, level);
+}
+
+/**
+ * Модальное окно регистрации — показывает спонсора
+ */
+async function showRegistrationModal(walletAddr, level) {
+    // Ищем спонсора
+    showToast('Поиск спонсора...', 'info');
+    
+    var sponsorId = null;
+    var sponsorDisplay = '';
+    var userCgId = window.currentCgId || window.currentDisplayId || window.currentTempId;
+    var supabase = (window.SupabaseClient && SupabaseClient.client) ? SupabaseClient.client : null;
+    
+    try {
+        if (typeof window.findGlobalWaySponsor === 'function' && supabase) {
+            sponsorId = await findGlobalWaySponsor(userCgId, supabase);
+        }
+    } catch (e) {
+        console.warn('findGlobalWaySponsor error:', e);
+    }
+    
+    // Fallback на ROOT
+    if (!sponsorId) {
+        sponsorId = GlobalWayBridge.ROOT_GW_NUMERIC_ID || 9729645;
+    }
+    
+    sponsorDisplay = 'GW' + sponsorId;
+    
+    var price = GlobalWayBridge.getLevelPrice(level);
+    var levelName = GlobalWayBridge.getLevelName(level);
+    
+    // Удаляем старую модалку если есть
+    var oldModal = document.getElementById('gwRegistrationModal');
+    if (oldModal) oldModal.remove();
+    
+    // Создаём модальное окно
+    var modal = document.createElement('div');
+    modal.id = 'gwRegistrationModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);';
+    
+    modal.innerHTML = '' +
+        '<div style="background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;border:1px solid #FFD700;max-width:500px;width:100%;box-shadow:0 25px 50px rgba(0,0,0,0.5);overflow:hidden;">' +
+            '<!-- Header -->' +
+            '<div style="padding:20px 25px;border-bottom:1px solid #333;display:flex;align-items:center;justify-content:space-between;">' +
+                '<h2 style="color:#FFD700;font-size:20px;margin:0;">🌐 Регистрация в GlobalWay</h2>' +
+                '<button onclick="closeGwRegistrationModal()" style="background:none;border:none;color:#888;font-size:28px;cursor:pointer;padding:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50;">×</button>' +
+            '</div>' +
+            '<!-- Body -->' +
+            '<div style="padding:25px;color:#CCC;line-height:1.8;">' +
+                '<div style="text-align:center;margin-bottom:20px;">' +
+                    '<div style="font-size:48px;margin-bottom:10px;">🎉</div>' +
+                    '<p style="font-size:16px;color:#fff;">Вы ещё не зарегистрированы в GlobalWay</p>' +
+                    '<p style="font-size:14px;color:#999;">Регистрация бесплатная (только газ)</p>' +
+                '</div>' +
+                '<div style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:15px;margin-bottom:15px;">' +
+                    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+                        '<span style="font-size:20px;">👤</span>' +
+                        '<span style="color:#FFD700;font-weight:600;">Ваш спонсор:</span>' +
+                    '</div>' +
+                    '<div style="font-size:24px;font-weight:bold;color:#fff;text-align:center;padding:8px 0;" id="gwSponsorDisplay">' + sponsorDisplay + '</div>' +
+                '</div>' +
+                '<div style="background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.3);border-radius:12px;padding:15px;margin-bottom:15px;">' +
+                    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+                        '<span style="font-size:20px;">🚀</span>' +
+                        '<span style="color:#4CAF50;font-weight:600;">После регистрации:</span>' +
+                    '</div>' +
+                    '<p style="font-size:14px;margin:0;">Активация уровня <strong style="color:#FFD700;">' + level + '</strong> (' + levelName + ') за <strong style="color:#FFD700;">' + price + ' BNB</strong></p>' +
+                '</div>' +
+                '<div id="gwRegStatus" style="text-align:center;padding:10px;color:#999;font-size:14px;display:none;"></div>' +
+            '</div>' +
+            '<!-- Footer -->' +
+            '<div style="padding:15px 25px;border-top:1px solid #333;display:flex;gap:10px;">' +
+                '<button onclick="closeGwRegistrationModal()" style="flex:1;padding:12px;background:#333;color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;">Отмена</button>' +
+                '<button id="gwRegConfirmBtn" onclick="confirmGwRegistration(' + sponsorId + ',' + level + ')" style="flex:2;padding:12px;background:linear-gradient(135deg,#FFD700,#F59E0B);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;">✅ Зарегистрироваться</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.appendChild(modal);
+}
+
+/**
+ * Закрыть модалку регистрации
+ */
+function closeGwRegistrationModal() {
+    var modal = document.getElementById('gwRegistrationModal');
+    if (modal) modal.remove();
+}
+
+/**
+ * Подтверждение регистрации и последующая активация
+ */
+async function confirmGwRegistration(sponsorId, level) {
+    var btn = document.getElementById('gwRegConfirmBtn');
+    var status = document.getElementById('gwRegStatus');
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Регистрация...';
+        btn.style.opacity = '0.6';
+    }
+    if (status) {
+        status.style.display = 'block';
+        status.textContent = '📡 Отправка транзакции регистрации...';
+        status.style.color = '#FFD700';
+    }
+    
+    try {
+        // 1. Регистрация в GlobalWay
+        console.log('📡 Registering with sponsor:', sponsorId);
+        var regResult = await GlobalWayBridge.registerInGlobalWay(sponsorId);
+        
+        if (!regResult.success) {
+            throw new Error(regResult.error || 'Ошибка регистрации');
+        }
+        
+        if (status) {
+            status.textContent = '⏳ Ожидание подтверждения транзакции... (TX: ' + (regResult.txHash || '').slice(0, 12) + '...)';
+        }
+        
+        // 2. Ждём подтверждения
+        console.log('⏳ Waiting for registration confirmation...');
+        await new Promise(function(r) { setTimeout(r, 5000); });
+        
+        // 3. Получаем GW ID
+        var gwId = await GlobalWayBridge.getGlobalWayId(window.walletAddress);
+        console.log('✅ New GW ID:', gwId);
+        
+        // 4. Сохраняем GW ID в Supabase
+        var supabase = (window.SupabaseClient && SupabaseClient.client) ? SupabaseClient.client : null;
+        var userCgId = window.currentCgId || window.currentDisplayId || window.currentTempId;
+        
+        if (gwId && supabase && userCgId) {
+            try {
+                await supabase
+                    .from('users')
+                    .update({
+                        gw_id: 'GW' + gwId,
+                        gw_registered_at: new Date().toISOString(),
+                        wallet_address: window.walletAddress.toLowerCase()
+                    })
+                    .eq('cg_id', userCgId);
+                console.log('✅ GW ID saved to Supabase');
+            } catch (e) {
+                console.warn('Supabase save error:', e);
+            }
+        }
+        
+        if (gwId) {
+            window.currentGwId = 'GW' + gwId;
+            localStorage.setItem('cardgift_gw_id', window.currentGwId);
+        }
+        
+        if (status) {
+            status.textContent = '✅ Регистрация успешна! GW ID: GW' + (gwId || '?');
+            status.style.color = '#4CAF50';
+        }
+        
+        showToast('✅ Регистрация в GlobalWay успешна!', 'success');
+        
+        // 5. Закрываем модалку
+        setTimeout(function() {
+            closeGwRegistrationModal();
+            // 6. Переходим к активации уровня
+            doActivateLevel(window.walletAddress, level);
+        }, 2000);
+        
+    } catch (err) {
+        console.error('Registration error:', err);
+        
+        if (status) {
+            status.textContent = '❌ Ошибка: ' + err.message;
+            status.style.color = '#ff6b6b';
+        }
+        
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '🔄 Попробовать снова';
+            btn.style.opacity = '1';
+        }
+        
+        showToast('❌ Ошибка регистрации: ' + err.message, 'error');
+    }
+}
+
+/**
+ * Активация уровня (после регистрации)
+ */
+async function doActivateLevel(walletAddr, level) {
+    var price = GlobalWayBridge.getLevelPrice(level);
+    var levelName = GlobalWayBridge.getLevelName(level);
+    
+    // Подтверждение
+    if (!confirm('Активировать уровень ' + level + ' (' + levelName + ')?\n\nСтоимость: ' + price + ' BNB + газ сети opBNB')) {
+        return;
+    }
+    
+    showToast('📡 Активация уровня ' + level + '...', 'info');
+    
+    try {
+        var result = await GlobalWayBridge.activateLevel(level);
+        
+        if (result.success) {
+            showToast('✅ Уровень ' + level + ' (' + levelName + ') активирован!', 'success');
+            
+            // Обновляем состояние
+            window.currentUserLevel = level;
+            localStorage.setItem('cardgift_level', level);
+            
+            // Сохраняем уровень в Supabase
+            var supabase = (window.SupabaseClient && SupabaseClient.client) ? SupabaseClient.client : null;
+            var userCgId = window.currentCgId || window.currentDisplayId || window.currentTempId;
+            if (supabase && userCgId) {
+                try {
+                    await supabase
+                        .from('users')
+                        .update({ gw_level: level })
+                        .eq('cg_id', userCgId);
+                } catch (e) {
+                    console.warn('Level save error:', e);
+                }
+            }
+            
+            // Очищаем кэш
+            if (GlobalWayBridge.cachedLevels) {
+                delete GlobalWayBridge.cachedLevels[walletAddr.toLowerCase()];
+            }
+            
+            // Обновляем UI
+            updateAccessLocks();
+            updateLevelButtons();
+            updateUserIds();
+            
+        } else {
+            showToast('❌ Ошибка активации: ' + (result.error || 'Неизвестная ошибка'), 'error');
+        }
+    } catch (err) {
+        console.error('doActivateLevel error:', err);
+        showToast('❌ Ошибка: ' + err.message, 'error');
     }
 }
 
 function showActivationModal(level) {
-    // Делегируем в activateLevel — там уже есть подтверждение
     activateLevel(level);
 }
 
 function closeActivationModal() {
     closeModal('activationModal');
+    closeGwRegistrationModal();
 }
 
 function confirmActivation() {
@@ -1564,6 +1800,10 @@ window.activateLevel = activateLevel;
 window.showActivationModal = showActivationModal;
 window.closeActivationModal = closeActivationModal;
 window.confirmActivation = confirmActivation;
+window.showRegistrationModal = showRegistrationModal;
+window.closeGwRegistrationModal = closeGwRegistrationModal;
+window.confirmGwRegistration = confirmGwRegistration;
+window.doActivateLevel = doActivateLevel;
 window.goToGlobalWay = goToGlobalWay;
 window.openGlobalWay = openGlobalWay;
 
