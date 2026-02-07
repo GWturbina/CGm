@@ -909,6 +909,8 @@
     </div>
     
     <!-- SCRIPTS -->
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
     <script src="js/lessons-data.js"></script>
     <script>
         // ═══════════════════════════════════════════════════════════
@@ -933,9 +935,66 @@
             updateUI();
         }
         
-        // Save to localStorage
+        // Save to localStorage + sync to Supabase + API
         function saveState() {
             localStorage.setItem('program_progress', JSON.stringify(state));
+            
+            // ⭐ Синхронизация с сервером (async, не блокирует UI)
+            syncProgressToServer();
+        }
+        
+        // Синхронизация прогресса с бэкендом
+        let _lastSyncedDay = 0;
+        async function syncProgressToServer() {
+            try {
+                const gwId = localStorage.getItem('cardgift_display_id') || 
+                            localStorage.getItem('userGwId') ||
+                            localStorage.getItem('cardgift_gw_id');
+                
+                if (!gwId || gwId === 'DEV') return;
+                
+                // 1. Обновляем user_progress в Supabase напрямую
+                const db = window.SupabaseClient?.client || window.supabaseClient;
+                if (db) {
+                    const cleanGwId = gwId.toString().replace('GW', '');
+                    await db.from('user_progress').upsert({
+                        user_id: cleanGwId,
+                        gw_id: cleanGwId,
+                        current_day: state.currentDay,
+                        program_status: state.currentDay > 21 ? 'completed' : 'active',
+                        last_activity_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+                }
+                
+                // 2. Если день завершён и мы ещё не синхронизировали этот день — 
+                //    вызываем API для Telegram-уведомления
+                const lastCompletedDay = state.completedDays?.length > 0 
+                    ? Math.max(...state.completedDays) 
+                    : 0;
+                
+                if (lastCompletedDay > _lastSyncedDay) {
+                    _lastSyncedDay = lastCompletedDay;
+                    
+                    const cleanGwId = gwId.toString().replace('GW', '');
+                    
+                    fetch('/api/academy-complete-day', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_gw_id: cleanGwId,
+                            day: lastCompletedDay
+                        })
+                    }).then(r => r.json()).then(data => {
+                        if (data.ok) {
+                            console.log('✅ Day ' + lastCompletedDay + ' synced to server');
+                        }
+                    }).catch(e => {
+                        console.warn('Sync error (non-critical):', e.message);
+                    });
+                }
+            } catch (e) {
+                console.warn('syncProgressToServer error:', e.message);
+            }
         }
         
         // Update UI
