@@ -509,25 +509,77 @@
         const deltaTime = ((x - dragging.startX) / trackWidth) * totalDuration;
         const { type, id, mode } = dragging;
         
+        // Snap threshold (в секундах) — магнитное прилипание
+        const SNAP_THRESHOLD = 0.15;
+        const MIN_DURATION = 0.1; // Минимальная длительность сегмента
+        
+        // Собираем все точки прилипания (границы сегментов)
+        const getSnapPoints = (excludeId) => {
+          const points = [0]; // Начало таймлайна
+          const allSegments = [
+            ...clips.filter(c => c.id !== excludeId),
+            ...voiceSegments.filter(s => s.id !== excludeId),
+            ...musicSegments.filter(s => s.id !== excludeId)
+          ];
+          allSegments.forEach(s => {
+            points.push(s.startTime);
+            points.push(s.startTime + (s.trimEnd - s.trimStart));
+          });
+          // Добавляем позицию playhead
+          points.push(currentTime);
+          return points;
+        };
+        
+        // Прилипание к ближайшей точке
+        const snapTo = (value, excludeId) => {
+          const points = getSnapPoints(excludeId);
+          let closest = value;
+          let minDist = SNAP_THRESHOLD;
+          for (const p of points) {
+            const dist = Math.abs(value - p);
+            if (dist < minDist) {
+              minDist = dist;
+              closest = p;
+            }
+          }
+          return closest;
+        };
+        
         if (type === 'text') {
           const text = textOverlays.find(t => t.id === id);
           if (!text) return;
           if (mode === 'move') {
             const duration = text.endTime - text.startTime;
-            const newStart = Math.max(0, dragging.startTime + deltaTime);
+            let newStart = Math.max(0, dragging.startTime + deltaTime);
+            newStart = snapTo(newStart, id);
             updateText(id, { startTime: newStart, endTime: newStart + duration });
           } else if (mode === 'resize-left') {
-            const newStart = Math.max(0, Math.min(dragging.startTime + deltaTime, dragging.startEndTime - 0.5));
+            const newStart = Math.max(0, Math.min(dragging.startTime + deltaTime, dragging.startEndTime - MIN_DURATION));
             updateText(id, { startTime: newStart });
           } else if (mode === 'resize-right') {
-            const newEnd = Math.max(dragging.startTime + 0.5, dragging.startEndTime + deltaTime);
+            const newEnd = Math.max(dragging.startTime + MIN_DURATION, dragging.startEndTime + deltaTime);
             updateText(id, { endTime: newEnd });
           }
           return;
         }
         
         if (mode === 'move') {
-          const newStartTime = Math.max(0, dragging.startTime + deltaTime);
+          let newStartTime = Math.max(0, dragging.startTime + deltaTime);
+          // Snap начала сегмента к границам других
+          newStartTime = snapTo(newStartTime, id);
+          // Также проверяем snap конца сегмента
+          let segment;
+          if (type === 'clip') segment = clips.find(c => c.id === id);
+          else if (type === 'voice') segment = voiceSegments.find(s => s.id === id);
+          else if (type === 'music') segment = musicSegments.find(s => s.id === id);
+          if (segment) {
+            const segDuration = segment.trimEnd - segment.trimStart;
+            const snappedEnd = snapTo(newStartTime + segDuration, id);
+            if (Math.abs(snappedEnd - (newStartTime + segDuration)) < SNAP_THRESHOLD) {
+              newStartTime = snappedEnd - segDuration;
+            }
+          }
+          newStartTime = Math.max(0, newStartTime);
           if (type === 'clip') updateClip(id, { startTime: newStartTime });
           else if (type === 'voice') updateVoice(id, { startTime: newStartTime });
           else if (type === 'music') updateMusic(id, { startTime: newStartTime });
@@ -537,7 +589,7 @@
           else if (type === 'voice') segment = voiceSegments.find(s => s.id === id);
           else if (type === 'music') segment = musicSegments.find(s => s.id === id);
           if (!segment) return;
-          const newTrimStart = Math.max(0, Math.min(dragging.startTrimStart + deltaTime, dragging.startTrimEnd - 0.5));
+          const newTrimStart = Math.max(0, Math.min(dragging.startTrimStart + deltaTime, dragging.startTrimEnd - MIN_DURATION));
           const newStartTime = dragging.startTime + (newTrimStart - dragging.startTrimStart);
           if (type === 'clip') updateClip(id, { trimStart: newTrimStart, startTime: Math.max(0, newStartTime) });
           else if (type === 'voice') updateVoice(id, { trimStart: newTrimStart, startTime: Math.max(0, newStartTime) });
@@ -549,14 +601,30 @@
           else if (type === 'music') segment = musicSegments.find(s => s.id === id);
           if (!segment) return;
           const maxTrimEnd = segment.type === 'image' ? 300 : segment.duration;
-          const newTrimEnd = Math.max(dragging.startTrimStart + 0.5, Math.min(maxTrimEnd, dragging.startTrimEnd + deltaTime));
+          const newTrimEnd = Math.max(dragging.startTrimStart + MIN_DURATION, Math.min(maxTrimEnd, dragging.startTrimEnd + deltaTime));
           if (type === 'clip') updateClip(id, { trimEnd: newTrimEnd, ...(segment.type === 'image' ? { duration: newTrimEnd } : {}) });
           else if (type === 'voice') updateVoice(id, { trimEnd: newTrimEnd });
           else if (type === 'music') updateMusic(id, { trimEnd: newTrimEnd });
         }
-      }, [dragging, totalDuration, clips, voiceSegments, musicSegments, textOverlays]);
+      }, [dragging, totalDuration, clips, voiceSegments, musicSegments, textOverlays, currentTime]);
 
-      const handleDragEnd = useCallback(() => setDragging(null), []);
+      const handleDragEnd = useCallback(() => {
+        // При отпускании — авто-снап к ближайшим границам для устранения щелей
+        setDragging(null);
+      }, []);
+      
+      // Авто-выравнивание клипов на дорожке (убрать щели между видео/фото)
+      const autoSnapClips = () => {
+        setClips(prev => {
+          const sorted = [...prev].sort((a, b) => a.startTime - b.startTime);
+          let currentEnd = 0;
+          return sorted.map(clip => {
+            const newClip = { ...clip, startTime: currentEnd };
+            currentEnd += clip.trimEnd - clip.trimStart;
+            return newClip;
+          });
+        });
+      };
 
       useEffect(() => {
         if (dragging) {
@@ -1515,38 +1583,86 @@
           </div>
 
           {/* Timeline */}
-          <div ref={timelineRef} style={{ height: isMobile ? '140px' : '180px', background: 'rgba(0,0,0,0.5)', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '8px' }}>
-            <div style={{ height: '20px', marginLeft: isMobile ? '45px' : '60px', position: 'relative', marginBottom: '4px' }}>
-              {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }).map((_, i) => (
-                <span key={i} style={{ position: 'absolute', left: ((i * 5 / totalDuration) * 100) + '%', fontSize: '9px', color: '#555', transform: 'translateX(-50%)' }}>{formatTime(i * 5)}</span>
-              ))}
+          <div ref={timelineRef} style={{ height: isMobile ? '140px' : '180px', background: 'rgba(0,0,0,0.5)', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '0' }}>
+            {/* Timeline Toolbar */}
+            <div className="timeline-toolbar">
+              <div className="zoom-control">
+                <button className="zoom-btn" onClick={zoomOut} title="-">−</button>
+                <span style={{ fontSize: '10px', color: '#888', minWidth: '30px', textAlign: 'center' }}>{Math.round(timelineZoom * 100)}%</span>
+                <button className="zoom-btn" onClick={zoomIn} title="+">+</button>
+                <button className="zoom-btn" onClick={zoomReset} title="Reset" style={{ fontSize: '10px' }}>1:1</button>
+              </div>
+              <button className="zoom-btn" onClick={autoSnapClips} title="Убрать щели между клипами" style={{ fontSize: '11px', width: 'auto', padding: '4px 8px' }}>🧲 Snap</button>
+              <button className="zoom-btn" onClick={splitAtPlayhead} disabled={!selectedItem || selectedItem.type === 'text'} title="Разрезать (S)" style={{ fontSize: '11px', width: 'auto', padding: '4px 8px' }}>✂️</button>
+              <span style={{ fontSize: '9px', color: '#555', marginLeft: 'auto' }}>🎯 {formatTime(currentTime)} / {formatTime(totalDuration)}</span>
             </div>
+            
+            <div style={{ overflowX: 'auto', overflowY: 'hidden', height: 'calc(100% - 40px)', padding: '4px 0' }}>
+              <div style={{ minWidth: (100 * timelineZoom) + '%', position: 'relative' }}>
+                {/* Time ruler */}
+                <div style={{ height: '16px', marginLeft: isMobile ? '45px' : '60px', position: 'relative', marginBottom: '2px' }}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const ratio = x / rect.width;
+                    setCurrentTime(Math.max(0, Math.min(ratio * totalDuration, totalDuration)));
+                  }}
+                  style2={{ cursor: 'pointer' }}
+                >
+                  {Array.from({ length: Math.ceil(totalDuration / (timelineZoom > 2 ? 1 : timelineZoom > 1 ? 2 : 5)) + 1 }).map((_, i) => {
+                    const step = timelineZoom > 2 ? 1 : timelineZoom > 1 ? 2 : 5;
+                    return (
+                      <span key={i} style={{ position: 'absolute', left: ((i * step / totalDuration) * 100) + '%', fontSize: '9px', color: '#555', transform: 'translateX(-50%)', cursor: 'pointer' }}>{formatTime(i * step)}</span>
+                    );
+                  })}
+                </div>
 
-            <div className="track-row">
-              <div className="track-label" style={{ color: '#00d4ff' }}>🎬</div>
-              <div className="track-content">
-                {clips.map(c => renderSegment('clip', c, '#00d4ff', c.type === 'video' ? '#1e3a5f' : '#5a3d1e', c.type === 'video' ? '🎬' : '🖼️'))}
-                <div style={{ position: 'absolute', left: ((currentTime / totalDuration) * 100) + '%', top: '-5px', bottom: '-5px', width: '2px', background: '#ff0000', zIndex: 50, pointerEvents: 'none' }}>
-                  <div style={{ position: 'absolute', top: '-8px', left: '-6px', width: '14px', height: '14px', background: '#ff0000', borderRadius: '50%' }} />
+                <div className="track-row" onClick={(e) => {
+                  if (e.target.classList.contains('track-content')) {
+                    const rect = e.target.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const ratio = x / rect.width;
+                    setCurrentTime(Math.max(0, Math.min(ratio * totalDuration, totalDuration)));
+                  }
+                }}>
+                  <div className="track-label" style={{ color: '#00d4ff' }}>🎬</div>
+                  <div className="track-content" style={{ cursor: 'crosshair' }}>
+                    {clips.map(c => renderSegment('clip', c, '#00d4ff', c.type === 'video' ? '#1e3a5f' : '#5a3d1e', c.type === 'video' ? '🎬' : '🖼️'))}
+                    <div style={{ position: 'absolute', left: ((currentTime / totalDuration) * 100) + '%', top: '-5px', bottom: '-5px', width: '2px', background: '#ff0000', zIndex: 50, pointerEvents: 'none' }}>
+                      <div style={{ position: 'absolute', top: '-8px', left: '-6px', width: '14px', height: '14px', background: '#ff0000', borderRadius: '50%' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="track-row">
+                  <div className="track-label" style={{ color: '#ffc800' }}>✏️</div>
+                  <div className="track-content">
+                    {textOverlays.map(txt => renderSegment('text', txt, '#ffc800', '#5f4a00', '✏️'))}
+                  </div>
+                </div>
+
+                <div className="track-row" onClick={(e) => {
+                  if (e.target.classList.contains('track-content')) {
+                    const rect = e.target.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    setCurrentTime(Math.max(0, Math.min((x / rect.width) * totalDuration, totalDuration)));
+                  }
+                }}>
+                  <div className="track-label" style={{ color: '#00d4ff' }}>🎤</div>
+                  <div className="track-content" style={{ cursor: 'crosshair' }}>{voiceSegments.map(s => renderSegment('voice', s, '#00d4ff', '#005566', '🎤'))}</div>
+                </div>
+
+                <div className="track-row" onClick={(e) => {
+                  if (e.target.classList.contains('track-content')) {
+                    const rect = e.target.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    setCurrentTime(Math.max(0, Math.min((x / rect.width) * totalDuration, totalDuration)));
+                  }
+                }}>
+                  <div className="track-label" style={{ color: '#bb86fc' }}>🎵</div>
+                  <div className="track-content" style={{ cursor: 'crosshair' }}>{musicSegments.map(s => renderSegment('music', s, '#bb86fc', '#3d1e5f', '🎵'))}</div>
                 </div>
               </div>
-            </div>
-
-            <div className="track-row">
-              <div className="track-label" style={{ color: '#ffc800' }}>✏️</div>
-              <div className="track-content">
-                {textOverlays.map(txt => renderSegment('text', txt, '#ffc800', '#5f4a00', '✏️'))}
-              </div>
-            </div>
-
-            <div className="track-row">
-              <div className="track-label" style={{ color: '#00d4ff' }}>🎤</div>
-              <div className="track-content">{voiceSegments.map(s => renderSegment('voice', s, '#00d4ff', '#005566', '🎤'))}</div>
-            </div>
-
-            <div className="track-row">
-              <div className="track-label" style={{ color: '#bb86fc' }}>🎵</div>
-              <div className="track-content">{musicSegments.map(s => renderSegment('music', s, '#bb86fc', '#3d1e5f', '🎵'))}</div>
             </div>
           </div>
 
@@ -1767,7 +1883,7 @@
         else if (effect === 'shimmer') effectStyle = 'background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);background-size:200% 100%;animation:shimmer 2s infinite;';
         else if (effect === 'gradient') effectStyle = `background:linear-gradient(135deg,${bgColor},${textColor}40);`;
         
-        return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:${effect !== 'gradient' ? bgColor : ''};border-radius:8px;cursor:pointer;${effectStyle}" onclick="window.open('${link}','_blank')">
+        return `<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;background:${effect !== 'gradient' ? bgColor : ''};border-radius:8px;cursor:pointer;${effectStyle}" onclick="window.open('${link}','_blank')">
 ${logo ? `<img src="${logo}" style="height:32px" alt=""/>` : ''}
 <span style="color:${textColor};font-weight:600;font-size:14px">${bannerText}</span>
 </div>
@@ -1788,7 +1904,7 @@ ${logo ? `<img src="${logo}" style="height:32px" alt=""/>` : ''}
           <div style={{ marginBottom: '10px', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '6px' }}>
             <div style={{ fontSize: '9px', color: '#666', marginBottom: '4px' }}>{t.preview}:</div>
             <div style={{ 
-              display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px 16px', 
               background: effect === 'gradient' ? `linear-gradient(135deg, ${bgColor}, ${textColor}40)` : bgColor, 
               borderRadius: '8px'
             }} className={effect === 'shimmer' ? 'shimmer' : ''} style2={effect === 'pulse' ? {animation: 'pulse 2s infinite'} : {}}>
