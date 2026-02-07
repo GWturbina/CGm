@@ -693,18 +693,27 @@ function openModal(modalId) {
 }
 
 function showNewsModal() {
-    var modal = document.getElementById('newsModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        modal.classList.add('show');
-        if (typeof loadUserNewsContent === 'function') loadUserNewsContent();
+    // Делегируем в NotificationCenter или openNewsModal
+    if (window.NotificationCenter && typeof NotificationCenter.open === 'function') {
+        NotificationCenter.open();
+    } else if (typeof window.openNewsModal === 'function') {
+        window.openNewsModal();
+    } else {
+        var modal = document.getElementById('newsModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+            if (typeof loadUserNewsContent === 'function') loadUserNewsContent();
+        }
     }
 }
-
 function closeNewsModal() {
+    if (window.NotificationCenter && typeof NotificationCenter.close === 'function') {
+        NotificationCenter.close();
+    }
     var modal = document.getElementById('newsModal');
     if (modal) {
-        modal.style.display = 'none';
+        modal.style.setProperty('display', 'none', 'important');
         modal.classList.remove('show');
     }
 }
@@ -1369,15 +1378,153 @@ function closeUpgradeModal() {
     closeModal('upgradeModal');
 }
 
-// ============ LEVEL ACTIVATION ============
-function activateLevel(level) {
+// ============ LEVEL ACTIVATION (РАБОЧАЯ ВЕРСИЯ) ============
+async function activateLevel(level) {
     console.log('⬆️ Activate level:', level);
-    showToast('Активация уровня ' + level + '...', 'info');
-    // TODO: Реальная активация через контракт
+    
+    // 1. Проверяем подключение кошелька
+    if (!window.walletAddress || !window.walletConnected) {
+        showToast('Сначала подключите кошелёк SafePal', 'error');
+        showSection('wallet');
+        return;
+    }
+    
+    // 2. Проверяем что GlobalWayBridge доступен
+    if (!window.GlobalWayBridge) {
+        showToast('Ошибка: модуль GlobalWay не загружен', 'error');
+        return;
+    }
+    
+    // 3. Проверяем последовательность уровней
+    if (level > 1 && window.currentUserLevel < level - 1) {
+        showToast('Сначала активируйте уровень ' + (level - 1), 'error');
+        return;
+    }
+    
+    // Если уровень уже активирован
+    if (level <= window.currentUserLevel) {
+        showToast('Уровень ' + level + ' уже активирован', 'info');
+        return;
+    }
+    
+    // 4. Показываем подтверждение
+    var price = GlobalWayBridge.getLevelPrice(level);
+    var levelName = GlobalWayBridge.getLevelName(level);
+    
+    if (!confirm('Активировать уровень ' + level + ' (' + levelName + ')?\n\nСтоимость: ' + price + ' BNB + газ')) {
+        return;
+    }
+    
+    // 5. Проверяем сеть
+    var isCorrectNetwork = await GlobalWayBridge.checkNetwork();
+    if (!isCorrectNetwork) {
+        showToast('Переключение на opBNB...', 'info');
+        var switched = await GlobalWayBridge.switchToOpBNB();
+        if (!switched) {
+            showToast('Не удалось переключить сеть на opBNB', 'error');
+            return;
+        }
+    }
+    
+    // 6. Получаем Supabase клиент
+    var supabase = null;
+    if (window.SupabaseClient && SupabaseClient.client) {
+        supabase = SupabaseClient.client;
+    }
+    
+    // 7. Получаем CG ID пользователя
+    var userCgId = window.currentCgId || window.currentDisplayId || window.currentTempId;
+    
+    // 8. Вызываем полный flow через activateWithAutoRegistration
+    if (typeof window.activateWithAutoRegistration === 'function') {
+        showToast('Начинаем активацию уровня ' + level + '...', 'info');
+        
+        try {
+            var result = await window.activateWithAutoRegistration(
+                window.walletAddress,
+                level,
+                userCgId,
+                supabase,
+                function(status) {
+                    showToast(status, 'info');
+                    console.log('📋 Status:', status);
+                }
+            );
+            
+            if (result.success) {
+                showToast('✅ Уровень ' + level + ' активирован! TX: ' + (result.txHash || '').slice(0, 10) + '...', 'success');
+                
+                // Обновляем локальный уровень
+                window.currentUserLevel = level;
+                localStorage.setItem('cardgift_level', level);
+                
+                // Сохраняем GW ID если новый
+                if (result.newGwId) {
+                    window.currentGwId = 'GW' + result.newGwId;
+                    localStorage.setItem('cardgift_gw_id', window.currentGwId);
+                }
+                
+                // Обновляем UI
+                updateAccessLocks();
+                updateLevelButtons();
+                updateUserIds();
+                
+                // Очищаем кэш уровня в Bridge
+                if (GlobalWayBridge.cachedLevels) {
+                    delete GlobalWayBridge.cachedLevels[window.walletAddress.toLowerCase()];
+                }
+            } else {
+                showToast('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'), 'error');
+            }
+        } catch (err) {
+            console.error('activateLevel error:', err);
+            showToast('Ошибка: ' + err.message, 'error');
+        }
+    } else {
+        // Fallback — прямой вызов через GlobalWayBridge
+        showToast('Активация уровня ' + level + '...', 'info');
+        
+        try {
+            // Проверяем регистрацию
+            var isRegistered = await GlobalWayBridge.isRegisteredInGlobalWay(window.walletAddress);
+            
+            if (!isRegistered) {
+                showToast('Регистрация в GlobalWay...', 'info');
+                var sponsorId = GlobalWayBridge.ROOT_GW_NUMERIC_ID;
+                var regResult = await GlobalWayBridge.registerInGlobalWay(sponsorId);
+                
+                if (!regResult.success) {
+                    showToast('Ошибка регистрации: ' + regResult.error, 'error');
+                    return;
+                }
+                
+                showToast('Ожидание подтверждения регистрации...', 'info');
+                await new Promise(function(r) { setTimeout(r, 4000); });
+            }
+            
+            // Активируем уровень
+            var activateResult = await GlobalWayBridge.activateLevel(level);
+            
+            if (activateResult.success) {
+                showToast('✅ Уровень ' + level + ' активирован!', 'success');
+                window.currentUserLevel = level;
+                localStorage.setItem('cardgift_level', level);
+                updateAccessLocks();
+                updateLevelButtons();
+                updateUserIds();
+            } else {
+                showToast('❌ ' + activateResult.error, 'error');
+            }
+        } catch (err) {
+            console.error('activateLevel fallback error:', err);
+            showToast('Ошибка: ' + err.message, 'error');
+        }
+    }
 }
 
 function showActivationModal(level) {
-    console.log('📋 Show activation modal for level:', level);
+    // Делегируем в activateLevel — там уже есть подтверждение
+    activateLevel(level);
 }
 
 function closeActivationModal() {
@@ -1385,7 +1532,7 @@ function closeActivationModal() {
 }
 
 function confirmActivation() {
-    console.log('✅ Confirm activation');
+    console.log('✅ Confirm activation — logic moved to activateLevel()');
 }
 
 // ============ GLOBALWAY ============
