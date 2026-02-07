@@ -621,8 +621,27 @@ const GlobalWayBridge = {
      * Конвертация BNB в Wei (hex)
      */
     _toWei: function(bnbAmount) {
-        var wei = parseFloat(bnbAmount) * 1e18;
-        return '0x' + Math.floor(wei).toString(16);
+        // Используем ethers.js для точной конверсии если доступен
+        if (window.ethers && ethers.utils && ethers.utils.parseEther) {
+            try {
+                return ethers.utils.parseEther(bnbAmount).toHexString();
+            } catch (e) {
+                console.warn('ethers parseEther failed:', e);
+            }
+        }
+        // Fallback без потери точности через BigInt
+        try {
+            var str = String(bnbAmount);
+            var parts = str.split('.');
+            var whole = parts[0] || '0';
+            var frac = (parts[1] || '').padEnd(18, '0').slice(0, 18);
+            var wei = BigInt(whole) * BigInt('1000000000000000000') + BigInt(frac);
+            return '0x' + wei.toString(16);
+        } catch (e2) {
+            // Последний fallback — parseFloat (менее точный)
+            var wei = parseFloat(bnbAmount) * 1e18;
+            return '0x' + Math.floor(wei).toString(16);
+        }
     },
     
     /**
