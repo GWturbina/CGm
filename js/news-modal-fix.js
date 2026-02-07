@@ -1,133 +1,62 @@
 // ═══════════════════════════════════════════════════════════
-// NEWS MODAL FIX v2.0 - Блокирует автооткрытие newsModal
-// Добавить в dashboard.html ПОСЛЕДНИМ скриптом
-// ИЛИ вставить этот код в конец dashboard.js
+// NEWS MODAL FIX v3.0 — Чистая блокировка старого newsModal
+// Вся логика новостей теперь в notifications-center.js
+// 
+// Проблема была: 4 скрипта боролись за openNewsModal(),
+// каждый переопределял функцию → race condition → мигание.
+// Решение: один блокировщик + один обработчик (NotificationCenter)
 // ═══════════════════════════════════════════════════════════
 
 (function() {
     'use strict';
     
-    console.log('🔧 News Modal Fix v2.0 loading...');
+    console.log('🔧 News Modal Fix v3.0 loading...');
     
     // ═══════════════════════════════════════════════════════════
-    // 1. НЕМЕДЛЕННО ЗАКРЫТЬ newsModal
+    // 1. БЛОКИРОВКА СТАРОГО newsModal
     // ═══════════════════════════════════════════════════════════
     
-    function forceCloseNewsModal() {
-        const modal = document.getElementById('newsModal');
+    function blockOldModal() {
+        var modal = document.getElementById('newsModal');
         if (modal) {
-            modal.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important;';
-            modal.classList.remove('show', 'active', 'open', 'visible');
-            modal.removeAttribute('open');
+            modal.style.cssText = 'display:none!important;visibility:hidden!important;pointer-events:none!important;position:fixed!important;top:-9999px!important;';
         }
     }
     
-    // Закрываем сразу
-    forceCloseNewsModal();
+    // Блокируем немедленно
+    blockOldModal();
+    
+    // Блокируем после загрузки DOM и страницы
+    document.addEventListener('DOMContentLoaded', blockOldModal);
+    window.addEventListener('load', blockOldModal);
     
     // ═══════════════════════════════════════════════════════════
-    // 2. ПЕРЕХВАТЫВАЕМ openNewsModal
+    // 2. MutationObserver — единственный наблюдатель
+    // Если какой-то скрипт попытается показать старый модал — блокируем
     // ═══════════════════════════════════════════════════════════
     
-    let pageFullyLoaded = false;
-    let userClickedNews = false;
-    
-    // Отмечаем когда страница полностью загружена
-    window.addEventListener('load', function() {
-        setTimeout(function() {
-            pageFullyLoaded = true;
-            console.log('🔧 Page fully loaded, news modal unlocked');
-        }, 3000); // Ждём 3 секунды после загрузки
-    });
-    
-    // Перехватываем клик на колокольчик
-    document.addEventListener('click', function(e) {
-        const bell = e.target.closest('#newsBell, .news-bell, [onclick*="openNewsModal"]');
-        if (bell) {
-            userClickedNews = true;
-            console.log('🔔 User clicked news bell');
-        }
-    }, true);
-    
-    // Переопределяем openNewsModal
-    const originalOpenNews = window.openNewsModal;
-    
-    window.openNewsModal = function() {
-        // Разрешаем открытие ТОЛЬКО если:
-        // 1. Пользователь кликнул на колокольчик, ИЛИ
-        // 2. Страница полностью загружена (прошло 3 сек)
+    function startObserver() {
+        var modal = document.getElementById('newsModal');
+        if (!modal) return;
         
-        if (!userClickedNews && !pageFullyLoaded) {
-            console.log('🔧 BLOCKED auto-open of newsModal (page still loading)');
-            return;
-        }
-        
-        // Сбрасываем флаг клика
-        userClickedNews = false;
-        
-        // Открываем модалку
-        const modal = document.getElementById('newsModal');
-        if (modal) {
-            modal.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
-            modal.classList.add('show');
-            
-            // Загружаем контент
-            if (typeof loadUserNewsContent === 'function') {
-                loadUserNewsContent();
-            } else if (typeof loadNewsModalContent === 'function') {
-                loadNewsModalContent();
-            }
-            
-            console.log('📰 News modal opened (user action)');
-        }
-    };
-    
-    // ═══════════════════════════════════════════════════════════
-    // 3. ЗАКРЫВАЕМ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
-    // ═══════════════════════════════════════════════════════════
-    
-    // Многократно закрываем модалку при загрузке
-    document.addEventListener('DOMContentLoaded', forceCloseNewsModal);
-    window.addEventListener('load', forceCloseNewsModal);
-    
-    // Таймеры на случай асинхронных скриптов
-    setTimeout(forceCloseNewsModal, 100);
-    setTimeout(forceCloseNewsModal, 500);
-    setTimeout(forceCloseNewsModal, 1000);
-    setTimeout(forceCloseNewsModal, 2000);
-    setTimeout(forceCloseNewsModal, 3000);
-    
-    // ═══════════════════════════════════════════════════════════
-    // 4. MutationObserver - следим за изменениями
-    // ═══════════════════════════════════════════════════════════
-    
-    const observer = new MutationObserver(function(mutations) {
-        if (!pageFullyLoaded && !userClickedNews) {
-            mutations.forEach(function(mutation) {
-                if (mutation.target.id === 'newsModal') {
-                    const modal = mutation.target;
-                    const style = window.getComputedStyle(modal);
-                    
-                    // Если модалка стала видимой без клика пользователя
-                    if (style.display !== 'none' && style.visibility !== 'hidden') {
-                        console.log('🔧 BLOCKED newsModal via MutationObserver');
-                        forceCloseNewsModal();
+        var observer = new MutationObserver(function(mutations) {
+            for (var i = 0; i < mutations.length; i++) {
+                var m = mutations[i];
+                if (m.type === 'attributes') {
+                    var style = window.getComputedStyle(modal);
+                    if (style.display !== 'none' || style.visibility !== 'hidden') {
+                        blockOldModal();
                     }
                 }
-            });
-        }
-    });
-    
-    // Запускаем observer когда DOM готов
-    function startObserver() {
-        const modal = document.getElementById('newsModal');
-        if (modal) {
-            observer.observe(modal, { 
-                attributes: true, 
-                attributeFilter: ['style', 'class'] 
-            });
-            console.log('🔧 MutationObserver watching newsModal');
-        }
+            }
+        });
+        
+        observer.observe(modal, { 
+            attributes: true, 
+            attributeFilter: ['style', 'class'] 
+        });
+        
+        console.log('🔧 MutationObserver watching newsModal');
     }
     
     if (document.readyState === 'loading') {
@@ -137,31 +66,53 @@
     }
     
     // ═══════════════════════════════════════════════════════════
-    // 5. ИСПРАВЛЯЕМ closeNewsModal
+    // 3. ПЕРЕХВАТ openNewsModal → делегируем в NotificationCenter
+    // Ставим с задержкой, чтобы быть ПОСЛЕДНИМ кто переопределит
     // ═══════════════════════════════════════════════════════════
     
-    window.closeNewsModal = function() {
-        forceCloseNewsModal();
-        console.log('📰 News modal closed');
-    };
+    function setupOpenNewsModal() {
+        window.openNewsModal = function() {
+            // Делегируем в NotificationCenter если он загружен
+            if (window.NotificationCenter && typeof NotificationCenter.open === 'function') {
+                NotificationCenter.open();
+                return;
+            }
+            // Иначе ничего не делаем — старый модал заблокирован
+            console.log('🔧 openNewsModal called but NotificationCenter not ready');
+        };
+        
+        window.closeNewsModal = function() {
+            blockOldModal();
+            if (window.NotificationCenter && typeof NotificationCenter.close === 'function') {
+                NotificationCenter.close();
+            }
+        };
+    }
+    
+    // Устанавливаем сейчас
+    setupOpenNewsModal();
+    
+    // И повторно через 2 и 4 секунды (после того как все скрипты загрузятся 
+    // и попытаются переопределить openNewsModal)
+    setTimeout(setupOpenNewsModal, 2000);
+    setTimeout(setupOpenNewsModal, 4000);
     
     // ═══════════════════════════════════════════════════════════
-    // 6. ЗАКРЫТИЕ ПО КЛИКУ НА OVERLAY И ESCAPE
+    // 4. ЗАКРЫТИЕ ПО ESC И КЛИКУ НА OVERLAY
     // ═══════════════════════════════════════════════════════════
-    
-    document.addEventListener('click', function(e) {
-        if (e.target.id === 'newsModal' || 
-            (e.target.classList.contains('modal-overlay') && e.target.querySelector('#newsModalContent'))) {
-            forceCloseNewsModal();
-        }
-    });
     
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            forceCloseNewsModal();
+            blockOldModal();
         }
     });
     
-    console.log('✅ News Modal Fix v2.0 loaded - auto-open blocked for 3 seconds');
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'newsModal' || e.target.classList.contains('modal-overlay')) {
+            blockOldModal();
+        }
+    });
+    
+    console.log('✅ News Modal Fix v3.0 loaded — delegating to NotificationCenter');
     
 })();
