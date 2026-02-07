@@ -711,6 +711,12 @@ export default async function handler(req, res) {
                 .select('user_id, gw_id, current_day, program_status')
                 .limit(20);
             
+            // ⭐ Также читаем academy_progress для полной диагностики
+            const { data: acadProgress, error: acadErr } = await supabase
+                .from('academy_progress')
+                .select('user_gw_id, current_day, total_days_completed, last_completed_at')
+                .limit(20);
+            
             const { data: queue, error: queueErr } = await supabase
                 .from('cardgift_bot_queue')
                 .select('id, user_gw_id, message_type, status, created_at')
@@ -732,6 +738,11 @@ export default async function handler(req, res) {
                     count: progress?.length || 0,
                     error: progErr?.message || null,
                     data: progress || []
+                },
+                academy_progress: {
+                    count: acadProgress?.length || 0,
+                    error: acadErr?.message || null,
+                    data: acadProgress || []
                 },
                 queue: {
                     count: queue?.length || 0,
@@ -797,26 +808,44 @@ export default async function handler(req, res) {
         
         for (const sub of subscribers) {
             // 2. Получить прогресс пользователя
-            // ⭐ FIX: Ищем в user_progress (туда сохраняет academy.html)
-            // Пробуем найти по user_id или gw_id (оба могут использоваться)
+            // ⭐ FIX: Ищем в ОБЕИХ таблицах (user_progress И academy_progress)
+            // academy.html пишет в user_progress, academy-complete-day пишет в academy_progress
             let progress = null;
             
-            const { data: p1 } = await supabase
-                .from('user_progress')
-                .select('current_day, program_status, last_activity_at')
-                .eq('gw_id', sub.user_gw_id)
+            // Сначала пробуем academy_progress (обновляется при завершении дня)
+            const { data: ap1 } = await supabase
+                .from('academy_progress')
+                .select('current_day, last_completed_at')
+                .eq('user_gw_id', sub.user_gw_id)
                 .single();
             
-            if (p1) {
-                progress = p1;
-            } else {
-                // Fallback - пробуем user_id
-                const { data: p2 } = await supabase
+            if (ap1) {
+                progress = {
+                    current_day: ap1.current_day,
+                    program_status: ap1.current_day > 21 ? 'completed' : 'active',
+                    last_activity_at: ap1.last_completed_at
+                };
+            }
+            
+            // Если нет в academy_progress — пробуем user_progress (старая таблица)
+            if (!progress) {
+                const { data: p1 } = await supabase
                     .from('user_progress')
                     .select('current_day, program_status, last_activity_at')
-                    .eq('user_id', sub.user_gw_id)
+                    .eq('gw_id', sub.user_gw_id)
                     .single();
-                if (p2) progress = p2;
+                
+                if (p1) {
+                    progress = p1;
+                } else {
+                    // Fallback - пробуем user_id
+                    const { data: p2 } = await supabase
+                        .from('user_progress')
+                        .select('current_day, program_status, last_activity_at')
+                        .eq('user_id', sub.user_gw_id)
+                        .single();
+                    if (p2) progress = p2;
+                }
             }
             
             if (!progress) {
