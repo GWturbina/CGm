@@ -786,6 +786,12 @@ function getNewsTypeIcon(type) {
 }
 
 function openNewsModal() {
+    // Делегируем в NotificationCenter (единственный обработчик новостей)
+    if (window.NotificationCenter && typeof NotificationCenter.open === 'function') {
+        NotificationCenter.open();
+        return;
+    }
+    // Fallback на старую модалку
     const modal = document.getElementById('newsModal');
     if (modal) {
         modal.removeAttribute('hidden');
